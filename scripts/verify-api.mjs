@@ -4,10 +4,30 @@
  */
 
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 
+function loadLocalEnv() {
+  const envPath = path.resolve(process.cwd(), ".env.local");
+  if (!fs.existsSync(envPath)) return {};
+  const out = {};
+  for (const line of fs.readFileSync(envPath, "utf8").split(/\r?\n/)) {
+    const t = line.trim();
+    if (!t || t.startsWith("#")) continue;
+    const eq = t.indexOf("=");
+    if (eq > 0) out[t.slice(0, eq).trim()] = t.slice(eq + 1).trim();
+  }
+  return out;
+}
+
+const localEnv = loadLocalEnv();
 const BASE = (process.argv[2] || "http://localhost:3000").replace(/\/$/, "");
-const PIN = process.env.WORKSHOP_PIN || "202604";
-const PASSCODE = process.env.FACILITATOR_PASSCODE || "MEDIOUNA-ADMIN-2026";
+const PIN = process.env.WORKSHOP_PIN || localEnv.WORKSHOP_PIN;
+const PASSCODE = process.env.FACILITATOR_PASSCODE || localEnv.FACILITATOR_PASSCODE;
+
+if (!PIN || !PASSCODE) {
+  throw new Error("WORKSHOP_PIN and FACILITATOR_PASSCODE must be set in env or .env.local.");
+}
 
 async function req(path, opts = {}) {
   const res = await fetch(`${BASE}${path}`, {

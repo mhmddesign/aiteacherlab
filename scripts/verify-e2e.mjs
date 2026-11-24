@@ -25,11 +25,29 @@ if (!pwPath) {
 }
 const { chromium } = require(pwPath);
 
+function loadLocalEnv() {
+  const envPath = path.resolve(process.cwd(), ".env.local");
+  if (!fs.existsSync(envPath)) return {};
+  const out = {};
+  for (const line of fs.readFileSync(envPath, "utf8").split(/\r?\n/)) {
+    const t = line.trim();
+    if (!t || t.startsWith("#")) continue;
+    const eq = t.indexOf("=");
+    if (eq > 0) out[t.slice(0, eq).trim()] = t.slice(eq + 1).trim();
+  }
+  return out;
+}
+
+const localEnv = loadLocalEnv();
 const BASE = (process.argv[2] || "http://localhost:3000").replace(/\/$/, "");
 const ARTIFACT_DIR =
   "C:\\Users\\MHMD\\.gemini\\antigravity\\brain\\d143fa10-852f-4c36-95b0-bfab85175a67";
-const PIN = process.env.WORKSHOP_PIN || "202604";
-const PASSCODE = process.env.FACILITATOR_PASSCODE || "MEDIOUNA-ADMIN-2026";
+const PIN = process.env.WORKSHOP_PIN || localEnv.WORKSHOP_PIN;
+const PASSCODE = process.env.FACILITATOR_PASSCODE || localEnv.FACILITATOR_PASSCODE;
+if (!PIN || !PASSCODE) {
+  throw new Error("WORKSHOP_PIN and FACILITATOR_PASSCODE must be set in env or .env.local.");
+}
+const INVALID_PIN = PIN === "999999" ? "111111" : "999999";
 
 async function launchBrowser() {
   const edgePath = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
@@ -120,18 +138,18 @@ async function run() {
 
     // 3. Participant 1 tries Invalid PIN -> error, then valid PIN
     await p1.goto(`${BASE}/join`, { waitUntil: "networkidle" });
-    await p1.getByPlaceholder("Ex. : 202604").fill("999999");
+    await p1.getByPlaceholder("Ex. : 482915").fill(INVALID_PIN);
     await p1.getByPlaceholder(/Ex\. : Khadija B\./).fill("Khadija B.");
     await p1.getByRole("button", { name: /Entrer dans l'atelier/ }).click();
     await p1.getByText(/Code PIN de l'atelier incorrect\./).waitFor({ timeout: 8000 });
 
-    await p1.getByPlaceholder("Ex. : 202604").fill(PIN);
+    await p1.getByPlaceholder("Ex. : 482915").fill(PIN);
     await p1.getByRole("button", { name: /Entrer dans l'atelier/ }).click();
     await p1.getByText(/Connecté\(e\) : Khadija B\./).waitFor({ timeout: 10000 });
 
     // Participant 2 joins
     await p2.goto(`${BASE}/join`, { waitUntil: "networkidle" });
-    await p2.getByPlaceholder("Ex. : 202604").fill(PIN);
+    await p2.getByPlaceholder("Ex. : 482915").fill(PIN);
     await p2.getByPlaceholder(/Ex\. : Khadija B\./).fill("Youssef E.");
     await p2.getByRole("button", { name: /Entrer dans l'atelier/ }).click();
     await p2.getByText(/Connecté\(e\) : Youssef E\./).waitFor({ timeout: 10000 });

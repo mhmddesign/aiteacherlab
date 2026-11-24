@@ -9,6 +9,7 @@
 ## 2. Adaptation au système éducatif primaire public marocain
 
 - **Niveaux couverts :** 1AEP à 6AEP (arabe RTL, français LTR, mathématiques, lecture/écriture fondamentale, calcul, compréhension, évaluation formative, remédiation, différenciation liée au principe *Teaching at the Right Level* sans supposer que chaque école relève du modèle *Écoles pionnières*, gestion de classe et préparation). Extension future envisagée : Amazigh (Tifinagh).
+- **Interface bilingue simultanée (Français + Arabe) :** Chaque élément visible de la plateforme (présentation, script animateur, interface participant, projecteur, graphiques, formulaires, galerie, mini-applications et messages système) affiche simultanément son libellé français (`dir="ltr"`) et son libellé arabe (`dir="rtl" lang="ar"`), **sans sélecteur ni bascule de langue**.
 - **Intégrité curriculaire :** L'application n'invente aucun référentiel ministériel officiel ; l'enseignant fournit son propre niveau, discipline, objectif, compétence, extrait éventuel et difficulté. Tout contenu généré par l'IA est présenté comme un **brouillon à relire, adapter et valider par l'enseignant**.
 
 ## 3. Contraintes réalistes des écoles publiques de Mediouna

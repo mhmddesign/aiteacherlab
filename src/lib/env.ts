@@ -32,21 +32,25 @@ export function getSessionSecret(): string {
   if (secret && secret.length >= 16 && !secret.includes("replace_with")) {
     return secret;
   }
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("SESSION_SECRET must be configured in production.");
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL === "1") {
+    throw new Error("SESSION_SECRET must be configured with at least 16 characters.");
   }
-  return "dev-mediouna-teacher-workshop-session-secret-2026";
+  throw new Error(
+    "SESSION_SECRET is missing or uses a placeholder. Generate a strong secret in .env.local."
+  );
 }
 
 export function getWorkshopPin(): string {
   const pin = process.env.WORKSHOP_PIN?.trim();
-  if (pin && pin.length >= 4) {
+  if (pin && pin.length >= 4 && !pin.includes("replace_with")) {
     return pin;
   }
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("WORKSHOP_PIN must be configured in production.");
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL === "1") {
+    throw new Error("WORKSHOP_PIN must be configured cleanly in environment variables.");
   }
-  return "202604";
+  throw new Error(
+    "WORKSHOP_PIN is missing or uses a placeholder. Set it in .env.local."
+  );
 }
 
 export function getFacilitatorPasscode(): string {
@@ -54,10 +58,12 @@ export function getFacilitatorPasscode(): string {
   if (pass && pass.length >= 6 && !pass.includes("replace_with")) {
     return pass;
   }
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("FACILITATOR_PASSCODE must be configured in production.");
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL === "1") {
+    throw new Error("FACILITATOR_PASSCODE must be configured cleanly in environment variables.");
   }
-  return "MEDIOUNA-ADMIN-2026";
+  throw new Error(
+    "FACILITATOR_PASSCODE is missing or uses a placeholder. Set it in .env.local."
+  );
 }
 
 export function getWorkshopSlug(): string {

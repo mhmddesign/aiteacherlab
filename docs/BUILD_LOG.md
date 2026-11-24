@@ -46,3 +46,19 @@
   - `node scripts/verify-e2e.mjs http://localhost:3000` : **Succès** (`ALL BILINGUAL 4-CONTEXT MULTI-SESSION E2E VERIFICATIONS PASSED WITH ZERO PAGE ERRORS!`), vérifiant l'absence de bascule de langue, les blocs `dir="rtl" lang="ar"`, les libellés SVG FR+AR du graphique Recharts, l'affichage projecteur `1920×1080`, zéro débordement horizontal sur mobile `390×844` et l'emprise `.print-sheet` d'impression A4.
 
 > **Note sur la vérification Supabase distante :** le script `scripts/verify-supabase.mjs` est prêt à être exécuté dès que les clés réelles de votre projet Supabase dédié seront ajoutées dans `.env.local` et que les migrations `202611240001` / `202611240002` auront été appliquées.
+
+## Nettoyage Sécurité, Rotation & Préparation GitHub / Vercel Preview (`2026-11-24`)
+
+- **Audit & Rotation locale :**
+  - Vérification de `.gitignore` : `.env.local` (via `.env.*` avec exception `!.env.example`) et `.local-data/` restent strictement ignorés et n'ont jamais été suivis dans l'historique Git (`0daab37` et commits précédents propres).
+  - Rotation locale cryptographique effectuée dans `.env.local` (sans exposition de valeurs) pour `SESSION_SECRET`, `WORKSHOP_PIN` et `FACILITATOR_PASSCODE`. Les clés Supabase dans `.env.local` restent vides en attente du projet Supabase dédié (séparé de MUTALAA).
+  - Suppression complète des anciennes valeurs par défaut/exemples dans `.env.example`, `src/lib/env.ts`, `src/lib/workshop/supabase-store.ts`, `supabase/migrations/202611240002_seed_workshop_and_demo.sql`, `src/components/participant/ParticipantShell.tsx`, `scripts/verify-api.mjs` et `scripts/verify-e2e.mjs`.
+  - Ajout d'un garde-fou dans `src/lib/workshop/store.ts` interdisant le basculement sur `localStore` lorsque `VERCEL=1` ou `VERCEL_ENV=production` et ajout de `"engines": { "node": ">=20.9.0 <25.0.0" }` dans `package.json`.
+- **Vérification post-durcissement observée :**
+  - `npm.cmd run typecheck` : **Succès** (`0` erreur).
+  - `npm.cmd run lint` : **Succès** (`0` erreur, `0` avertissement).
+  - `npm.cmd run build` : **Succès** (`Next.js 16.4.6`, `18/18` routes compilées).
+  - Scan statique des fichiers suivis : `ZERO SECRET LEAKS IN REPO`.
+  - `node scripts/verify-api.mjs http://localhost:3000` : **Succès** (`ALL API SECURITY & WORKFLOW ASSERTIONS PASSED!`).
+  - `node scripts/verify-e2e.mjs http://localhost:3000` : **Succès** (`ALL BILINGUAL 4-CONTEXT MULTI-SESSION E2E VERIFICATIONS PASSED WITH ZERO PAGE ERRORS!`).
+  - `node --env-file=.env.local scripts/verify-supabase.mjs` : **Non exécuté** (clés Supabase absentes de `.env.local`, projet dédié non encore créé/relié).

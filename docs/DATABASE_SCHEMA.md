@@ -6,7 +6,7 @@ Les migrations se trouvent dans `supabase/migrations/` :
 
 ## Tables principales
 
-1. `public.workshops` : métadonnées de l'atelier et empreinte SHA-256 du code PIN partagé (`join_pin_hash`).
+1. `public.workshops` : métadonnées de l'atelier et empreinte `join_pin_hash` initialisée à `'env-managed-pin-hash'` (la vérification du code PIN à l'exécution s'appuie exclusivement sur la variable serveur `WORKSHOP_PIN` comparée par empreinte SHA-256 en temps constant).
 2. `public.workshop_state` : état synchronisé en temps réel (`current_slide_id`, `current_section`, `active_activity_key`, `activity_status`, `show_results`, `show_qr_overlay`, `is_paused`, `demo_mode`, minuteur, `state_version`).
 3. `public.activities` : les 8 activités persistées (`poll-needs`, `quiz-genai`, `quiz-responsible`, `builder-prompt`, `exercise-metaprompt`, `vote-project`, `vote-showcase`, `exit-ticket`) avec compteur `reset_generation`.
 4. `public.participants` : uniquement `display_name`, `session_token_hash`, `is_demo`, `joined_at`, `last_seen_at` (zéro e-mail, zéro téléphone, zéro donnée élève).
@@ -20,3 +20,5 @@ Les migrations se trouvent dans `supabase/migrations/` :
 - RLS activé sur l'ensemble des tables `public.*` avec révocation des privilèges directs `anon` / `authenticated` (modèle *default-deny*).
 - Toutes les écritures, agrégations et suppressions passent par les Route Handlers Next.js via `SUPABASE_SECRET_KEY`.
 - Sur `realtime.messages` (où RLS est déjà actif par défaut dans Supabase), une politique `SELECT` vérifie que `auth.uid()` possède un droit explicite pour `realtime.topic()`. Aucune politique `INSERT` client n'est accordée.
+
+> **Statut de vérification distante :** les migrations sont prêtes et inspectées statiquement, mais n'ont pas encore été exécutées contre un projet Supabase distant (clés en attente). L'exécution de `node --env-file=.env.local scripts/verify-supabase.mjs` confirmera le RLS distant dès réception des clés du projet dédié (séparé de MUTALAA).

@@ -29,12 +29,12 @@ declare
     'group3', 'group1', 'group3', 'group2', 'group4', 'group1', 'group3', 'group2', 'group4', 'group3'
   ];
 begin
-  -- Upsert workshop (default PIN hash corresponds to '202604'; server syncs WORKSHOP_PIN hash automatically)
+  -- Upsert workshop (PIN verification is enforced strictly from server-side WORKSHOP_PIN env)
   insert into public.workshops (slug, title, join_pin_hash, is_active)
   values (
     'mediouna-ai-teacher-lab',
     'AI Teacher Lab · Atelier Provincial de Mediouna',
-    encode(digest('202604', 'sha256'), 'hex'),
+    'env-managed-pin-hash',
     true
   )
   on conflict (slug) do update set title = excluded.title

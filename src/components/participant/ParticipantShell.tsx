@@ -168,7 +168,7 @@ export function ParticipantShell({
                 type="text"
                 required
                 autoComplete="off"
-                placeholder="Ex. : 202604"
+                placeholder="Ex. : 482915"
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
                 dir="ltr"

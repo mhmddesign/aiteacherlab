@@ -116,10 +116,8 @@ export const supabaseStore = {
     const pinHash = sha256Hex(pin.trim());
     const envPinHash = sha256Hex(envPin);
 
-    // Verify against current WORKSHOP_PIN env (or DB hash if env matches DB)
-    const pinMatchesEnv = safeEqualStrings(pinHash, envPinHash);
-    const pinMatchesDb = safeEqualStrings(pinHash, workshop.join_pin_hash);
-    if (!pinMatchesEnv && !pinMatchesDb) {
+    // Verify strictly against the server-side WORKSHOP_PIN environment variable
+    if (!safeEqualStrings(pinHash, envPinHash)) {
       return {
         ok: false as const,
         status: 401,
