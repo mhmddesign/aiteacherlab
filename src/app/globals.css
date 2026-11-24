@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-arabic: var(--font-ibm-arabic), "Noto Sans Arabic", Tahoma, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
+
+  --color-navy-950: #060b16;
+  --color-navy-900: #0b1426;
+  --color-navy-800: #111e38;
+  --color-navy-700: #1a2c4e;
+  --color-ivory-50: #fcfbf8;
+  --color-ivory-100: #f8f6f1;
+  --color-ivory-200: #efeae0;
+  --color-teal-600: #0d9488;
+  --color-teal-500: #14b8a6;
+  --color-cyan-500: #06b6d4;
+  --color-amber-600: #d97706;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #0b1426;
+    color: #0f172a;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-arabic {
+  font-family: var(--font-arabic);
+  line-height: 1.8;
+}
+
+.font-mono-code {
+  font-family: var(--font-mono);
+}
+
+/* Custom editorial scrollbar for dark presenter rail */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 9999px;
+}
+
+/* Print-friendly classroom worksheets & formative assessment summaries */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-sheet {
+    display: block !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 16px !important;
+    margin: 0 !important;
+    page-break-inside: avoid;
+  }
+}

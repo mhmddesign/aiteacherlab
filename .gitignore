@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.*
+
+# Next.js build outputs
+/.next/
+/out/
+/build
+
+# Environment & local secrets
+.env
+.env.*
+!.env.example
+
+# Local fallback workshop store & verification artifacts
+.local-data/
+/.vercel/
+playwright-report/
+test-results/
+
+# Logs & OS files
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
+next-env.d.ts
