@@ -28,4 +28,21 @@
 | Suite sécurité & API | `node scripts/verify-api.mjs http://localhost:3000` | **Succès** : blocage non authentifié (`401`), PIN invalide (`401`), isolation participant/animateur (`401`/`403`), soumission + anti-doublon (`409`), zéro PII dans `/api/workshop/state`, activité fermée bloquée (`409`), correction quiz côté serveur, refus galerie sans déclaration confidentialité (`400`), réinitialisation, purge (`SUPPRIMER`), rate-limit (`429`). |
 | Test navigateur 4 contextes | `node scripts/verify-e2e.mjs http://localhost:3000` | **Succès** (0 `pageerror`) : synchronisation en direct entre `/presenter` (`1440×900`), `/screen` (`1440×900`) et 2 sessions mobiles `/join` (`390×844`) de la Section 1 à la Section 12, incluant RTL arabe, mini-app galerie, contribution Galerie Provinciale, Mode Démo (`18` participants) et purge finale. |
 
+## Extension Bilingue Simultanée (Français + Arabe)
+
+- **Affichage simultané sans sélecteur de langue (`src/components/ui/Bilingual.tsx`, `src/content/types.ts`) :** introduction du type `BilingualText` (`{ fr, ar }`) et des composants `BilingualBlock`, `BilingualPair`, `BilingualInline` et `BilingualSplit`. Chaque élément de l'interface affiche simultanément sa version française (`dir="ltr" lang="fr"`) et sa version arabe (`dir="rtl" lang="ar"` avec `IBM Plex Sans Arabic`).
+- **Couverture complète :**
+  - Les 12 sections, 21 diapositives et notes complètes de l'animateur ([slides.ts](file:///c:/Users/MHMD/Documents/Presentation/teacher-workshop-live/src/content/slides.ts)).
+  - Les 8 activités synchronisées, sondages, QCM, Vrai/Faux, votes et billets de sortie ([activities.ts](file:///c:/Users/MHMD/Documents/Presentation/teacher-workshop-live/src/content/activities.ts)).
+  - Les 8 cas d'usage `1AEP–6AEP`, comparatif faible/fort, exemples de méta-prompting et texte/quiz de démonstration ([use-cases.ts](file:///c:/Users/MHMD/Documents/Presentation/teacher-workshop-live/src/content/use-cases.ts)).
+  - Les 12 catégories de la galerie, 7+ mini-apps fonctionnelles et 4 projets de groupe ([gallery.ts](file:///c:/Users/MHMD/Documents/Presentation/teacher-workshop-live/src/content/gallery.ts), [MiniAppsPlayground.tsx](file:///c:/Users/MHMD/Documents/Presentation/teacher-workshop-live/src/components/interactive/MiniAppsPlayground.tsx)).
+  - Graphiques Recharts bilingues SVG à 2 lignes (`BilingualYAxisTick` dans [LiveChart.tsx](file:///c:/Users/MHMD/Documents/Presentation/teacher-workshop-live/src/components/ui/LiveChart.tsx)), messages d'erreur API/validation bilingues (`FR / AR`), mode Démo et modales de réinitialisation/purge.
+- **Exceptions intentionnelles non traduites :** URLs, identifiants techniques de code (`HTML`, `CSS`, `JavaScript`, `FACILITATOR_PASSCODE`, `API`), code PIN, jeton de confirmation `SUPPRIMER`, ainsi que les noms saisis par les participants et leurs textes libres.
+- **Vérification bilingue finale observée (`2026-11-24`) :**
+  - `npm.cmd run typecheck` : **Succès** (0 erreur).
+  - `npm.cmd run lint` (`eslint src`) : **Succès** (0 erreur).
+  - `npm.cmd run build` : **Succès** (`Next.js 16.4.6`, 18/18 routes compilées).
+  - `node scripts/verify-api.mjs http://localhost:3000` : **Succès** (`ALL API SECURITY & WORKFLOW ASSERTIONS PASSED!`).
+  - `node scripts/verify-e2e.mjs http://localhost:3000` : **Succès** (`ALL BILINGUAL 4-CONTEXT MULTI-SESSION E2E VERIFICATIONS PASSED WITH ZERO PAGE ERRORS!`), vérifiant l'absence de bascule de langue, les blocs `dir="rtl" lang="ar"`, les libellés SVG FR+AR du graphique Recharts, l'affichage projecteur `1920×1080`, zéro débordement horizontal sur mobile `390×844` et l'emprise `.print-sheet` d'impression A4.
+
 > **Note sur la vérification Supabase distante :** le script `scripts/verify-supabase.mjs` est prêt à être exécuté dès que les clés réelles de votre projet Supabase dédié seront ajoutées dans `.env.local` et que les migrations `202611240001` / `202611240002` auront été appliquées.

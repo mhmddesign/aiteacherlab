@@ -143,7 +143,11 @@ export const localStore = {
   async joinParticipant(pin: string, displayName: string) {
     const expectedPin = getWorkshopPin();
     if (!safeEqualStrings(pin.trim(), expectedPin)) {
-      return { ok: false as const, status: 401, error: "Code PIN de l'atelier incorrect." };
+      return {
+        ok: false as const,
+        status: 401,
+        error: "Code PIN de l'atelier incorrect. / رمز PIN الخاص بالورشة غير صحيح.",
+      };
     }
     const db = readDb();
     const rawToken = randomTokenHex(24);
@@ -328,7 +332,7 @@ export const localStore = {
       return {
         ok: false as const,
         status: 409,
-        error: "L'atelier est actuellement en pause par l'animateur.",
+        error: "L'atelier est actuellement en pause par l'animateur. / تم إيقاف الورشة مؤقتاً من طرف المنشط.",
       };
     }
     if (
@@ -338,7 +342,7 @@ export const localStore = {
       return {
         ok: false as const,
         status: 409,
-        error: "Cette activité n'est pas ouverte aux réponses pour le moment.",
+        error: "Cette activité n'est pas ouverte aux réponses pour le moment. / هذا النشاط غير مفتوح للإجابات حالياً.",
       };
     }
 
@@ -353,7 +357,7 @@ export const localStore = {
       return {
         ok: false as const,
         status: 409,
-        error: "Vous avez déjà soumis une réponse pour cet élément.",
+        error: "Vous avez déjà soumis une réponse pour cet élément. / لقد سبق لكم إرسال إجابة لهذا العنصر.",
       };
     }
 

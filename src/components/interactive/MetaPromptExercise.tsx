@@ -7,6 +7,7 @@ import type {
   ActivityStatus,
   ParticipantResponseItem,
 } from "@/content/types";
+import { BilingualBlock, BilingualInline } from "@/components/ui/Bilingual";
 import { CopyPromptButton } from "@/components/ui/CopyPromptButton";
 import { OptionBarChart } from "@/components/ui/LiveChart";
 
@@ -28,32 +29,38 @@ export function MetaPromptExercise({
   onSubmitted,
 }: MetaPromptExerciseProps) {
   const existing = myResponses.find((r) => r.itemKey === "main");
-  const [language, setLanguage] = useState<"fr" | "ar">("fr");
   const [grade, setGrade] = useState("3AEP");
-  const [roughIdea, setRoughIdea] = useState(
+  const [preferredLang, setPreferredLang] = useState<"fr" | "ar">("fr");
+  const [roughIdeaFr, setRoughIdeaFr] = useState(
     "Je veux une activité de remédiation pour mes élèves qui ont du mal avec les soustractions avec retenue."
+  );
+  const [roughIdeaAr, setRoughIdeaAr] = useState(
+    "أريد نشاطاً علاجياً لتلاميذ المستوى الثالث لمساعدتهم على فهم الطرح بالاحتفاظ."
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const generatedMetaPrompt = useMemo(() => {
-    if (language === "ar") {
-      return `أنت مستشار تربوي في التعليم الابتدائي المغربي.
-المستوى المستهدف: ${grade}.
-فكرتي الأولية: ${roughIdea}
-قبل أن تنشئ التمرين أو التطبيق:
-1. حدد المعلومات الناقصة في طلبي (مستوى التلاميذ الفعلي، مدة الحصة، الوسائل المتاحة بالقسم أو الورق).
-2. اطرح عليّ 5 أسئلة واضحة ومختصرة.
-3. انتظر إجاباتي ثم اقترح مسودة مناسبة للمراجعة والتجريب.`;
-    }
-    return `Tu es un conseiller pédagogique du primaire au Maroc.
+  const generatedMetaPromptFr = useMemo(
+    () => `Tu es un conseiller pédagogique du primaire au Maroc.
 Niveau ciblé : ${grade}.
-Mon idée brute : ${roughIdea}
+Mon idée brute : ${roughIdeaFr}
 Avant de générer le contenu ou le prototype :
 1. Identifie les informations manquantes (niveau réel des élèves, équipement en classe, durée, format).
 2. Pose-moi 5 questions courtes et ciblées.
-3. Attends mes réponses avant de me proposer un brouillon à relire et valider.`;
-  }, [language, grade, roughIdea]);
+3. Attends mes réponses avant de me proposer un brouillon à relire et valider.`,
+    [grade, roughIdeaFr]
+  );
+
+  const generatedMetaPromptAr = useMemo(
+    () => `أنت مستشار تربوي في التعليم الابتدائي المغربي.
+المستوى المستهدف: ${grade}.
+فكرتي الأولية: ${roughIdeaAr}
+قبل أن تنشئ التمرين أو التطبيق:
+1. حدد المعلومات الناقصة في طلبي (مستوى التلاميذ الفعلي، مدة الحصة، الوسائل المتاحة بالقسم أو الورق).
+2. اطرح عليّ 5 أسئلة واضحة ومختصرة.
+3. انتظر إجاباتي ثم اقترح مسودة مناسبة للمراجعة والتجريب.`,
+    [grade, roughIdeaAr]
+  );
 
   const isLocked = isPaused || status !== "open" || Boolean(existing);
 
@@ -69,23 +76,26 @@ Avant de générer le contenu ou le prototype :
         body: JSON.stringify({
           activityKey: "exercise-metaprompt",
           itemKey: "main",
-          selectedOption: language,
+          selectedOption: preferredLang,
           payload: {
-            language,
+            language: preferredLang,
             grade,
-            roughIdea,
-            metaPrompt: generatedMetaPrompt,
+            roughIdea: preferredLang === "ar" ? roughIdeaAr : roughIdeaFr,
+            metaPrompt:
+              preferredLang === "ar" ? generatedMetaPromptAr : generatedMetaPromptFr,
           },
         }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Impossible d'envoyer l'exercice.");
+        setError(
+          data.error ?? "Impossible d'envoyer l'exercice. / تعذر إرسال التمرين."
+        );
         return;
       }
       onSubmitted?.();
     } catch {
-      setError("Problème de connexion. Réessayez.");
+      setError("Problème de connexion. Réessayez. / مشكل في الاتصال، أعيدوا المحاولة.");
     } finally {
       setSubmitting(false);
     }
@@ -98,78 +108,81 @@ Avant de générer le contenu ou le prototype :
           onSubmit={handleSubmit}
           className="lg:col-span-6 space-y-3 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs"
         >
-          <div className="flex items-center justify-between gap-2">
-            <h4 className="text-sm font-bold text-slate-900">
-              Votre idée brute → Méta-Prompt
-            </h4>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <BilingualBlock
+              text={{
+                fr: "Votre idée brute → Méta-Prompt (FR & AR)",
+                ar: "فكرتكم الأولية ← الميتا-برومبت (فرنسية وعربية)",
+              }}
+              frClassName="text-sm font-bold text-slate-900"
+              arClassName="text-xs font-bold text-teal-800"
+            />
             {existing ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                Envoyé
+                <BilingualInline text={{ fr: "Envoyé", ar: "تم الإرسال" }} />
               </span>
             ) : status !== "open" || isPaused ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
                 <Lock className="h-3.5 w-3.5" />
-                Fermé
+                <BilingualInline text={{ fr: "Fermé", ar: "مغلق" }} />
               </span>
             ) : null}
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setLanguage("fr");
-                setRoughIdea(
-                  "Je veux une activité de remédiation pour mes élèves qui ont du mal avec les soustractions avec retenue."
-                );
-              }}
-              className={`rounded-xl border px-3 py-1.5 text-xs font-semibold cursor-pointer ${
-                language === "fr"
-                  ? "border-teal-600 bg-teal-600 text-white"
-                  : "border-slate-300 bg-white text-slate-700"
-              }`}
-            >
-              Français (LTR)
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setLanguage("ar");
-                setRoughIdea(
-                  "أريد نشاطاً علاجياً لتلاميذ المستوى الثالث لمساعدتهم على فهم الطرح بالاحتفاظ."
-                );
-              }}
-              className={`font-arabic rounded-xl border px-3 py-1.5 text-xs font-semibold cursor-pointer ${
-                language === "ar"
-                  ? "border-teal-600 bg-teal-600 text-white"
-                  : "border-slate-300 bg-white text-slate-700"
-              }`}
-            >
-              العربية (RTL)
-            </button>
-            <select
-              value={grade}
-              onChange={(e) => setGrade(e.target.value)}
-              className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800"
-            >
-              {["1AEP", "2AEP", "3AEP", "4AEP", "5AEP", "6AEP"].map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </select>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <label className="font-semibold text-slate-700">
+              Niveau · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">المستوى</span>
+              <select
+                value={grade}
+                onChange={(e) => setGrade(e.target.value)}
+                className="ml-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800"
+              >
+                {["1AEP", "2AEP", "3AEP", "4AEP", "5AEP", "6AEP"].map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="font-semibold text-slate-700">
+              Langue principale partagée · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">اللغة المشاركة</span>
+              <select
+                value={preferredLang}
+                onChange={(e) => setPreferredLang(e.target.value as "fr" | "ar")}
+                className="ml-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800"
+              >
+                <option value="fr">Français · الفرنسية</option>
+                <option value="ar">Arabe · العربية</option>
+              </select>
+            </label>
           </div>
 
-          <textarea
-            dir={language === "ar" ? "rtl" : "ltr"}
-            rows={3}
-            value={roughIdea}
-            onChange={(e) => setRoughIdea(e.target.value)}
-            className={`w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 ${
-              language === "ar" ? "font-arabic text-sm" : ""
-            }`}
-          />
+          <label className="block text-xs font-semibold text-slate-700">
+            Idée brute en Français
+            <textarea
+              dir="ltr"
+              rows={2}
+              value={roughIdeaFr}
+              onChange={(e) => setRoughIdeaFr(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900"
+            />
+          </label>
+
+          <label className="block text-xs font-semibold text-slate-700">
+            <span dir="rtl" lang="ar" className="font-arabic block text-teal-900">
+              الفكرة الأولية بالعربية
+            </span>
+            <textarea
+              dir="rtl"
+              lang="ar"
+              rows={2}
+              value={roughIdeaAr}
+              onChange={(e) => setRoughIdeaAr(e.target.value)}
+              className="font-arabic mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900"
+            />
+          </label>
 
           {error && (
             <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
@@ -178,48 +191,75 @@ Avant de générer le contenu ou le prototype :
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <CopyPromptButton text={generatedMetaPrompt} label="Copier le méta-prompt" />
+            <CopyPromptButton
+              text={generatedMetaPromptFr}
+              label="Copier FR"
+              labelAr="نسخ FR"
+            />
+            <CopyPromptButton
+              text={generatedMetaPromptAr}
+              label="Copier AR"
+              labelAr="نسخ AR"
+            />
             <button
               type="submit"
               disabled={isLocked || submitting}
               className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700 disabled:opacity-50 cursor-pointer"
             >
               <Send className="h-3.5 w-3.5" />
-              <span>{submitting ? "Envoi..." : "Partager"}</span>
+              <span>
+                {submitting ? (
+                  "Envoi... / إرسال..."
+                ) : (
+                  <BilingualInline text={{ fr: "Partager", ar: "مشاركة" }} />
+                )}
+              </span>
             </button>
           </div>
         </form>
       )}
 
       <div className={`${canSubmit ? "lg:col-span-6" : "lg:col-span-12"} space-y-4`}>
-        <div className="rounded-2xl border border-slate-800 bg-[#0B1426] p-4 text-slate-100">
-          <div className="mb-2 flex items-center justify-between">
+        <div className="rounded-2xl border border-slate-800 bg-[#0B1426] p-4 text-slate-100 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
-              Méta-prompt généré
+              Méta-prompt FR · الميتا-برومبت بالفرنسية
             </span>
-            <CopyPromptButton text={generatedMetaPrompt} label="Copier" />
+            <CopyPromptButton text={generatedMetaPromptFr} label="Copier FR" labelAr="نسخ FR" />
           </div>
-          <pre
-            dir={language === "ar" ? "rtl" : "ltr"}
-            className={`whitespace-pre-wrap leading-relaxed text-slate-100 ${
-              language === "ar" ? "font-arabic text-sm" : "font-mono-code text-xs"
-            }`}
-          >
-            {generatedMetaPrompt}
+          <pre dir="ltr" className="font-mono-code whitespace-pre-wrap text-xs leading-relaxed text-slate-100">
+            {generatedMetaPromptFr}
           </pre>
+
+          <div className="border-t border-slate-700 pt-3 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span dir="rtl" lang="ar" className="font-arabic text-xs font-bold text-teal-300">
+                الميتا-برومبت بالعربية
+              </span>
+              <CopyPromptButton text={generatedMetaPromptAr} label="Copier AR" labelAr="نسخ AR" />
+            </div>
+            <pre dir="rtl" lang="ar" className="font-arabic whitespace-pre-wrap text-sm leading-relaxed text-slate-100">
+              {generatedMetaPromptAr}
+            </pre>
+          </div>
         </div>
 
         {aggregate?.optionTallies && (
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-800">
-                Langues choisies par la salle
-              </span>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <BilingualBlock
+                text={{
+                  fr: "Langues choisies par la salle",
+                  ar: "اللغات المختارة في القاعة",
+                }}
+                frClassName="text-xs font-bold text-slate-800"
+                arClassName="text-xs font-bold text-teal-800"
+              />
               <span className="text-xs font-semibold text-teal-700">
-                {aggregate.totalRespondents} partages
+                {aggregate.totalRespondents} · <span className="font-arabic">مشاركة</span>
               </span>
             </div>
-            <OptionBarChart data={aggregate.optionTallies} height={135} />
+            <OptionBarChart data={aggregate.optionTallies} height={150} />
           </div>
         )}
       </div>

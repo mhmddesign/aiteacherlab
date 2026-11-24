@@ -12,6 +12,6 @@ export async function GET() {
     });
   } catch (err) {
     console.error("[API /gallery]", err);
-    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur. / خطأ في الخادم." }, { status: 500 });
   }
 }

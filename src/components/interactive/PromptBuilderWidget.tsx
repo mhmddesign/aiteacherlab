@@ -7,6 +7,7 @@ import type {
   ActivityStatus,
   ParticipantResponseItem,
 } from "@/content/types";
+import { BilingualBlock, BilingualInline } from "@/components/ui/Bilingual";
 import { CopyPromptButton } from "@/components/ui/CopyPromptButton";
 
 interface PromptBuilderWidgetProps {
@@ -20,13 +21,26 @@ interface PromptBuilderWidgetProps {
 
 const GRADES = ["1AEP", "2AEP", "3AEP", "4AEP", "5AEP", "6AEP"];
 const SUBJECTS = [
-  "Langue Arabe",
-  "Français",
-  "Mathématiques",
-  "Éveil Scientifique",
-  "Remédiation / TaRL",
+  { value: "Langue Arabe / اللغة العربية", fr: "Langue Arabe", ar: "اللغة العربية" },
+  { value: "Français / اللغة الفرنسية", fr: "Français", ar: "اللغة الفرنسية" },
+  { value: "Mathématiques / الرياضيات", fr: "Mathématiques", ar: "الرياضيات" },
+  { value: "Éveil Scientifique / النشاط العلمي", fr: "Éveil Scientifique", ar: "النشاط العلمي" },
+  { value: "Remédiation (TaRL) / الدعم التربوي", fr: "Remédiation (TaRL)", ar: "الدعم التربوي" },
 ];
-const DIFFICULTIES = ["Base", "Intermédiaire", "Défi", "3 niveaux progressifs"];
+const DIFFICULTIES = [
+  { value: "Base / أساسي", label: "Base · أساسي" },
+  { value: "Intermédiaire / متوسط", label: "Intermédiaire · متوسط" },
+  { value: "Défi / تحدي", label: "Défi · تحدي" },
+  {
+    value: "3 niveaux progressifs / 3 مستويات متدرجة",
+    label: "3 niveaux progressifs · 3 مستويات متدرجة",
+  },
+];
+const TARGET_LANGUAGES = [
+  { value: "fr", label: "Français · الفرنسية" },
+  { value: "ar", label: "Arabe · العربية" },
+  { value: "bilingual", label: "Bilingue (FR + AR) · ثنائي اللغة" },
+] as const;
 
 export function PromptBuilderWidget({
   status,
@@ -38,7 +52,8 @@ export function PromptBuilderWidget({
 }: PromptBuilderWidgetProps) {
   const existing = myResponses.find((r) => r.itemKey === "main");
   const [grade, setGrade] = useState("4AEP");
-  const [subject, setSubject] = useState("Français");
+  const [subject, setSubject] = useState(SUBJECTS[1].value);
+  const [targetMaterialLang, setTargetMaterialLang] = useState<"fr" | "ar" | "bilingual">("bilingual");
   const [role, setRole] = useState("Enseignant(e) expérimenté(e) du primaire public au Maroc");
   const [objective, setObjective] = useState(
     "Identifier les actions principales dans un court récit du quotidien"
@@ -48,7 +63,7 @@ export function PromptBuilderWidget({
   const [learnerLevel, setLearnerLevel] = useState(
     "Classe hétérogène de 34 élèves (vidéoprojecteur + cahiers)"
   );
-  const [difficulty, setDifficulty] = useState("3 niveaux progressifs");
+  const [difficulty, setDifficulty] = useState(DIFFICULTIES[3].value);
   const [constraints, setConstraints] = useState(
     "Langage simple, zéro donnée personnelle d'élève, utilisable sur tableau ou fiche A4"
   );
@@ -62,10 +77,24 @@ export function PromptBuilderWidget({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const assembledPrompt = useMemo(() => {
+  const targetLangFr =
+    targetMaterialLang === "fr"
+      ? "Français uniquement"
+      : targetMaterialLang === "ar"
+        ? "Arabe uniquement (avec vocalisation adaptée)"
+        : "Bilingue Français et Arabe";
+  const targetLangAr =
+    targetMaterialLang === "fr"
+      ? "اللغة الفرنسية فقط"
+      : targetMaterialLang === "ar"
+        ? "اللغة العربية فقط (مع الشكل المناسب)"
+        : "ثنائي اللغة (الفرنسية والعربية)";
+
+  const assembledPromptFr = useMemo(() => {
     const lines = [
       `Rôle : ${role}`,
       `Niveau & Discipline : ${grade} · ${subject}`,
+      `Langue souhaitée pour le support pédagogique : ${targetLangFr}`,
       `Public & Contexte de classe : ${learnerLevel}`,
       `Objectif d'apprentissage (fourni par l'enseignant) : ${objective}`,
       `Compétence ciblée : ${competency}`,
@@ -82,6 +111,39 @@ export function PromptBuilderWidget({
     role,
     grade,
     subject,
+    targetLangFr,
+    learnerLevel,
+    objective,
+    competency,
+    textbookExtract,
+    difficulty,
+    constraints,
+    outputFormat,
+    qualityCriteria,
+  ]);
+
+  const assembledPromptAr = useMemo(() => {
+    const lines = [
+      `الدور: ${role}`,
+      `المستوى والمادة: ${grade} · ${subject}`,
+      `اللغة المطلوبة للمورد البيداغوجي: ${targetLangAr}`,
+      `الفئة المستهدفة وسياق القسم: ${learnerLevel}`,
+      `الهدف التعلمي (المحدد من طرف الأستاذ/ة): ${objective}`,
+      `الكفاية المستهدفة: ${competency}`,
+      textbookExtract.trim()
+        ? `مقتطف من الدرس أو المقرر: ${textbookExtract.trim()}`
+        : null,
+      `مستوى الصعوبة: ${difficulty}`,
+      `الشروط المادية والأخلاقية: ${constraints}`,
+      `صيغة المخرجات المطلوبة: ${outputFormat}`,
+      `معايير الجودة والمراجعة: ${qualityCriteria}`,
+    ].filter(Boolean);
+    return lines.join("\n");
+  }, [
+    role,
+    grade,
+    subject,
+    targetLangAr,
     learnerLevel,
     objective,
     competency,
@@ -110,21 +172,27 @@ export function PromptBuilderWidget({
           payload: {
             grade,
             subject,
+            targetMaterialLang,
             objective,
             competency,
             difficulty,
-            assembledPrompt,
+            assembledPrompt: `${assembledPromptFr}\n---\n${assembledPromptAr}`,
           },
         }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Impossible de partager votre prompt.");
+        setError(
+          data.error ??
+            "Impossible de partager votre prompt. / تعذر مشاركة التوجيه."
+        );
         return;
       }
       onSubmitted?.();
     } catch {
-      setError("Erreur réseau lors de l'envoi. Votre prompt reste copiable ci-contre.");
+      setError(
+        "Erreur réseau lors de l'envoi. Votre prompt reste copiable ci-contre. / خطأ في الشبكة أثناء الإرسال، يمكنكم نسخ التوجيه."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -137,26 +205,35 @@ export function PromptBuilderWidget({
           onSubmit={handleSubmit}
           className="lg:col-span-7 space-y-3 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs"
         >
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-bold text-slate-900">
-              Paramètres de votre classe (1AEP–6AEP)
-            </h4>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <BilingualBlock
+              text={{
+                fr: "Paramètres de votre classe (1AEP–6AEP)",
+                ar: "إعدادات قسمكم الدراسي (1AEP–6AEP)",
+              }}
+              frClassName="text-sm font-bold text-slate-900"
+              arClassName="text-xs font-bold text-teal-800"
+            />
             {existing ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Partagé avec la salle
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                <BilingualInline text={{ fr: "Partagé avec la salle", ar: "تمت المشاركة مع القاعة" }} />
               </span>
             ) : status !== "open" || isPaused ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
-                <Lock className="h-3.5 w-3.5" />
-                {isPaused ? "En pause" : "Envoi fermé (copie libre)"}
+                <Lock className="h-3.5 w-3.5 shrink-0" />
+                {isPaused ? (
+                  <BilingualInline text={{ fr: "En pause", ar: "استراحة" }} />
+                ) : (
+                  <BilingualInline text={{ fr: "Envoi fermé (copie libre)", ar: "الإرسال مغلق (النسخ متاح)" }} />
+                )}
               </span>
             ) : null}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs font-semibold text-slate-700">
-              Niveau
+              <span>Niveau · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">المستوى</span></span>
               <select
                 value={grade}
                 onChange={(e) => setGrade(e.target.value)}
@@ -171,30 +248,45 @@ export function PromptBuilderWidget({
             </label>
 
             <label className="text-xs font-semibold text-slate-700">
-              Discipline
+              <span>Discipline · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">المادة</span></span>
               <select
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900"
               >
                 {SUBJECTS.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
+                  <option key={s.value} value={s.value}>
+                    {s.fr} · {s.ar}
                   </option>
                 ))}
               </select>
             </label>
 
             <label className="text-xs font-semibold text-slate-700">
-              Difficulté
+              <span>Difficulté · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">الصعوبة</span></span>
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900"
               >
                 {DIFFICULTIES.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
+                  <option key={d.value} value={d.value}>
+                    {d.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="text-xs font-semibold text-slate-700">
+              <span>Langue du support produit · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">لغة المورد المطلوب</span></span>
+              <select
+                value={targetMaterialLang}
+                onChange={(e) => setTargetMaterialLang(e.target.value as "fr" | "ar" | "bilingual")}
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900"
+              >
+                {TARGET_LANGUAGES.map((l) => (
+                  <option key={l.value} value={l.value}>
+                    {l.label}
                   </option>
                 ))}
               </select>
@@ -203,7 +295,7 @@ export function PromptBuilderWidget({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs font-semibold text-slate-700">
-              Objectif d&apos;apprentissage
+              <span>Objectif d&apos;apprentissage · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">الهدف التعلمي</span></span>
               <input
                 type="text"
                 value={objective}
@@ -212,7 +304,7 @@ export function PromptBuilderWidget({
               />
             </label>
             <label className="text-xs font-semibold text-slate-700">
-              Compétence ciblée
+              <span>Compétence ciblée · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">الكفاية المستهدفة</span></span>
               <input
                 type="text"
                 value={competency}
@@ -224,7 +316,7 @@ export function PromptBuilderWidget({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs font-semibold text-slate-700">
-              Rôle attribué à l&apos;IA
+              <span>Rôle attribué à l&apos;IA · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">دور الذكاء الاصطناعي</span></span>
               <input
                 type="text"
                 value={role}
@@ -233,7 +325,7 @@ export function PromptBuilderWidget({
               />
             </label>
             <label className="text-xs font-semibold text-slate-700">
-              Niveau réel des élèves & classe
+              <span>Niveau réel & classe · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">مستوى التلاميذ والقسم</span></span>
               <input
                 type="text"
                 value={learnerLevel}
@@ -244,19 +336,19 @@ export function PromptBuilderWidget({
           </div>
 
           <label className="block text-xs font-semibold text-slate-700">
-            Extrait de leçon ou du manuel (optionnel)
+            <span>Extrait de leçon ou du manuel (optionnel) · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">مقتطف من الدرس أو الكتاب (اختياري)</span></span>
             <textarea
               rows={2}
               value={textbookExtract}
               onChange={(e) => setTextbookExtract(e.target.value)}
-              placeholder="Collez ici un court paragraphe ou une consigne de votre manuel si besoin..."
+              placeholder="Collez un court passage / الصقوا مقتطفاً قصيراً من الدرس..."
               className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900"
             />
           </label>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs font-semibold text-slate-700">
-              Contraintes
+              <span>Contraintes · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">الشروط والقيود</span></span>
               <input
                 type="text"
                 value={constraints}
@@ -265,7 +357,7 @@ export function PromptBuilderWidget({
               />
             </label>
             <label className="text-xs font-semibold text-slate-700">
-              Format de sortie & Critères
+              <span>Format de sortie · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">صيغة المخرجات</span></span>
               <input
                 type="text"
                 value={outputFormat}
@@ -285,39 +377,73 @@ export function PromptBuilderWidget({
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-            <CopyPromptButton text={assembledPrompt} label="Copier le prompt assemblé" />
+            <CopyPromptButton
+              text={assembledPromptFr}
+              label="Copier FR"
+              labelAr="نسخ الفرنسي"
+            />
+            <CopyPromptButton
+              text={assembledPromptAr}
+              label="Copier AR"
+              labelAr="نسخ العربي"
+            />
             <button
               type="submit"
               disabled={isLocked || submitting}
               className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700 disabled:opacity-50 cursor-pointer"
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>{submitting ? "Envoi..." : "Partager avec l'atelier"}</span>
+              <Sparkles className="h-3.5 w-3.5 shrink-0" />
+              <span>
+                {submitting ? (
+                  "Envoi... / جاري الإرسال..."
+                ) : (
+                  <BilingualInline
+                    text={{ fr: "Partager avec l'atelier", ar: "مشاركة مع الورشة" }}
+                  />
+                )}
+              </span>
             </button>
           </div>
         </form>
       )}
 
       <div className={`${canSubmit ? "lg:col-span-5" : "lg:col-span-12"} space-y-4`}>
-        <div className="rounded-2xl border border-slate-800 bg-[#0B1426] p-4 text-slate-100">
-          <div className="mb-2 flex items-center justify-between">
+        <div className="rounded-2xl border border-slate-800 bg-[#0B1426] p-4 text-slate-100 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
-              Prompt assemblé (prêt à copier)
+              Prompt assemblé (FR) · التوجيه المركّب
             </span>
-            <CopyPromptButton text={assembledPrompt} label="Copier" />
+            <CopyPromptButton text={assembledPromptFr} label="Copier FR" labelAr="نسخ FR" />
           </div>
-          <pre className="font-mono-code whitespace-pre-wrap text-xs leading-relaxed text-slate-100">
-            {assembledPrompt}
+          <pre dir="ltr" className="font-mono-code whitespace-pre-wrap text-xs leading-relaxed text-slate-100">
+            {assembledPromptFr}
           </pre>
+
+          <div className="border-t border-slate-700 pt-3 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span dir="rtl" lang="ar" className="font-arabic text-xs font-bold text-teal-300">
+                التوجيه المركّب بالعربية (AR)
+              </span>
+              <CopyPromptButton text={assembledPromptAr} label="Copier AR" labelAr="نسخ AR" />
+            </div>
+            <pre dir="rtl" lang="ar" className="font-arabic whitespace-pre-wrap text-xs leading-relaxed text-slate-100">
+              {assembledPromptAr}
+            </pre>
+          </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-          <div className="mb-3 flex items-center justify-between">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">
-              Prompts partagés dans la salle (anonymisés)
-            </h4>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <BilingualBlock
+              text={{
+                fr: "Prompts partagés dans la salle (anonymisés)",
+                ar: "التوجيهات المشاركة في القاعة (مجهولة المصدر)",
+              }}
+              frClassName="text-xs font-bold uppercase tracking-wider text-slate-600"
+              arClassName="text-xs font-bold text-teal-800"
+            />
             <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-bold text-teal-800">
-              {aggregate?.totalRespondents ?? 0} créés
+              {aggregate?.totalRespondents ?? 0} · <span className="font-arabic">مشاركة</span>
             </span>
           </div>
           <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
@@ -337,9 +463,14 @@ export function PromptBuilderWidget({
                 </div>
               ))
             ) : (
-              <p className="text-xs text-slate-500">
-                Les prompts partagés par les collègues s&apos;afficheront ici en direct.
-              </p>
+              <BilingualBlock
+                text={{
+                  fr: "Les prompts partagés par les collègues s'afficheront ici en direct.",
+                  ar: "ستظهر هنا التوجيهات التي يشاركها الزملاء مباشرة.",
+                }}
+                frClassName="text-xs text-slate-500"
+                arClassName="text-xs text-slate-500"
+              />
             )}
           </div>
         </div>

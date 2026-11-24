@@ -12,7 +12,10 @@ export async function POST(req: NextRequest) {
 
     if (!participantClaims && !presenterClaims) {
       return NextResponse.json(
-        { error: "Connectez-vous à l'atelier pour publier dans la galerie." },
+        {
+          error:
+            "Connectez-vous à l'atelier pour publier dans la galerie. / اتصلوا بالورشة للنشر في المعرض.",
+        },
         { status: 401 }
       );
     }
@@ -22,7 +25,10 @@ export async function POST(req: NextRequest) {
     const allowed = await store.checkRateLimit(`gallery:${ip}`, 15, 300);
     if (!allowed) {
       return NextResponse.json(
-        { error: "Trop de publications rapprochées. Veuillez patienter." },
+        {
+          error:
+            "Trop de publications rapprochées. Veuillez patienter. / عدد كبير من المنشورات المتتالية، يرجى الانتظار.",
+        },
         { status: 429 }
       );
     }
@@ -31,7 +37,11 @@ export async function POST(req: NextRequest) {
     const parsed = galleryContributionSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: parsed.error.issues[0]?.message ?? "Formulaire incomplet." },
+        {
+          error:
+            parsed.error.issues[0]?.message ??
+            "Formulaire incomplet. / الاستمارة غير مكتملة.",
+        },
         { status: 400 }
       );
     }
@@ -64,6 +74,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, contribution: record }, { status: 201 });
   } catch (err) {
     console.error("[API /gallery/contribute]", err);
-    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur. / خطأ في الخادم." }, { status: 500 });
   }
 }

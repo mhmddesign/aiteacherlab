@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
       const presenter = await verifyPresenterSession();
       if (!presenter) {
         return NextResponse.json(
-          { error: "Canal animateur non autorisé." },
+          { error: "Canal animateur non autorisé. / قناة المنشط غير مصرح بها." },
           { status: 403 }
         );
       }

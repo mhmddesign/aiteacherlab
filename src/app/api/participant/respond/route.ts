@@ -9,7 +9,10 @@ export async function POST(req: NextRequest) {
   try {
     const claims = await verifyParticipantSession();
     if (!claims) {
-      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+      return NextResponse.json(
+        { error: "Non authentifié. / غير مصادق عليه." },
+        { status: 401 }
+      );
     }
 
     const store = getWorkshopStore();
@@ -21,7 +24,10 @@ export async function POST(req: NextRequest) {
     );
     if (!allowed) {
       return NextResponse.json(
-        { error: "Trop de requêtes rapides. Patientez un instant." },
+        {
+          error:
+            "Trop de requêtes rapides. Patientez un instant. / طلبات سريعة متتالية، يرجى الانتظار لحظة.",
+        },
         { status: 429 }
       );
     }
@@ -31,14 +37,21 @@ export async function POST(req: NextRequest) {
       claims.tokenHash
     );
     if (!participant) {
-      return NextResponse.json({ error: "Session invalide." }, { status: 401 });
+      return NextResponse.json(
+        { error: "Session invalide. / جلسة غير صالحة." },
+        { status: 401 }
+      );
     }
 
     const body = await req.json().catch(() => null);
     const parsed = participantResponseSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: parsed.error.issues[0]?.message ?? "Réponse invalide." },
+        {
+          error:
+            parsed.error.issues[0]?.message ??
+            "Réponse invalide. / إجابة غير صالحة.",
+        },
         { status: 400 }
       );
     }
@@ -67,6 +80,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, response: result.response });
   } catch (err) {
     console.error("[API /participant/respond]", err);
-    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur. / خطأ في الخادم." }, { status: 500 });
   }
 }

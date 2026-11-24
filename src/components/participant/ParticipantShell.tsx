@@ -6,6 +6,7 @@ import type { ParticipantResponseItem, PublicWorkshopSnapshot } from "@/content/
 import { getSlideById, TOTAL_SECTIONS } from "@/content/slides";
 import { useWorkshopSync } from "@/lib/realtime/client";
 import { SlideRenderer } from "@/components/slides/SlideRenderer";
+import { BilingualBlock, BilingualInline } from "@/components/ui/Bilingual";
 import { ConnectionBadge } from "@/components/ui/ConnectionBadge";
 
 interface ParticipantShellProps {
@@ -52,7 +53,6 @@ export function ParticipantShell({
     }
   }, [refresh]);
 
-  // Refresh personal responses whenever active activity or stateVersion changes
   useEffect(() => {
     if (!participant) return;
     let active = true;
@@ -81,7 +81,6 @@ export function ParticipantShell({
     activeSnapshot.state.stateVersion,
   ]);
 
-  // Heartbeat every 30s for live connected attendance counter
   useEffect(() => {
     if (!participant) return;
     const id = setInterval(() => {
@@ -102,13 +101,18 @@ export function ParticipantShell({
       });
       const data = await res.json();
       if (!res.ok) {
-        setJoinError(data.error ?? "Impossible de rejoindre l'atelier.");
+        setJoinError(
+          data.error ??
+            "Impossible de rejoindre l'atelier. / تعذر الانضمام إلى الورشة."
+        );
         return;
       }
       setParticipant(data.participant);
       await refreshMe();
     } catch {
-      setJoinError("Erreur réseau. Vérifiez votre connexion Wi-Fi.");
+      setJoinError(
+        "Erreur réseau. Vérifiez votre connexion Wi-Fi. / خطأ في الشبكة، تحققوا من الاتصال."
+      );
     } finally {
       setJoining(false);
     }
@@ -126,21 +130,40 @@ export function ParticipantShell({
         <div className="w-full max-w-md rounded-3xl border border-slate-700/70 bg-white p-6 sm:p-8 shadow-2xl space-y-5">
           <div className="space-y-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-xs font-bold text-teal-800">
-              <Smartphone className="h-3.5 w-3.5" />
-              Atelier Provincial de Mediouna
+              <Smartphone className="h-3.5 w-3.5 shrink-0" />
+              <BilingualInline
+                text={{
+                  fr: "Atelier Provincial de Mediouna",
+                  ar: "الورشة الإقليمية بمديونة",
+                }}
+              />
             </span>
-            <h1 className="font-display text-2xl font-bold text-navy-900">
-              Rejoindre AI Teacher Lab
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-600">
-              Saisissez le code PIN communiqué dans la salle et votre prénom ou nom affiché.
-              Aucun compte ni mot de passe requis.
-            </p>
+            <BilingualBlock
+              text={{
+                fr: "Rejoindre AI Teacher Lab",
+                ar: "الانضمام إلى مختبر المعلم",
+              }}
+              frClassName="font-display text-2xl font-bold text-navy-900"
+              arClassName="text-xl font-bold text-teal-800"
+            />
+            <BilingualBlock
+              text={{
+                fr: "Saisissez le code PIN communiqué dans la salle et votre prénom ou nom affiché. Aucun compte ni mot de passe requis.",
+                ar: "أدخلوا رمز PIN المعلن في القاعة واسمكم المعروض. لا حاجة لأي حساب أو كلمة سر.",
+              }}
+              frClassName="text-xs sm:text-sm text-slate-600"
+              arClassName="text-xs sm:text-sm text-slate-700"
+            />
           </div>
 
           <form onSubmit={handleJoin} className="space-y-4">
             <label className="block text-xs font-bold text-slate-700">
-              Code PIN de l&apos;atelier
+              <BilingualInline
+                text={{
+                  fr: "Code PIN de l'atelier",
+                  ar: "رمز PIN للورشة",
+                }}
+              />
               <input
                 type="text"
                 required
@@ -148,18 +171,24 @@ export function ParticipantShell({
                 placeholder="Ex. : 202604"
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
+                dir="ltr"
                 className="mt-1.5 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 font-mono-code text-base tracking-widest text-slate-900 focus:border-teal-600 focus:outline-none"
               />
             </label>
 
             <label className="block text-xs font-bold text-slate-700">
-              Votre prénom ou nom affiché
+              <BilingualInline
+                text={{
+                  fr: "Votre prénom ou nom affiché",
+                  ar: "اسمكم الشخصي أو المعروض",
+                }}
+              />
               <input
                 type="text"
                 required
                 minLength={2}
                 maxLength={40}
-                placeholder="Ex. : Khadija B."
+                placeholder="Ex. : Khadija B. / خديجة ب."
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 className="mt-1.5 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-teal-600 focus:outline-none"
@@ -177,16 +206,28 @@ export function ParticipantShell({
               disabled={joining}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-3 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-60 cursor-pointer"
             >
-              <Sparkles className="h-4 w-4" />
-              <span>{joining ? "Connexion..." : "Entrer dans l'atelier"}</span>
+              <Sparkles className="h-4 w-4 shrink-0" />
+              {joining ? (
+                <span>Connexion... · جاري الدخول...</span>
+              ) : (
+                <BilingualInline
+                  text={{
+                    fr: "Entrer dans l'atelier",
+                    ar: "الدخول إلى الورشة",
+                  }}
+                />
+              )}
             </button>
           </form>
 
           <div className="flex items-start gap-2 rounded-xl bg-ivory-100 p-3 text-[11px] text-slate-600">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal-700" />
-            <span>
-              Aucune donnée d&apos;élève, adresse e-mail ou numéro de téléphone n&apos;est collecté.
-            </span>
+            <BilingualBlock
+              text={{
+                fr: "Aucune donnée d'élève, adresse e-mail ou numéro de téléphone n'est collecté.",
+                ar: "لا يتم جمع أي معطيات للتلاميذ أو بريد إلكتروني أو رقم هاتف.",
+              }}
+            />
           </div>
         </div>
       </div>
@@ -199,11 +240,17 @@ export function ParticipantShell({
         <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-2">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-cyan-300">
-              Section {activeSnapshot.state.currentSection} / {TOTAL_SECTIONS} · Connecté(e) :{" "}
-              {participant.displayName}
+              Section {activeSnapshot.state.currentSection} / {TOTAL_SECTIONS} ·{" "}
+              <span dir="rtl" lang="ar" className="font-arabic">
+                القسم {activeSnapshot.state.currentSection} / {TOTAL_SECTIONS}
+              </span>{" "}
+              · Connecté(e) : {participant.displayName}
             </p>
             <h1 className="font-display text-base font-bold">
-              AI Teacher Lab · Mediouna
+              AI Teacher Lab · Mediouna ·{" "}
+              <span dir="rtl" lang="ar" className="font-arabic text-sm text-cyan-200">
+                مختبر المعلم
+              </span>
             </h1>
           </div>
 
@@ -216,10 +263,13 @@ export function ParticipantShell({
             <button
               type="button"
               onClick={handleLeave}
-              title="Quitter la session"
-              className="inline-flex items-center gap-1 rounded-xl border border-slate-700 px-2.5 py-1.5 text-xs text-slate-300 hover:bg-slate-800 cursor-pointer"
+              title="Quitter la session / مغادرة الجلسة"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-slate-800 cursor-pointer"
             >
               <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">
+                <BilingualInline text={{ fr: "Quitter", ar: "خروج" }} />
+              </span>
             </button>
           </div>
         </div>
@@ -233,11 +283,14 @@ export function ParticipantShell({
         )}
 
         {activeSnapshot.state.isPaused && (
-          <div className="flex items-center gap-3 rounded-2xl border border-amber-400 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">
-            <PauseCircle className="h-5 w-5 shrink-0 text-amber-600" />
-            <span>
-              Pause atelier : l&apos;animateur a momentanément suspendu les soumissions. Échangeons en salle !
-            </span>
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-400 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">
+            <PauseCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            <BilingualBlock
+              text={{
+                fr: "Pause atelier : l'animateur a momentanément suspendu les soumissions. Échangeons en salle !",
+                ar: "استراحة في الورشة: تم تعليق الإرسالات مؤقتاً من طرف المنشط لنتبادل النقاش في القاعة.",
+              }}
+            />
           </div>
         )}
 

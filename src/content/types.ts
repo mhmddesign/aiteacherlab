@@ -1,3 +1,12 @@
+export interface BilingualText {
+  fr: string;
+  ar: string;
+}
+
+export function bi(fr: string, ar: string): BilingualText {
+  return { fr, ar };
+}
+
 export type ActivityType =
   | "poll"
   | "mcq_quiz"
@@ -34,81 +43,90 @@ export type SlideKind =
 export interface SlideDefinition {
   id: string;
   sectionNumber: number;
-  sectionTitle: string;
-  timeRange: string;
+  sectionTitle: BilingualText;
+  timeRange: BilingualText;
   durationMinutes: number;
-  title: string;
-  subtitle: string;
+  title: BilingualText;
+  subtitle: BilingualText;
   kind: SlideKind;
   activityKey?: string;
-  keyPoints: string[];
+  keyPoints: BilingualText[];
   darijaNote: {
-    title: string;
+    title: BilingualText;
+    fr: string;
     arabic: string;
   };
-  techTerms: Array<{ term: string; explanation: string }>;
+  techTerms: Array<{
+    term: string;
+    explanation: BilingualText;
+  }>;
   presenterNotes: {
     durationCue: string;
-    script: string;
-    classroomExample: string;
-    transition: string;
+    script: BilingualText;
+    classroomExample: BilingualText;
+    transition: BilingualText;
+    discussionPrompt: BilingualText;
   };
 }
 
 export interface PollOption {
   id: string;
-  label: string;
-  shortLabel: string;
-  description?: string;
+  label: BilingualText;
+  shortLabel: BilingualText;
+  description?: BilingualText;
 }
 
 export interface QuizQuestion {
   id: string;
-  prompt: string;
+  prompt: BilingualText;
   darijaHint?: string;
-  options: Array<{ id: string; label: string }>;
+  options: Array<{ id: string; label: BilingualText }>;
   correctOptionId: string;
-  explanation: string;
+  explanation: BilingualText;
 }
 
 export interface ActivityDefinition {
   key: string;
   sectionNumber: number;
   type: ActivityType;
-  title: string;
-  instruction: string;
+  title: BilingualText;
+  instruction: BilingualText;
   options?: PollOption[];
   questions?: QuizQuestion[];
-  categories?: Array<{ id: string; label: string; description: string }>;
+  categories?: Array<{
+    id: string;
+    label: BilingualText;
+    description: BilingualText;
+  }>;
 }
 
 export interface UseCaseItem {
   id: string;
-  label: string;
+  label: BilingualText;
   grade: string;
-  subject: string;
-  objective: string;
-  competency: string;
-  promptLanguage: "fr" | "ar" | "bilingual";
-  prompt: string;
-  draftOutputTitle: string;
-  draftOutputBody: string;
-  arabicSample?: string;
-  teacherCheck: string;
+  subject: BilingualText;
+  objective: BilingualText;
+  competency: BilingualText;
+  promptFr: string;
+  promptAr: string;
+  draftOutputTitle: BilingualText;
+  draftOutputFr: string;
+  draftOutputAr: string;
+  teacherCheck: BilingualText;
   printable?: boolean;
 }
 
 export interface GalleryCategoryItem {
   id: string;
   number: number;
-  title: string;
-  problem: string;
+  title: BilingualText;
+  problem: BilingualText;
   gradeRange: string;
-  subject: string;
-  learningObjective: string;
-  proposedFeatures: string[];
-  exampleInteraction: string;
-  possibleImprovements: string[];
+  subject: BilingualText;
+  learningObjective: BilingualText;
+  proposedFeatures: BilingualText[];
+  exampleInteraction: BilingualText;
+  possibleImprovements: BilingualText[];
   demoKey?:
     | "arabic-literacy"
     | "french-reading"
@@ -124,19 +142,19 @@ export interface GalleryCategoryItem {
 
 export interface GroupProjectGuide {
   id: "group1" | "group2" | "group3" | "group4";
-  groupLabel: string;
-  title: string;
-  subtitle: string;
+  groupLabel: BilingualText;
+  title: BilingualText;
+  subtitle: BilingualText;
   defaultGrade: string;
-  defaultSubject: string;
-  defaultCompetency: string;
-  problemSolved: string;
-  expectedOutcome: string;
-  requiredFeatures: string[];
-  learningObjectives: string[];
-  techSpec: string[];
-  testingChecklist: string[];
-  demoChecklist: string[];
+  defaultSubject: BilingualText;
+  defaultCompetency: BilingualText;
+  problemSolved: BilingualText;
+  expectedOutcome: BilingualText;
+  requiredFeatures: BilingualText[];
+  learningObjectives: BilingualText[];
+  techSpec: BilingualText[];
+  testingChecklist: BilingualText[];
+  demoChecklist: BilingualText[];
 }
 
 export interface PublicWorkshopState {
@@ -159,25 +177,25 @@ export interface PublicWorkshopState {
 
 export interface OptionTally {
   optionId: string;
-  label: string;
-  shortLabel: string;
+  label: BilingualText;
+  shortLabel: BilingualText;
   count: number;
   percentage: number;
 }
 
 export interface QuestionTally {
   questionId: string;
-  prompt: string;
+  prompt: BilingualText;
   totalResponses: number;
   correctCount: number;
   correctOptionId: string | null;
-  explanation: string | null;
+  explanation: BilingualText | null;
   options: OptionTally[];
 }
 
 export interface ShowcaseCategoryTally {
   categoryId: string;
-  categoryLabel: string;
+  categoryLabel: BilingualText;
   totalVotes: number;
   options: OptionTally[];
 }

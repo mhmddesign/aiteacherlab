@@ -29,18 +29,23 @@ export function QrJoinPanel({
 
   return (
     <div
-      className={`flex flex-col items-center gap-3 rounded-2xl border p-5 text-center ${
+      className={`flex flex-col items-center gap-3 rounded-2xl border p-4 text-center ${
         darkSurface
           ? "border-slate-700/70 bg-navy-800/90 text-white"
           : "border-slate-200 bg-white text-slate-900 shadow-sm"
       }`}
     >
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-teal-600">
-        <Smartphone className="h-4 w-4" />
-        <span>Rejoindre l&apos;atelier (/join)</span>
+      <div className="space-y-0.5 text-xs font-semibold text-teal-500">
+        <div className="flex items-center justify-center gap-1.5 uppercase tracking-wider">
+          <Smartphone className="h-4 w-4" />
+          <span>Rejoindre l&apos;atelier (/join)</span>
+        </div>
+        <div dir="rtl" lang="ar" className="font-arabic text-xs font-semibold">
+          الانضمام إلى الورشة (/join)
+        </div>
       </div>
 
-      <div className="rounded-xl bg-white p-3 shadow-xs">
+      <div className="rounded-xl bg-white p-2.5 shadow-xs">
         <QRCodeSVG
           value={joinUrl}
           size={size}
@@ -50,20 +55,30 @@ export function QrJoinPanel({
         />
       </div>
 
-      <div className="space-y-1">
-        <p className="font-mono-code text-xs break-all opacity-90">{joinUrl}</p>
+      <div className="space-y-1.5 w-full">
+        <p dir="ltr" className="font-mono-code text-[11px] break-all opacity-90">
+          {joinUrl}
+        </p>
         {showPinHint ? (
-          <p className="text-xs font-semibold text-amber-600">
-            Code PIN partagé : <span className="font-mono-code">{showPinHint}</span>
-          </p>
+          <div className="text-xs font-semibold text-amber-500 space-y-0.5">
+            <p>
+              Code PIN partagé : <span dir="ltr" className="font-mono-code">{showPinHint}</span>
+            </p>
+            <p dir="rtl" lang="ar" className="font-arabic">
+              رمز PIN المشترك: <span dir="ltr" className="font-mono-code">{showPinHint}</span>
+            </p>
+          </div>
         ) : (
-          <p className={`text-xs ${darkSurface ? "text-slate-300" : "text-slate-600"}`}>
-            Saisissez le code PIN communiqué dans la salle et votre prénom.
-          </p>
+          <div className={`text-[11px] space-y-0.5 ${darkSurface ? "text-slate-300" : "text-slate-600"}`}>
+            <p>Saisissez le code PIN communiqué et votre prénom.</p>
+            <p dir="rtl" lang="ar" className="font-arabic">
+              أدخلوا رمز PIN المعلن واسمكم للانضمام.
+            </p>
+          </div>
         )}
       </div>
 
-      <CopyPromptButton text={joinUrl} label="Copier le lien /join" />
+      <CopyPromptButton text={joinUrl} label="Copier le lien /join" labelAr="نسخ رابط الورشة" />
     </div>
   );
 }

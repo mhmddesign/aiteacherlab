@@ -6,14 +6,18 @@ import { Check, Copy } from "lucide-react";
 interface CopyPromptButtonProps {
   text: string;
   label?: string;
+  labelAr?: string;
   copiedLabel?: string;
+  copiedLabelAr?: string;
   className?: string;
 }
 
 export function CopyPromptButton({
   text,
-  label = "Copier le prompt",
+  label = "Copier",
+  labelAr = "نسخ",
   copiedLabel = "Copié !",
+  copiedLabelAr = "تم النسخ!",
   className = "",
 }: CopyPromptButtonProps) {
   const [copied, setCopied] = useState(false);
@@ -48,8 +52,18 @@ export function CopyPromptButton({
           : "border-slate-300 bg-white text-slate-800 hover:border-teal-500 hover:text-teal-800"
       } ${className}`}
     >
-      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-      <span>{copied ? copiedLabel : label}</span>
+      {copied ? <Check className="h-3.5 w-3.5 shrink-0" /> : <Copy className="h-3.5 w-3.5 shrink-0" />}
+      <span className="inline-flex flex-wrap items-center gap-x-1.5">
+        <span dir="ltr" lang="fr">
+          {copied ? copiedLabel : label}
+        </span>
+        <span aria-hidden="true" className="opacity-60">
+          ·
+        </span>
+        <span dir="rtl" lang="ar" className="font-arabic">
+          {copied ? copiedLabelAr : labelAr}
+        </span>
+      </span>
     </button>
   );
 }

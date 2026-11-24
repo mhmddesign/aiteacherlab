@@ -34,6 +34,7 @@ import {
 import type { PresenterSnapshot } from "@/content/types";
 import { useWorkshopSync } from "@/lib/realtime/client";
 import { SlideRenderer } from "@/components/slides/SlideRenderer";
+import { BilingualBlock, BilingualInline } from "@/components/ui/Bilingual";
 import { ConnectionBadge } from "@/components/ui/ConnectionBadge";
 import { QrJoinPanel } from "@/components/ui/QrJoinPanel";
 
@@ -71,7 +72,6 @@ export function PresenterShell({
 
   const active = (snapshot as PresenterSnapshot | null) ?? initialSnapshot;
 
-  // Live ticking 120-minute timer (only updates interval tick)
   const isTimerRunning = Boolean(active?.state.timerRunning);
   useEffect(() => {
     if (!isTimerRunning) return;
@@ -126,7 +126,6 @@ export function PresenterShell({
     }
   }, [currentIdx, sendControl]);
 
-  // Keyboard shortcuts for smooth live facilitation
   useEffect(() => {
     if (!authenticated) return;
     const onKey = (e: KeyboardEvent) => {
@@ -160,7 +159,7 @@ export function PresenterShell({
     });
     const data = await res.json();
     if (!res.ok) {
-      setLoginError(data.error ?? "Accès refusé.");
+      setLoginError(data.error ?? "Accès refusé. / تم رفض الولوج.");
       return;
     }
     setAuthenticated(true);
@@ -205,27 +204,48 @@ export function PresenterShell({
     return (
       <div className="min-h-screen bg-[#0B1426] px-4 py-12 flex items-center justify-center">
         <div className="w-full max-w-md rounded-3xl border border-slate-700 bg-white p-8 shadow-2xl space-y-5">
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-navy-900 px-3 py-1 text-xs font-bold text-cyan-300">
-              <Lock className="h-3.5 w-3.5" />
-              Espace Animateur Protégé
+              <Lock className="h-3.5 w-3.5 shrink-0" />
+              <BilingualInline
+                text={{
+                  fr: "Espace Animateur Protégé",
+                  ar: "فضاء المنشط المحمي",
+                }}
+              />
             </span>
-            <h1 className="font-display text-2xl font-bold text-navy-900">
-              Console de pilotage · Mediouna
-            </h1>
-            <p className="text-xs text-slate-600">
-              Réservé au facilitateur de l&apos;atelier. Ce code est distinct du PIN partagé avec les participants.
-            </p>
+            <BilingualBlock
+              text={{
+                fr: "Console de pilotage · Mediouna",
+                ar: "لوحة القيادة والتحكم · مديونة",
+              }}
+              frClassName="font-display text-2xl font-bold text-navy-900"
+              arClassName="text-lg font-bold text-teal-800"
+            />
+            <BilingualBlock
+              text={{
+                fr: "Réservé au facilitateur de l'atelier. Ce code est distinct du PIN partagé avec les participants.",
+                ar: "خاص بمنشط الورشة فقط، ويختلف عن رمز PIN المشترك مع المشاركين.",
+              }}
+              frClassName="text-xs text-slate-600"
+              arClassName="text-xs text-slate-700"
+            />
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
             <label className="block text-xs font-bold text-slate-700">
-              Code d&apos;accès animateur
+              <BilingualInline
+                text={{
+                  fr: "Code d'accès animateur",
+                  ar: "رمز دخول المنشط",
+                }}
+              />
               <input
                 type="password"
                 required
                 value={passcode}
                 onChange={(e) => setPasscode(e.target.value)}
-                placeholder="Saisissez FACILITATOR_PASSCODE"
+                placeholder="FACILITATOR_PASSCODE"
+                dir="ltr"
                 className="mt-1.5 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900"
               />
             </label>
@@ -238,7 +258,12 @@ export function PresenterShell({
               type="submit"
               className="w-full rounded-xl bg-navy-900 px-4 py-3 text-sm font-bold text-white hover:bg-navy-800 cursor-pointer"
             >
-              Ouvrir le poste de contrôle
+              <BilingualInline
+                text={{
+                  fr: "Ouvrir le poste de contrôle",
+                  ar: "فتح مركز التحكم",
+                }}
+              />
             </button>
           </form>
         </div>
@@ -256,12 +281,14 @@ export function PresenterShell({
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
             <span className="font-display text-base font-bold text-white">
-              AI Teacher Lab · Animateur
+              AI Teacher Lab · Animateur ·{" "}
+              <span dir="rtl" lang="ar" className="font-arabic text-sm text-cyan-200">
+                المنشط
+              </span>
             </span>
             <ConnectionBadge mode={connectionMode} demoMode={active.state.demoMode} />
           </div>
 
-          {/* View Switcher + Timer + Projector Link */}
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex rounded-xl border border-slate-700 bg-navy-800 p-0.5">
               <button
@@ -271,8 +298,8 @@ export function PresenterShell({
                   viewMode === "presentation" ? "bg-teal-600 text-white" : "text-slate-300"
                 }`}
               >
-                <Presentation className="h-3.5 w-3.5" />
-                Présentation
+                <Presentation className="h-3.5 w-3.5 shrink-0" />
+                <BilingualInline text={{ fr: "Présentation", ar: "العرض" }} />
               </button>
               <button
                 type="button"
@@ -281,12 +308,11 @@ export function PresenterShell({
                   viewMode === "dashboard" ? "bg-teal-600 text-white" : "text-slate-300"
                 }`}
               >
-                <LayoutDashboard className="h-3.5 w-3.5" />
-                Tableau de bord
+                <LayoutDashboard className="h-3.5 w-3.5 shrink-0" />
+                <BilingualInline text={{ fr: "Tableau de bord", ar: "لوحة القيادة" }} />
               </button>
             </div>
 
-            {/* Live 120-min timer */}
             <div className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-navy-800 px-3 py-1.5 text-xs">
               <Clock className="h-3.5 w-3.5 text-cyan-400" />
               <span className="font-mono-code font-bold">{formatSeconds(displaySeconds)}</span>
@@ -296,9 +322,9 @@ export function PresenterShell({
                 onClick={() =>
                   sendControl({ timerAction: active.state.timerRunning ? "pause" : "start" })
                 }
-                className="ml-1 rounded bg-slate-700 px-1.5 py-0.5 text-[11px] hover:bg-teal-600 cursor-pointer"
+                className="ml-1 rounded bg-slate-700 px-2 py-0.5 text-[11px] hover:bg-teal-600 cursor-pointer"
               >
-                {active.state.timerRunning ? "Pause" : "Démarrer"}
+                {active.state.timerRunning ? "Pause · إيقاف" : "Démarrer · ابدأ"}
               </button>
               <button
                 type="button"
@@ -315,14 +341,14 @@ export function PresenterShell({
               className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-bold text-cyan-200 hover:bg-cyan-500/20"
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              Ouvrir /screen
+              <BilingualInline text={{ fr: "Ouvrir /screen", ar: "شاشة العرض" }} />
             </Link>
 
             <button
               type="button"
               onClick={() => document.documentElement.requestFullscreen().catch(() => undefined)}
               className="rounded-xl border border-slate-700 p-2 text-slate-300 hover:text-white cursor-pointer"
-              title="Plein écran"
+              title="Plein écran / ملء الشاشة"
             >
               <Maximize2 className="h-3.5 w-3.5" />
             </button>
@@ -331,7 +357,7 @@ export function PresenterShell({
               type="button"
               onClick={handleLogout}
               className="rounded-xl border border-slate-700 p-2 text-slate-300 hover:text-white cursor-pointer"
-              title="Déconnexion"
+              title="Déconnexion / تسجيل الخروج"
             >
               <LogOut className="h-3.5 w-3.5" />
             </button>
@@ -341,12 +367,15 @@ export function PresenterShell({
 
       {/* Main Presenter Workspace */}
       <div className="mx-auto w-full max-w-[1440px] flex-1 grid gap-5 p-4 lg:grid-cols-12">
-        {/* Left Navigation Rail (12 Sections) */}
+        {/* Left Navigation Rail */}
         <aside className="lg:col-span-3 space-y-4">
           <div className="rounded-2xl border border-slate-800 bg-navy-800/80 p-4 space-y-3">
             <div className="flex items-center justify-between text-xs font-bold">
               <span className="text-slate-300">
-                Section {active.state.currentSection} / {TOTAL_SECTIONS}
+                Section {active.state.currentSection} / {TOTAL_SECTIONS} ·{" "}
+                <span dir="rtl" lang="ar" className="font-arabic text-teal-300">
+                  المحور {active.state.currentSection}
+                </span>
               </span>
               <span className="text-cyan-300">
                 Diapo {currentIdx + 1}/{SLIDES.length}
@@ -360,8 +389,8 @@ export function PresenterShell({
                 onClick={goPrev}
                 className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-slate-700 bg-navy-900 py-2 text-xs font-bold hover:border-cyan-400 disabled:opacity-40 cursor-pointer"
               >
-                <ChevronLeft className="h-4 w-4" />
-                Précédent
+                <ChevronLeft className="h-4 w-4 shrink-0" />
+                <BilingualInline text={{ fr: "Précédent", ar: "السابق" }} />
               </button>
               <button
                 type="button"
@@ -369,12 +398,12 @@ export function PresenterShell({
                 onClick={goNext}
                 className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-teal-600 py-2 text-xs font-bold text-white hover:bg-teal-500 disabled:opacity-40 cursor-pointer"
               >
-                Suivant
-                <ChevronRight className="h-4 w-4" />
+                <BilingualInline text={{ fr: "Suivant", ar: "التالي" }} />
+                <ChevronRight className="h-4 w-4 shrink-0" />
               </button>
             </div>
 
-            <div className="space-y-1 max-h-[340px] overflow-y-auto pr-1">
+            <div className="space-y-1.5 max-h-[360px] overflow-y-auto pr-1">
               {sections.map((sec) => {
                 const isCurrent = sec.sectionNumber === active.state.currentSection;
                 return (
@@ -388,30 +417,40 @@ export function PresenterShell({
                         : "text-slate-300 hover:bg-slate-800"
                     }`}
                   >
-                    <span className="truncate">{sec.title}</span>
-                    <span className="ml-2 shrink-0 text-[10px] opacity-80">{sec.timeRange}</span>
+                    <BilingualBlock
+                      text={sec.title}
+                      className="min-w-0 flex-1"
+                      frClassName="truncate"
+                      arClassName={`truncate text-[11px] ${isCurrent ? "text-teal-50" : "text-cyan-200/80"}`}
+                    />
+                    <span className="ml-2 shrink-0 text-[10px] opacity-80">
+                      {sec.timeRange.fr}
+                    </span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Slides inside current section */}
             <div className="border-t border-slate-700 pt-2.5 space-y-1">
               <p className="text-[11px] font-bold uppercase text-slate-400">
-                Diapositives de la section
+                Diapositives · <span className="font-arabic">شرائح المحور</span>
               </p>
               {SLIDES.filter((s) => s.sectionNumber === active.state.currentSection).map((s) => (
                 <button
                   key={s.id}
                   type="button"
                   onClick={() => sendControl({ currentSlideId: s.id })}
-                  className={`block w-full truncate rounded-lg px-2.5 py-1.5 text-left text-xs cursor-pointer ${
+                  className={`block w-full rounded-lg px-2.5 py-1.5 text-left text-xs cursor-pointer ${
                     s.id === currentSlide.id
                       ? "bg-cyan-500/20 font-bold text-cyan-200 border border-cyan-500/40"
                       : "text-slate-300 hover:bg-slate-800"
                   }`}
                 >
-                  {s.title}
+                  <BilingualBlock
+                    text={s.title}
+                    frClassName="truncate"
+                    arClassName="truncate text-[11px] opacity-90"
+                  />
                 </button>
               ))}
             </div>
@@ -421,15 +460,21 @@ export function PresenterShell({
           <div className="rounded-2xl border border-slate-800 bg-navy-800/80 p-4 space-y-3">
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="rounded-xl bg-navy-900 p-2.5">
-                <p className="text-[10px] text-slate-400">En ligne</p>
+                <p className="text-[10px] text-slate-400">
+                  En ligne · <span className="font-arabic">متصل</span>
+                </p>
                 <p className="text-lg font-bold text-cyan-300">{active.connectedCount}</p>
               </div>
               <div className="rounded-xl bg-navy-900 p-2.5">
-                <p className="text-[10px] text-slate-400">Inscrits</p>
+                <p className="text-[10px] text-slate-400">
+                  Inscrits · <span className="font-arabic">مسجل</span>
+                </p>
                 <p className="text-lg font-bold text-white">{active.totalParticipants}</p>
               </div>
               <div className="rounded-xl bg-navy-900 p-2.5">
-                <p className="text-[10px] text-slate-400">Taux rép.</p>
+                <p className="text-[10px] text-slate-400">
+                  Taux · <span className="font-arabic">نسبة</span>
+                </p>
                 <p className="text-lg font-bold text-teal-400">{active.responseRate}%</p>
               </div>
             </div>
@@ -437,26 +482,39 @@ export function PresenterShell({
             <button
               type="button"
               onClick={() => sendControl({ demoMode: !active.state.demoMode })}
-              className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-xs font-bold cursor-pointer ${
+              className={`flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-xs font-bold cursor-pointer ${
                 active.state.demoMode
                   ? "border-amber-400 bg-amber-500/20 text-amber-200"
                   : "border-slate-700 bg-navy-900 text-slate-200"
               }`}
             >
-              <span>Mode Démo (secours salle)</span>
+              <BilingualBlock
+                text={{
+                  fr: "Mode Démo (secours salle)",
+                  ar: "الوضع التجريبي (احتياط)",
+                }}
+                className="text-left"
+                arClassName="text-[11px] opacity-85"
+              />
               <span>{active.state.demoMode ? "ACTIF" : "INACTIF"}</span>
             </button>
 
             <button
               type="button"
               onClick={() => sendControl({ showQrOverlay: !active.state.showQrOverlay })}
-              className="flex w-full items-center justify-between rounded-xl border border-slate-700 bg-navy-900 px-3 py-2 text-xs font-semibold text-slate-200 hover:border-cyan-400 cursor-pointer"
+              className="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-700 bg-navy-900 px-3 py-2 text-xs font-semibold text-slate-200 hover:border-cyan-400 cursor-pointer"
             >
-              <span className="inline-flex items-center gap-1.5">
-                <QrCode className="h-3.5 w-3.5 text-cyan-300" />
-                Afficher QR sur /screen
+              <span className="inline-flex items-center gap-1.5 text-left">
+                <QrCode className="h-3.5 w-3.5 text-cyan-300 shrink-0" />
+                <BilingualBlock
+                  text={{
+                    fr: "Afficher QR sur /screen",
+                    ar: "عرض رمز QR على الشاشة",
+                  }}
+                  arClassName="text-[11px] opacity-85"
+                />
               </span>
-              <span>{active.state.showQrOverlay ? "OUI" : "NON"}</span>
+              <span>{active.state.showQrOverlay ? "OUI · نعم" : "NON · لا"}</span>
             </button>
 
             <button
@@ -468,24 +526,42 @@ export function PresenterShell({
                   : "border border-slate-700 bg-navy-900 text-slate-200 hover:border-amber-400"
               }`}
             >
-              {active.state.isPaused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
-              <span>{active.state.isPaused ? "Reprendre l'atelier" : "Mettre en pause"}</span>
+              {active.state.isPaused ? (
+                <>
+                  <Play className="h-3.5 w-3.5 shrink-0" />
+                  <BilingualInline
+                    text={{ fr: "Reprendre l'atelier", ar: "استئناف الورشة" }}
+                  />
+                </>
+              ) : (
+                <>
+                  <Pause className="h-3.5 w-3.5 shrink-0" />
+                  <BilingualInline
+                    text={{ fr: "Mettre en pause", ar: "إيقاف مؤقت" }}
+                  />
+                </>
+              )}
             </button>
           </div>
         </aside>
 
         {/* Center Main Stage */}
         <section className="lg:col-span-6 space-y-4">
-          {/* Activity Control Bar */}
           {activeActivityDef && (
             <div className="rounded-2xl border border-teal-500/40 bg-navy-800 p-4 space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <span className="text-[11px] font-bold uppercase text-cyan-300">
-                    Activité synchronisée : {activeActivityDef.title}
+                    Activité synchronisée · نشاط متزامن
                   </span>
-                  <p className="text-xs text-slate-300">
-                    Statut : <strong className="text-white uppercase">{active.state.activityStatus}</strong>
+                  <BilingualBlock
+                    text={activeActivityDef.title}
+                    frClassName="text-xs font-bold text-white"
+                    arClassName="text-xs font-bold text-cyan-200"
+                  />
+                  <p className="text-[11px] text-slate-300 mt-0.5">
+                    Statut / الحالة :{" "}
+                    <strong className="text-white uppercase">{active.state.activityStatus}</strong>
                   </p>
                 </div>
 
@@ -495,14 +571,14 @@ export function PresenterShell({
                     onClick={() => sendControl({ activityStatus: "open" })}
                     className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-teal-500 cursor-pointer"
                   >
-                    Ouvrir / Rouvrir
+                    <BilingualInline text={{ fr: "Ouvrir / Rouvrir", ar: "فتح / إعادة فتح" }} />
                   </button>
                   <button
                     type="button"
                     onClick={() => sendControl({ activityStatus: "closed", showResults: true })}
                     className="rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-600 cursor-pointer"
                   >
-                    Fermer
+                    <BilingualInline text={{ fr: "Fermer", ar: "إغلاق" }} />
                   </button>
                   <button
                     type="button"
@@ -511,8 +587,12 @@ export function PresenterShell({
                     }
                     className="inline-flex items-center gap-1 rounded-lg border border-cyan-500/50 px-3 py-1.5 text-xs font-bold text-cyan-200 cursor-pointer"
                   >
-                    <Eye className="h-3.5 w-3.5" />
-                    {active.state.showResults ? "Masquer résultats" : "Afficher résultats"}
+                    <Eye className="h-3.5 w-3.5 shrink-0" />
+                    {active.state.showResults ? (
+                      <BilingualInline text={{ fr: "Masquer résultats", ar: "إخفاء النتائج" }} />
+                    ) : (
+                      <BilingualInline text={{ fr: "Afficher résultats", ar: "عرض النتائج" }} />
+                    )}
                   </button>
                   {(activeActivityDef.type === "mcq_quiz" ||
                     activeActivityDef.type === "tf_quiz") && (
@@ -523,8 +603,8 @@ export function PresenterShell({
                       }
                       className="inline-flex items-center gap-1 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-500 cursor-pointer"
                     >
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      Révéler réponses
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                      <BilingualInline text={{ fr: "Révéler réponses", ar: "كشف الإجابات" }} />
                     </button>
                   )}
                   <button
@@ -532,8 +612,8 @@ export function PresenterShell({
                     onClick={handleResetActivity}
                     className="inline-flex items-center gap-1 rounded-lg border border-amber-500/40 px-2.5 py-1.5 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 cursor-pointer"
                   >
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    Réinitialiser
+                    <RotateCcw className="h-3.5 w-3.5 shrink-0" />
+                    <BilingualInline text={{ fr: "Réinitialiser", ar: "إعادة ضبط" }} />
                   </button>
                 </div>
               </div>
@@ -557,28 +637,49 @@ export function PresenterShell({
             <div className="space-y-4">
               <div className="rounded-2xl border border-slate-200 bg-white p-5 text-slate-900">
                 <h3 className="mb-3 flex items-center gap-2 text-sm font-bold">
-                  <BarChart3 className="h-4 w-4 text-teal-700" />
-                  Participation par activité (session active)
+                  <BarChart3 className="h-4 w-4 text-teal-700 shrink-0" />
+                  <BilingualInline
+                    text={{
+                      fr: "Participation par activité (session active)",
+                      ar: "نسبة المشاركة حسب كل نشاط",
+                    }}
+                  />
                 </h3>
                 <div className="grid gap-2.5 sm:grid-cols-2">
-                  {Object.entries(active.activityCounts).map(([key, count]) => (
-                    <div
-                      key={key}
-                      className="flex items-center justify-between rounded-xl border border-slate-200 bg-ivory-50 px-3.5 py-2.5 text-xs"
-                    >
-                      <span className="font-semibold text-slate-800">
-                        {getActivityByKey(key)?.title ?? key}
-                      </span>
-                      <span className="font-mono-code font-bold text-teal-800">{count}</span>
-                    </div>
-                  ))}
+                  {Object.entries(active.activityCounts).map(([key, count]) => {
+                    const act = getActivityByKey(key);
+                    return (
+                      <div
+                        key={key}
+                        className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-ivory-50 px-3.5 py-2.5 text-xs"
+                      >
+                        {act ? (
+                          <BilingualBlock
+                            text={act.title}
+                            frClassName="font-semibold text-slate-800"
+                            arClassName="text-[11px] font-semibold text-teal-800"
+                          />
+                        ) : (
+                          <span className="font-semibold text-slate-800">{key}</span>
+                        )}
+                        <span className="font-mono-code font-bold text-teal-800 shrink-0">
+                          {count}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-white p-5 text-slate-900">
                 <h3 className="mb-3 flex items-center gap-2 text-sm font-bold">
-                  <Users className="h-4 w-4 text-cyan-700" />
-                  Dernières soumissions (anonymisées)
+                  <Users className="h-4 w-4 text-cyan-700 shrink-0" />
+                  <BilingualInline
+                    text={{
+                      fr: "Dernières soumissions (anonymisées)",
+                      ar: "آخر المشاركات المرسلة (مجهولة الهوية)",
+                    }}
+                  />
                 </h3>
                 <div className="space-y-2 max-h-72 overflow-y-auto">
                   {active.recentSubmissions.length > 0 ? (
@@ -590,77 +691,131 @@ export function PresenterShell({
                         <span className="text-slate-800">{s.summary}</span>
                         {s.isCorrect !== null && (
                           <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0 ${
                               s.isCorrect
                                 ? "bg-teal-100 text-teal-800"
                                 : "bg-amber-100 text-amber-800"
                             }`}
                           >
-                            {s.isCorrect ? "Correct" : "À discuter"}
+                            {s.isCorrect ? "Correct · صحيح" : "À discuter · للنقاش"}
                           </span>
                         )}
                       </div>
                     ))
                   ) : (
-                    <p className="text-xs text-slate-500">
-                      Aucune soumission pour le moment dans ce mode.
-                    </p>
+                    <BilingualBlock
+                      text={{
+                        fr: "Aucune soumission pour le moment dans ce mode.",
+                        ar: "لا توجد مشاركات حالياً في هذا الوضع.",
+                      }}
+                      frClassName="text-xs text-slate-500"
+                      arClassName="text-xs text-slate-500"
+                    />
                   )}
                 </div>
               </div>
 
               <div className="rounded-2xl border border-amber-500/40 bg-amber-950/30 p-5 space-y-3">
                 <div className="flex items-center gap-2 text-sm font-bold text-amber-200">
-                  <ShieldAlert className="h-4 w-4" />
-                  Protection des données après l&apos;événement
+                  <ShieldAlert className="h-4 w-4 shrink-0" />
+                  <BilingualInline
+                    text={{
+                      fr: "Protection des données après l'événement",
+                      ar: "حماية المعطيات بعد انتهاء الورشة",
+                    }}
+                  />
                 </div>
-                <p className="text-xs text-slate-300">
-                  Supprime tous les noms affichés et réponses réelles des participants tout en
-                  conservant la structure et le Mode Démo intact.
-                </p>
+                <BilingualBlock
+                  text={{
+                    fr: "Supprime tous les noms affichés et réponses réelles des participants tout en conservant la structure et le Mode Démo intact.",
+                    ar: "يمسح جميع الأسماء المعروضة وإجابات المشاركين الحقيقية مع الإبقاء على البنية والوضع التجريبي.",
+                  }}
+                  frClassName="text-xs text-slate-300"
+                  arClassName="text-xs text-amber-100"
+                />
                 <button
                   type="button"
                   onClick={() => setShowPurgeModal(true)}
                   className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-xs font-bold text-white hover:bg-amber-500 cursor-pointer"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Supprimer les données des participants
+                  <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                  <BilingualInline
+                    text={{
+                      fr: "Supprimer les données des participants",
+                      ar: "مسح معطيات المشاركين",
+                    }}
+                  />
                 </button>
               </div>
             </div>
           )}
         </section>
 
-        {/* Right Presenter Notes & QR Panel */}
+        {/* Right Bilingual Presenter Notes & QR Panel */}
         <aside className="lg:col-span-3 space-y-4">
           <div className="rounded-2xl border border-slate-800 bg-navy-800/90 p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-300">
-                Notes de l&apos;animateur (Script)
-              </h3>
-              <span className="rounded bg-navy-900 px-2 py-0.5 font-mono-code text-[11px] text-amber-300">
+            <div className="flex items-center justify-between gap-2">
+              <BilingualBlock
+                text={{
+                  fr: "Notes de l'animateur (Script)",
+                  ar: "ملاحظات المنشط (نص التقديم)",
+                }}
+                frClassName="text-xs font-bold uppercase tracking-wider text-cyan-300"
+                arClassName="text-xs font-bold text-teal-300"
+              />
+              <span className="rounded bg-navy-900 px-2 py-0.5 font-mono-code text-[11px] text-amber-300 shrink-0">
                 {currentSlide.presenterNotes.durationCue}
               </span>
             </div>
 
             <div className="space-y-3 text-xs leading-relaxed text-slate-200">
-              <p className="rounded-xl bg-navy-900/90 p-3 border border-slate-700/70">
-                {currentSlide.presenterNotes.script}
-              </p>
-
-              <div>
-                <p className="font-bold text-teal-300 mb-1">Exemple pratique à citer :</p>
-                <p className="text-slate-300">{currentSlide.presenterNotes.classroomExample}</p>
+              <div className="rounded-xl bg-navy-900/90 p-3 border border-slate-700/70 space-y-2">
+                <BilingualBlock
+                  text={currentSlide.presenterNotes.script}
+                  frClassName="text-slate-100"
+                  arClassName="text-cyan-100"
+                />
               </div>
 
               <div>
-                <p className="font-bold text-amber-300 mb-1">Transition :</p>
-                <p className="text-slate-300">{currentSlide.presenterNotes.transition}</p>
+                <p className="font-bold text-teal-300 mb-1">
+                  Exemple pratique · <span className="font-arabic">مثال تطبيقي</span> :
+                </p>
+                <BilingualBlock
+                  text={currentSlide.presenterNotes.classroomExample}
+                  frClassName="text-slate-300"
+                  arClassName="text-slate-200"
+                />
+              </div>
+
+              <div>
+                <p className="font-bold text-amber-300 mb-1">
+                  Discussion · <span className="font-arabic">سؤال للنقاش</span> :
+                </p>
+                <BilingualBlock
+                  text={currentSlide.presenterNotes.discussionPrompt}
+                  frClassName="text-slate-300"
+                  arClassName="text-slate-200"
+                />
+              </div>
+
+              <div>
+                <p className="font-bold text-cyan-300 mb-1">
+                  Transition · <span className="font-arabic">الانتقال</span> :
+                </p>
+                <BilingualBlock
+                  text={currentSlide.presenterNotes.transition}
+                  frClassName="text-slate-300"
+                  arClassName="text-slate-200"
+                />
               </div>
             </div>
 
-            <div className="border-t border-slate-700 pt-2.5 text-[11px] text-slate-400">
-              Raccourcis clavier : ← / → diapos · P pause · Q QR · R révéler
+            <div className="border-t border-slate-700 pt-2.5 text-[11px] text-slate-400 space-y-0.5">
+              <p>Raccourcis : ← / → diapos · P pause · Q QR · R révéler</p>
+              <p dir="rtl" lang="ar" className="font-arabic text-slate-400">
+                اختصارات لوحة المفاتيح: ← / → للتنقل · P استراحة · Q رمز QR · R كشف التصحيح
+              </p>
             </div>
           </div>
 
@@ -675,19 +830,29 @@ export function PresenterShell({
             onSubmit={handlePurge}
             className="w-full max-w-md rounded-2xl border border-slate-700 bg-white p-6 text-slate-900 space-y-4"
           >
-            <h3 className="text-lg font-bold text-slate-900">
-              Confirmer la suppression des données réelles
-            </h3>
-            <p className="text-xs text-slate-600">
-              Cette action efface définitivement les participants réels et leurs réponses pour cette
-              session. Tapez <strong>SUPPRIMER</strong> pour confirmer.
-            </p>
+            <BilingualBlock
+              text={{
+                fr: "Confirmer la suppression des données réelles",
+                ar: "تأكيد مسح المعطيات الحقيقية للمشاركين",
+              }}
+              frClassName="text-lg font-bold text-slate-900"
+              arClassName="text-base font-bold text-amber-800"
+            />
+            <BilingualBlock
+              text={{
+                fr: "Cette action efface définitivement les participants réels et leurs réponses pour cette session. Tapez SUPPRIMER pour confirmer.",
+                ar: "يمسح هذا الإجراء نهائياً بيانات المشاركين الحقيقيين وإجاباتهم في هذه الجلسة. اكتبوا SUPPRIMER للتأكيد.",
+              }}
+              frClassName="text-xs text-slate-600"
+              arClassName="text-xs text-slate-700"
+            />
             <input
               type="text"
               required
               value={purgeText}
               onChange={(e) => setPurgeText(e.target.value)}
               placeholder="SUPPRIMER"
+              dir="ltr"
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-mono-code"
             />
             <div className="flex justify-end gap-2">
@@ -696,14 +861,16 @@ export function PresenterShell({
                 onClick={() => setShowPurgeModal(false)}
                 className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-semibold cursor-pointer"
               >
-                Annuler
+                <BilingualInline text={{ fr: "Annuler", ar: "إلغاء" }} />
               </button>
               <button
                 type="submit"
                 disabled={purgeText !== "SUPPRIMER"}
                 className="rounded-xl bg-amber-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-50 cursor-pointer"
               >
-                Confirmer l&apos;effacement
+                <BilingualInline
+                  text={{ fr: "Confirmer l'effacement", ar: "تأكيد المسح" }}
+                />
               </button>
             </div>
           </form>

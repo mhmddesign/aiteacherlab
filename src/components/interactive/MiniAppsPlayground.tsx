@@ -3,59 +3,77 @@
 import React, { useMemo, useState } from "react";
 import { CheckCircle2, Printer, RefreshCw, Shuffle } from "lucide-react";
 import type { GalleryCategoryItem } from "@/content/types";
+import { BilingualBlock, BilingualInline } from "@/components/ui/Bilingual";
 import { DemoQuizApp } from "./DemoQuizApp";
 
 type DemoKey = NonNullable<GalleryCategoryItem["demoKey"]>;
 
 const ARABIC_LETTERS = [
-  { letter: "ب", name: "الباء", forms: ["بـ", "ـبـ", "ـب"] },
-  { letter: "ت", name: "التاء", forms: ["تـ", "ـتـ", "ـت"] },
-  { letter: "س", name: "السين", forms: ["سـ", "ـسـ", "ـس"] },
-  { letter: "م", name: "الميم", forms: ["مـ", "ـمـ", "ـم"] },
-  { letter: "ل", name: "اللام", forms: ["لـ", "ـلـ", "ـل"] },
+  { letter: "ب", name: "الباء (Ba)", forms: ["بـ", "ـبـ", "ـب"] },
+  { letter: "ت", name: "التاء (Ta)", forms: ["تـ", "ـتـ", "ـت"] },
+  { letter: "س", name: "السين (Sin)", forms: ["سـ", "ـسـ", "ـس"] },
+  { letter: "م", name: "الميم (Mim)", forms: ["مـ", "ـمـ", "ـم"] },
+  { letter: "ل", name: "اللام (Lam)", forms: ["لـ", "ـلـ", "ـل"] },
 ];
 
 const VOWELS = [
-  { mark: "\u064E", label: "فَتْحَة" },
-  { mark: "\u064F", label: "ضَمَّة" },
-  { mark: "\u0650", label: "كَسْرَة" },
-  { mark: "ا", label: "مَدّ بِالأَلِف" },
+  { mark: "\u064E", labelAr: "فَتْحَة", labelFr: "Fatha (a)" },
+  { mark: "\u064F", labelAr: "ضَمَّة", labelFr: "Damma (ou)" },
+  { mark: "\u0650", labelAr: "كَسْرَة", labelFr: "Kasra (i)" },
+  { mark: "ا", labelAr: "مَدّ بِالأَلِف", labelFr: "Madd Alif (aa)" },
 ];
 
 const FLASHCARDS = [
-  { fr: "Le tableau", ar: "السَّبُّورَةُ", sentence: "L'élève écrit la date au tableau." },
-  { fr: "Le cahier", ar: "الدَّفْتَرُ", sentence: "J'ouvre mon cahier de mathématiques." },
-  { fr: "La fraction", ar: "الْكَسْرُ", sentence: "Un demi (1/2) est une fraction simple." },
-  { fr: "La graine", ar: "الْبَذْرَةُ", sentence: "La graine germe grâce à l'eau." },
+  {
+    fr: "Le tableau",
+    ar: "السَّبُّورَةُ",
+    sentenceFr: "L'élève écrit la date au tableau.",
+    sentenceAr: "يكتب التلميذ التاريخ على السبورة.",
+  },
+  {
+    fr: "Le cahier",
+    ar: "الدَّفْتَرُ",
+    sentenceFr: "J'ouvre mon cahier de mathématiques.",
+    sentenceAr: "أفتح دفتر الرياضيات بنظام.",
+  },
+  {
+    fr: "La fraction",
+    ar: "الْكَسْرُ",
+    sentenceFr: "Un demi (1/2) est une fraction simple.",
+    sentenceAr: "النصف (1/2) كسر بسيط.",
+  },
+  {
+    fr: "La graine",
+    ar: "الْبَذْرَةُ",
+    sentenceFr: "La graine germe grâce à l'eau.",
+    sentenceAr: "تنبت البذرة بفضل الماء.",
+  },
 ];
 
 export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
-  // 1. Arabic literacy state
   const [letterIdx, setLetterIdx] = useState(0);
   const [vowelIdx, setVowelIdx] = useState(0);
 
-  // 2. Flashcard state
   const [cardIdx, setCardIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
 
-  // 3. Math C/D/U state
   const [hundreds, setHundreds] = useState(2);
   const [tens, setTens] = useState(4);
   const [units, setUnits] = useState(3);
   const [targetNum, setTargetNum] = useState(243);
 
-  // 4. Remediation TaRL state
   const [track, setTrack] = useState<"base" | "inter" | "defi">("base");
-  const [tarlFeedback, setTarlFeedback] = useState<string | null>(null);
+  const [tarlFeedback, setTarlFeedback] = useState<{ fr: string; ar: string } | null>(null);
 
-  // 5. Formative assessment state
   const [qErrors, setQErrors] = useState<number[]>([2, 4, 14, 5, 3]);
 
-  // 6. Printable worksheet state
-  const [sheetTitle, setSheetTitle] = useState("Fiche de calcul · Décomposition 3AEP");
-  const [sheetNote, setSheetNote] = useState("Consigne : Complète les décompositions puis vérifie avec ta règle.");
+  const [sheetTitle, setSheetTitle] = useState(
+    "Fiche de calcul · Décomposition 3AEP / ورقة حساب · التفكيك (3AEP)"
+  );
+  const [sheetNote, setSheetNote] = useState(
+    "Complète les décompositions puis vérifie. / أكمل التفكيك ثم تحقق."
+  );
 
-  // 7. Group maker state
   const [studentCount, setStudentCount] = useState(24);
   const [groupSize, setGroupSize] = useState(4);
   const [seed, setSeed] = useState(1);
@@ -82,16 +100,27 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
     const activeV = VOWELS[vowelIdx];
     const syllable = `${activeL.letter}${activeV.mark}`;
     return (
-      <div dir="rtl" lang="ar" className="font-arabic space-y-4 rounded-2xl border border-teal-200 bg-ivory-50 p-5">
+      <div className="space-y-4 rounded-2xl border border-teal-200 bg-ivory-50 p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-sm font-bold text-teal-900">
-            تطبيق القراءة والمقاطع (1AEP–2AEP)
-          </span>
+          <BilingualBlock
+            text={{
+              fr: "Alphabétisation arabe & syllabes (1AEP–2AEP)",
+              ar: "تطبيق القراءة والمقاطع (1AEP–2AEP)",
+            }}
+            frClassName="text-xs font-bold text-slate-900"
+            arClassName="text-sm font-bold text-teal-900"
+          />
           <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 border border-slate-200">
-            بدون أنترنيت · للسبورة التفاعلية
+            <BilingualInline
+              text={{
+                fr: "Hors ligne · Projecteur",
+                ar: "بدون أنترنيت · للسبورة",
+              }}
+            />
           </span>
         </div>
-        <div className="flex flex-wrap gap-2">
+
+        <div dir="rtl" lang="ar" className="font-arabic flex flex-wrap gap-2">
           {ARABIC_LETTERS.map((item, idx) => (
             <button
               key={item.letter}
@@ -107,29 +136,42 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
             </button>
           ))}
         </div>
+
         <div className="flex flex-wrap gap-2">
           {VOWELS.map((v, idx) => (
             <button
-              key={v.label}
+              key={v.labelAr}
               type="button"
               onClick={() => setVowelIdx(idx)}
-              className={`rounded-xl border px-3 py-1.5 text-sm font-semibold cursor-pointer ${
+              className={`rounded-xl border px-3 py-1.5 text-xs font-semibold cursor-pointer ${
                 idx === vowelIdx
                   ? "border-cyan-600 bg-cyan-600 text-white"
                   : "border-slate-300 bg-white text-slate-800"
               }`}
             >
-              {v.label}
+              <span>{v.labelFr}</span> ·{" "}
+              <span dir="rtl" lang="ar" className="font-arabic">
+                {v.labelAr}
+              </span>
             </button>
           ))}
         </div>
+
         <div className="grid gap-4 sm:grid-cols-2 items-center rounded-2xl bg-white p-5 border border-slate-200">
           <div className="text-center">
-            <p className="text-xs text-slate-500">المقطع الصوتي المركب</p>
-            <p className="mt-2 text-6xl font-bold text-navy-900">{syllable}</p>
+            <BilingualBlock
+              text={{ fr: "Syllabe composée", ar: "المقطع الصوتي المركب" }}
+              frClassName="text-xs text-slate-500"
+              arClassName="text-xs text-teal-800"
+            />
+            <p dir="rtl" lang="ar" className="font-arabic mt-2 text-6xl font-bold text-navy-900">
+              {syllable}
+            </p>
           </div>
-          <div className="space-y-2 text-sm">
-            <p className="font-bold text-teal-800">أشكال الحرف ({activeL.name}) :</p>
+          <div dir="rtl" lang="ar" className="font-arabic space-y-2 text-sm text-right">
+            <p className="font-bold text-teal-800">
+              أشكال الحرف ({activeL.name}) / Formes de la lettre :
+            </p>
             <div className="flex justify-around rounded-xl bg-ivory-100 p-3 text-2xl font-bold text-slate-900">
               <span>{activeL.forms[0]}</span>
               <span>{activeL.forms[1]}</span>
@@ -145,29 +187,44 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
     const card = FLASHCARDS[cardIdx];
     return (
       <div className="space-y-4 rounded-2xl border border-slate-200 bg-ivory-50 p-5">
-        <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-          <span>Carte {cardIdx + 1} / {FLASHCARDS.length}</span>
-          <span>Cliquez sur la carte pour retourner</span>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-700">
+          <span>
+            Carte {cardIdx + 1} / {FLASHCARDS.length} ·{" "}
+            <span dir="rtl" lang="ar" className="font-arabic text-teal-800">
+              البطاقة {cardIdx + 1} / {FLASHCARDS.length}
+            </span>
+          </span>
+          <BilingualInline
+            text={{
+              fr: "Cliquez pour retourner",
+              ar: "انقروا لقلب البطاقة",
+            }}
+          />
         </div>
+
         <button
           type="button"
           onClick={() => setFlipped((f) => !f)}
-          className="w-full rounded-2xl border border-teal-200 bg-white p-7 text-center shadow-xs hover:border-teal-500 cursor-pointer"
+          className="w-full rounded-2xl border border-teal-200 bg-white p-6 text-center shadow-xs hover:border-teal-500 cursor-pointer space-y-2"
         >
           {!flipped ? (
-            <div>
-              <p className="text-xs uppercase tracking-wider text-teal-700 font-bold">Français (LTR)</p>
+            <div dir="ltr" lang="fr">
+              <p className="text-xs uppercase tracking-wider text-teal-700 font-bold">
+                Face Français · الواجهة الفرنسية
+              </p>
               <p className="mt-2 font-display text-3xl font-bold text-navy-900">{card.fr}</p>
-              <p className="mt-2 text-sm text-slate-600">{card.sentence}</p>
+              <p className="mt-2 text-sm text-slate-600">{card.sentenceFr}</p>
             </div>
           ) : (
             <div dir="rtl" lang="ar" className="font-arabic">
-              <p className="text-xs font-bold text-cyan-700">العربية (RTL)</p>
+              <p className="text-xs font-bold text-cyan-700">الواجهة العربية · Face Arabe</p>
               <p className="mt-2 text-4xl font-bold text-navy-900">{card.ar}</p>
+              <p className="mt-2 text-sm text-slate-700">{card.sentenceAr}</p>
             </div>
           )}
         </button>
-        <div className="flex justify-between">
+
+        <div className="flex justify-between gap-2">
           <button
             type="button"
             onClick={() => {
@@ -176,7 +233,7 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
             }}
             className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold cursor-pointer"
           >
-            ← Précédente
+            <BilingualInline text={{ fr: "← Précédente", ar: "السابقة →" }} />
           </button>
           <button
             type="button"
@@ -186,7 +243,7 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
             }}
             className="rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white cursor-pointer"
           >
-            Suivante →
+            <BilingualInline text={{ fr: "Suivante →", ar: "← الموالية" }} />
           </button>
         </div>
       </div>
@@ -200,11 +257,17 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
       <div className="space-y-4 rounded-2xl border border-slate-200 bg-ivory-50 p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <span className="text-xs font-bold uppercase text-teal-800">
-              Défi C / D / U · Valeur positionnelle
-            </span>
-            <h5 className="text-lg font-bold text-slate-900">
-              Construisez le nombre : <span className="font-mono-code text-teal-700">{targetNum}</span>
+            <BilingualBlock
+              text={{
+                fr: "Défi C / D / U · Valeur positionnelle",
+                ar: "تحدي المئات والعشرات والوحدات · القيمة المكانية",
+              }}
+              frClassName="text-xs font-bold uppercase text-teal-800"
+              arClassName="text-xs font-bold text-teal-900"
+            />
+            <h5 className="text-lg font-bold text-slate-900 mt-1">
+              Construisez / ركّبوا العدد :{" "}
+              <span className="font-mono-code text-teal-700">{targetNum}</span>
             </h5>
           </div>
           <button
@@ -219,18 +282,43 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold cursor-pointer"
           >
             <RefreshCw className="h-3.5 w-3.5" />
-            Nouveau défi
+            <BilingualInline text={{ fr: "Nouveau défi", ar: "تحدٍّ جديد" }} />
           </button>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Centaines (100)", val: hundreds, set: setHundreds, max: 5, color: "bg-navy-900 text-white" },
-            { label: "Dizaines (10)", val: tens, set: setTens, max: 9, color: "bg-teal-600 text-white" },
-            { label: "Unités (1)", val: units, set: setUnits, max: 9, color: "bg-cyan-500 text-slate-950" },
+            {
+              fr: "Centaines (100)",
+              ar: "المئات (100)",
+              val: hundreds,
+              set: setHundreds,
+              max: 5,
+              color: "bg-navy-900 text-white",
+            },
+            {
+              fr: "Dizaines (10)",
+              ar: "العشرات (10)",
+              val: tens,
+              set: setTens,
+              max: 9,
+              color: "bg-teal-600 text-white",
+            },
+            {
+              fr: "Unités (1)",
+              ar: "الوحدات (1)",
+              val: units,
+              set: setUnits,
+              max: 9,
+              color: "bg-cyan-500 text-slate-950",
+            },
           ].map((col) => (
-            <div key={col.label} className="rounded-xl border border-slate-200 bg-white p-3 text-center">
-              <p className="text-xs font-bold text-slate-700">{col.label}</p>
+            <div key={col.fr} className="rounded-xl border border-slate-200 bg-white p-3 text-center">
+              <BilingualBlock
+                text={{ fr: col.fr, ar: col.ar }}
+                frClassName="text-xs font-bold text-slate-700"
+                arClassName="text-xs font-bold text-teal-800"
+              />
               <p className="my-2 font-mono-code text-2xl font-bold text-slate-900">{col.val}</p>
               <div className="flex justify-center gap-2">
                 <button
@@ -253,18 +341,19 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
         </div>
 
         <div
-          className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-bold ${
+          className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-4 py-3 text-sm font-bold ${
             isMatch
               ? "border-teal-600 bg-teal-50 text-teal-900"
               : "border-slate-200 bg-white text-slate-800"
           }`}
         >
           <span>
-            Votre construction : {hundreds * 100} + {tens * 10} + {units} = {currentVal}
+            Construction / التركيب : {hundreds * 100} + {tens * 10} + {units} = {currentVal}
           </span>
           {isMatch && (
             <span className="inline-flex items-center gap-1 text-teal-700">
-              <CheckCircle2 className="h-4 w-4" /> Exact !
+              <CheckCircle2 className="h-4 w-4" />
+              <BilingualInline text={{ fr: "Exact !", ar: "صحيح!" }} />
             </span>
           )}
         </div>
@@ -275,42 +364,68 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
   if (demoKey === "remediation-tarl") {
     const exercises = {
       base: {
-        title: "Parcours Base · Addition sans retenue (< 50)",
-        prompt: "23 + 14 = ?",
+        title: {
+          fr: "Parcours Base · Addition sans retenue (< 50)",
+          ar: "المسار الأساسي · الجمع بدون احتفاظ (< 50)",
+        },
+        prompt: { fr: "23 + 14 = ?", ar: "كم يساوي 23 + 14؟" },
         choices: ["37", "27", "47"],
         ok: "37",
-        hint: "On additionne les unités (3 + 4 = 7) puis les dizaines (2 + 1 = 3).",
+        hint: {
+          fr: "On additionne les unités (3 + 4 = 7) puis les dizaines (2 + 1 = 3).",
+          ar: "نجمع الوحدات (3 + 4 = 7) ثم العشرات (2 + 1 = 3).",
+        },
       },
       inter: {
-        title: "Parcours Intermédiaire · Addition avec une retenue",
-        prompt: "48 + 25 = ?",
+        title: {
+          fr: "Parcours Intermédiaire · Addition avec une retenue",
+          ar: "المسار المتوسط · الجمع باحتفاظ واحد",
+        },
+        prompt: { fr: "48 + 25 = ?", ar: "كم يساوي 48 + 25؟" },
         choices: ["63", "73", "72"],
         ok: "73",
-        hint: "8 + 5 = 13 → on écrit 3 et on retient 1 dizaine : 4 + 2 + 1 = 7.",
+        hint: {
+          fr: "8 + 5 = 13 → on écrit 3 et on retient 1 dizaine : 4 + 2 + 1 = 7.",
+          ar: "8 + 5 = 13 ← نكتب 3 ونحتفظ بـ 1 عشرة: 4 + 2 + 1 = 7.",
+        },
       },
       defi: {
-        title: "Parcours Défi · Petit problème contextualisé",
-        prompt: "La bibliothèque a 145 livres en arabe et 78 en français. Combien en tout ?",
+        title: {
+          fr: "Parcours Défi · Petit problème contextualisé",
+          ar: "مسار التحدي · مسألة من المحيط المدرسي",
+        },
+        prompt: {
+          fr: "La bibliothèque a 145 livres en arabe et 78 en français. Combien en tout ?",
+          ar: "تضم مكتبة القسم 145 كتاباً بالعربية و78 بالفرنسية. ما مجموع الكتب؟",
+        },
         choices: ["213", "223", "233"],
         ok: "223",
-        hint: "145 + 78 = 223 livres.",
+        hint: {
+          fr: "145 + 78 = 223 livres.",
+          ar: "145 + 78 = 223 كتاباً.",
+        },
       },
     }[track];
 
     return (
       <div className="space-y-4 rounded-2xl border border-slate-200 bg-ivory-50 p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-xs font-bold uppercase text-teal-800">
-            Remédiation 3 parcours (difficulté pilotée par l&apos;enseignant)
-          </span>
-          <div className="flex gap-1.5">
+          <BilingualBlock
+            text={{
+              fr: "Remédiation 3 parcours (pilotée par l'enseignant)",
+              ar: "الدعم بـ 3 مسارات (بتحكم من الأستاذ/ة)",
+            }}
+            frClassName="text-xs font-bold uppercase text-teal-800"
+            arClassName="text-xs font-bold text-teal-900"
+          />
+          <div className="flex flex-wrap gap-1.5">
             {(
               [
-                ["base", "Base"],
-                ["inter", "Intermédiaire"],
-                ["defi", "Défi"],
+                ["base", "Base", "أساسي"],
+                ["inter", "Intermédiaire", "متوسط"],
+                ["defi", "Défi", "تحدي"],
               ] as const
-            ).map(([id, lbl]) => (
+            ).map(([id, fr, ar]) => (
               <button
                 key={id}
                 type="button"
@@ -324,14 +439,22 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
                     : "border border-slate-300 bg-white text-slate-700"
                 }`}
               >
-                {lbl}
+                <BilingualInline text={{ fr, ar }} />
               </button>
             ))}
           </div>
         </div>
         <div className="rounded-xl bg-white p-4 border border-slate-200 space-y-3">
-          <p className="text-xs font-semibold text-teal-700">{exercises.title}</p>
-          <p className="text-base font-bold text-slate-900">{exercises.prompt}</p>
+          <BilingualBlock
+            text={exercises.title}
+            frClassName="text-xs font-semibold text-teal-700"
+            arClassName="text-xs font-semibold text-teal-900"
+          />
+          <BilingualBlock
+            text={exercises.prompt}
+            frClassName="text-base font-bold text-slate-900"
+            arClassName="text-sm font-bold text-slate-800"
+          />
           <div className="flex flex-wrap gap-2">
             {exercises.choices.map((c) => (
               <button
@@ -340,8 +463,14 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
                 onClick={() =>
                   setTarlFeedback(
                     c === exercises.ok
-                      ? `Bravo ! ${exercises.hint}`
-                      : `Pas tout à fait. Indice : ${exercises.hint}`
+                      ? {
+                          fr: `Bravo ! ${exercises.hint.fr}`,
+                          ar: `أحسنت! ${exercises.hint.ar}`,
+                        }
+                      : {
+                          fr: `Pas tout à fait. Indice : ${exercises.hint.fr}`,
+                          ar: `حاول مرة أخرى. تلميح: ${exercises.hint.ar}`,
+                        }
                   )
                 }
                 className="rounded-xl border border-slate-300 bg-ivory-50 px-4 py-2 text-sm font-bold hover:border-teal-500 cursor-pointer"
@@ -351,9 +480,9 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
             ))}
           </div>
           {tarlFeedback && (
-            <p className="rounded-lg bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-900">
-              {tarlFeedback}
-            </p>
+            <div className="rounded-lg bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-900">
+              <BilingualBlock text={tarlFeedback} />
+            </div>
           )}
         </div>
       </div>
@@ -362,22 +491,32 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
 
   if (demoKey === "formative-assessment") {
     const items = [
-      "Q1 · Lire une fraction simple (1/2)",
-      "Q2 · Identifier le dénominateur",
-      "Q3 · Parts égales obligatoires (piège)",
-      "Q4 · Comparer 1/4 et 1/2",
-      "Q5 · Colorier 3/4 d'une bande",
+      { fr: "Q1 · Lire une fraction simple (1/2)", ar: "س1 · قراءة كسر بسيط (1/2)" },
+      { fr: "Q2 · Identifier le dénominateur", ar: "س2 · تحديد المقام" },
+      { fr: "Q3 · Parts égales obligatoires (piège)", ar: "س3 · شرط الأجزاء المتساوية" },
+      { fr: "Q4 · Comparer 1/4 et 1/2", ar: "س4 · مقارنة 1/4 و 1/2" },
+      { fr: "Q5 · Colorier 3/4 d'une bande", ar: "س5 · تلوين 3/4 من شريط" },
     ];
     return (
       <div className="print-sheet space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h5 className="text-sm font-bold text-slate-900">
-              Bilan collectif d&apos;évaluation formative (5AEP · 32 élèves)
-            </h5>
-            <p className="text-xs text-slate-600">
-              Saisissez le nombre d&apos;élèves en erreur par item (aucun nom d&apos;élève).
-            </p>
+            <BilingualBlock
+              text={{
+                fr: "Bilan collectif d'évaluation formative (5AEP · 32 élèves)",
+                ar: "الحصيلة الجماعية للتقويم التكويني (5AEP · 32 تلميذاً)",
+              }}
+              frClassName="text-sm font-bold text-slate-900"
+              arClassName="text-xs font-bold text-teal-800"
+            />
+            <BilingualBlock
+              text={{
+                fr: "Saisissez le nombre d'élèves en erreur par item (aucun nom d'élève).",
+                ar: "أدخلوا عدد المتعثرين في كل سؤال (بدون أسماء التلاميذ).",
+              }}
+              frClassName="text-xs text-slate-600"
+              arClassName="text-xs text-slate-600"
+            />
           </div>
           <button
             type="button"
@@ -385,7 +524,7 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
             className="no-print inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-3 py-2 text-xs font-bold text-white cursor-pointer"
           >
             <Printer className="h-3.5 w-3.5" />
-            Imprimer le bilan A4
+            <BilingualInline text={{ fr: "Imprimer le bilan A4", ar: "طباعة الحصيلة A4" }} />
           </button>
         </div>
 
@@ -395,15 +534,19 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
             const alert = errs >= 10;
             return (
               <div
-                key={label}
+                key={label.fr}
                 className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-xs ${
                   alert ? "border-amber-300 bg-amber-50/70" : "border-slate-200 bg-slate-50"
                 }`}
               >
-                <span className="font-semibold text-slate-900">{label}</span>
+                <BilingualBlock
+                  text={label}
+                  frClassName="font-semibold text-slate-900"
+                  arClassName="font-semibold text-teal-900"
+                />
                 <div className="flex items-center gap-2">
                   <span className={alert ? "font-bold text-amber-800" : "text-slate-600"}>
-                    {errs} erreurs {alert ? "· À reprendre demain" : ""}
+                    {errs} erreurs / خطأ {alert ? "· À reprendre · للمعالجة" : ""}
                   </span>
                   <input
                     type="number"
@@ -431,7 +574,7 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
       <div className="space-y-4">
         <div className="no-print grid gap-3 sm:grid-cols-2 rounded-xl border border-slate-200 bg-ivory-50 p-4">
           <label className="text-xs font-semibold text-slate-700">
-            Titre de la fiche A4
+            <span>Titre de la fiche A4 · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">عنوان الورقة</span></span>
             <input
               type="text"
               value={sheetTitle}
@@ -440,7 +583,7 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
             />
           </label>
           <label className="text-xs font-semibold text-slate-700">
-            Consigne élève
+            <span>Consigne élève · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">التعليمة</span></span>
             <input
               type="text"
               value={sheetNote}
@@ -451,14 +594,14 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
         </div>
 
         <div className="print-sheet rounded-2xl border border-slate-300 bg-white p-6 text-slate-900">
-          <div className="flex items-center justify-between border-b border-slate-300 pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-300 pb-3">
             <div>
               <h5 className="text-base font-bold">{sheetTitle}</h5>
               <p className="text-xs text-slate-600">{sheetNote}</p>
             </div>
-            <div className="text-right text-xs text-slate-600">
-              <p>Nom : ___________________</p>
-              <p>Date : ____ / ____ / 2026</p>
+            <div className="text-right text-xs text-slate-600 space-y-0.5">
+              <p>Nom / الاسم : ___________________</p>
+              <p>Date / التاريخ : ____ / ____ / 2026</p>
             </div>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 text-sm">
@@ -474,7 +617,7 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
               className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white cursor-pointer"
             >
               <Printer className="h-3.5 w-3.5" />
-              Imprimer la fiche élève
+              <BilingualInline text={{ fr: "Imprimer la fiche élève", ar: "طباعة بطاقة التلميذ" }} />
             </button>
           </div>
         </div>
@@ -488,7 +631,7 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3 text-xs font-semibold">
           <label className="flex items-center gap-2">
-            Élèves (par numéros) :
+            <span>Élèves (numéros) · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">عدد التلاميذ</span> :</span>
             <input
               type="number"
               min={6}
@@ -499,7 +642,7 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
             />
           </label>
           <label className="flex items-center gap-2">
-            Taille d&apos;îlot :
+            <span>Taille d&apos;îlot · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">حجم المجموعة</span> :</span>
             <select
               value={groupSize}
               onChange={(e) => setGroupSize(Number(e.target.value))}
@@ -507,7 +650,7 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
             >
               {[3, 4, 5, 6].map((n) => (
                 <option key={n} value={n}>
-                  {n} élèves
+                  {n} élèves / تلاميذ
                 </option>
               ))}
             </select>
@@ -519,22 +662,29 @@ export function MiniAppDemoPanel({ demoKey }: { demoKey: DemoKey }) {
           className="inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-3.5 py-2 text-xs font-bold text-white cursor-pointer"
         >
           <Shuffle className="h-3.5 w-3.5" />
-          Mélanger
+          <BilingualInline text={{ fr: "Mélanger", ar: "توزيع عشوائي" }} />
         </button>
       </div>
       <div className="grid gap-2.5 sm:grid-cols-3 md:grid-cols-4">
         {generatedGroups.map((grp, i) => (
           <div key={i} className="rounded-xl border border-slate-200 bg-white p-3">
-            <p className="text-xs font-bold text-teal-800">Îlot {i + 1}</p>
+            <p className="text-xs font-bold text-teal-800">
+              Îlot {i + 1} · <span dir="rtl" lang="ar" className="font-arabic">المجموعة {i + 1}</span>
+            </p>
             <p className="mt-1 font-mono-code text-xs text-slate-700">
-              Élèves : {grp.join(", ")}
+              #{grp.join(", #")}
             </p>
           </div>
         ))}
       </div>
-      <p className="text-[11px] text-slate-600">
-        Zéro donnée personnelle : fonctionnement anonyme par numéros de liste de classe.
-      </p>
+      <BilingualBlock
+        text={{
+          fr: "Zéro donnée personnelle : fonctionnement anonyme par numéros de liste de classe.",
+          ar: "صفر معطيات شخصية: اشتغال مجهول الهوية باستعمال أرقام اللائحة فقط.",
+        }}
+        frClassName="text-[11px] text-slate-600"
+        arClassName="text-[11px] text-teal-800"
+      />
     </div>
   );
 }

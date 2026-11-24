@@ -16,7 +16,10 @@ export async function POST(req: NextRequest) {
     const allowed = await store.checkRateLimit(`join:${ip}`, 20, 300);
     if (!allowed) {
       return NextResponse.json(
-        { error: "Trop de tentatives. Veuillez patienter quelques minutes." },
+        {
+          error:
+            "Trop de tentatives. Veuillez patienter quelques minutes. / محاولات كثيرة، يرجى الانتظار بضع دقائق.",
+        },
         { status: 429 }
       );
     }
@@ -25,7 +28,11 @@ export async function POST(req: NextRequest) {
     const parsed = joinWorkshopSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: parsed.error.issues[0]?.message ?? "Données invalides." },
+        {
+          error:
+            parsed.error.issues[0]?.message ??
+            "Données invalides. / معطيات غير صالحة.",
+        },
         { status: 400 }
       );
     }
@@ -62,7 +69,10 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("[API /participant/join]", err);
     return NextResponse.json(
-      { error: "Erreur interne lors de la connexion à l'atelier." },
+      {
+        error:
+          "Erreur interne lors de la connexion à l'atelier. / خطأ داخلي أثناء الانضمام إلى الورشة.",
+      },
       { status: 500 }
     );
   }

@@ -9,14 +9,21 @@ export async function PATCH(req: NextRequest) {
   try {
     const presenter = await verifyPresenterSession();
     if (!presenter) {
-      return NextResponse.json({ error: "Accès réservé à l'animateur." }, { status: 401 });
+      return NextResponse.json(
+        { error: "Accès réservé à l'animateur. / الولوج محصور في المنشط." },
+        { status: 401 }
+      );
     }
 
     const body = await req.json().catch(() => null);
     const parsed = presenterControlSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: parsed.error.issues[0]?.message ?? "Commande invalide." },
+        {
+          error:
+            parsed.error.issues[0]?.message ??
+            "Commande invalide. / أمر غير صالح.",
+        },
         { status: 400 }
       );
     }
@@ -52,6 +59,6 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json(snapshot);
   } catch (err) {
     console.error("[API /presenter/control]", err);
-    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur. / خطأ في الخادم." }, { status: 500 });
   }
 }

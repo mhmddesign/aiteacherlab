@@ -9,7 +9,10 @@ export async function GET() {
   } catch (err) {
     console.error("[API /workshop/state]", err);
     return NextResponse.json(
-      { error: "Impossible de charger l'état de l'atelier." },
+      {
+        error:
+          "Impossible de charger l'état de l'atelier. / تعذر تحميل وضعية الورشة.",
+      },
       { status: 500 }
     );
   }

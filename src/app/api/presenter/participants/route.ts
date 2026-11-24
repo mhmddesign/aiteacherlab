@@ -8,14 +8,20 @@ export async function DELETE(req: NextRequest) {
   try {
     const presenter = await verifyPresenterSession();
     if (!presenter) {
-      return NextResponse.json({ error: "Accès réservé à l'animateur." }, { status: 401 });
+      return NextResponse.json(
+        { error: "Accès réservé à l'animateur. / الولوج محصور في المنشط." },
+        { status: 401 }
+      );
     }
 
     const body = await req.json().catch(() => null);
     const parsed = purgeParticipantsSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Veuillez taper SUPPRIMER pour confirmer l'effacement des données." },
+        {
+          error:
+            "Veuillez taper SUPPRIMER pour confirmer l'effacement des données. / اكتبوا SUPPRIMER لتأكيد مسح المعطيات.",
+        },
         { status: 400 }
       );
     }
@@ -38,6 +44,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json(snapshot);
   } catch (err) {
     console.error("[API /presenter/participants]", err);
-    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur. / خطأ في الخادم." }, { status: 500 });
   }
 }

@@ -46,7 +46,9 @@ export function useWorkshopSync({
       return data;
     } catch {
       setConnectionMode((prev) => (prev === "realtime" ? "polling" : "offline"));
-      setError("Connexion instable — nouvelle tentative automatique en cours.");
+      setError(
+        "Connexion instable — nouvelle tentative automatique en cours. / اتصال غير مستقر — جاري إعادة المحاولة تلقائياً."
+      );
       return null;
     }
   }, [mode]);

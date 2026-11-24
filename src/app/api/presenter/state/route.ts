@@ -6,13 +6,16 @@ export async function GET() {
   try {
     const presenter = await verifyPresenterSession();
     if (!presenter) {
-      return NextResponse.json({ error: "Accès réservé à l'animateur." }, { status: 401 });
+      return NextResponse.json(
+        { error: "Accès réservé à l'animateur. / الولوج محصور في المنشط." },
+        { status: 401 }
+      );
     }
     const store = getWorkshopStore();
     const snapshot = await store.getPresenterSnapshot();
     return NextResponse.json(snapshot);
   } catch (err) {
     console.error("[API /presenter/state]", err);
-    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur. / خطأ في الخادم." }, { status: 500 });
   }
 }

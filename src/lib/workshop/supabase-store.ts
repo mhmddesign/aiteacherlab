@@ -48,7 +48,7 @@ async function getWorkshopAndState(): Promise<{
 
   if (wErr || !workshop) {
     throw new Error(
-      `Workshop '${slug}' introuvable dans Supabase. Vérifiez l'exécution des migrations SQL.`
+      `Workshop '${slug}' introuvable dans Supabase. Vérifiez l'exécution des migrations SQL. / الورشة غير موجودة في قاعدة البيانات.`
     );
   }
 
@@ -59,7 +59,9 @@ async function getWorkshopAndState(): Promise<{
     .single();
 
   if (sErr || !st) {
-    throw new Error("État workshop_state introuvable dans Supabase.");
+    throw new Error(
+      "État workshop_state introuvable dans Supabase. / حالة الورشة غير موجودة في قاعدة البيانات."
+    );
   }
 
   return {
@@ -118,7 +120,11 @@ export const supabaseStore = {
     const pinMatchesEnv = safeEqualStrings(pinHash, envPinHash);
     const pinMatchesDb = safeEqualStrings(pinHash, workshop.join_pin_hash);
     if (!pinMatchesEnv && !pinMatchesDb) {
-      return { ok: false as const, status: 401, error: "Code PIN de l'atelier incorrect." };
+      return {
+        ok: false as const,
+        status: 401,
+        error: "Code PIN de l'atelier incorrect. / رمز PIN الخاص بالورشة غير صحيح.",
+      };
     }
 
     const admin = mustAdmin();
@@ -143,7 +149,7 @@ export const supabaseStore = {
       return {
         ok: false as const,
         status: 500,
-        error: "Impossible d'enregistrer votre session.",
+        error: "Impossible d'enregistrer votre session. / تعذر تسجيل جلستكم.",
       };
     }
 
@@ -370,7 +376,7 @@ export const supabaseStore = {
       return {
         ok: false as const,
         status: 409,
-        error: "L'atelier est actuellement en pause par l'animateur.",
+        error: "L'atelier est actuellement en pause par l'animateur. / تم إيقاف الورشة مؤقتاً من طرف المنشط.",
       };
     }
     if (
@@ -380,7 +386,7 @@ export const supabaseStore = {
       return {
         ok: false as const,
         status: 409,
-        error: "Cette activité n'est pas ouverte aux réponses pour le moment.",
+        error: "Cette activité n'est pas ouverte aux réponses pour le moment. / هذا النشاط غير مفتوح للإجابات حالياً.",
       };
     }
 
@@ -392,7 +398,11 @@ export const supabaseStore = {
       .maybeSingle();
 
     if (!act) {
-      return { ok: false as const, status: 404, error: "Activité introuvable." };
+      return {
+        ok: false as const,
+        status: 404,
+        error: "Activité introuvable. / النشاط غير موجود.",
+      };
     }
 
     const isCorrect = gradeResponse(
@@ -421,13 +431,13 @@ export const supabaseStore = {
         return {
           ok: false as const,
           status: 409,
-          error: "Vous avez déjà soumis une réponse pour cet élément.",
+          error: "Vous avez déjà soumis une réponse pour cet élément. / لقد سبق لكم إرسال إجابة لهذا العنصر.",
         };
       }
       return {
         ok: false as const,
         status: 500,
-        error: "Erreur lors de l'enregistrement de la réponse.",
+        error: "Erreur lors de l'enregistrement de la réponse. / خطأ أثناء حفظ الإجابة.",
       };
     }
 
@@ -643,7 +653,9 @@ export const supabaseStore = {
       .single();
 
     if (error || !data) {
-      throw new Error("Impossible d'enregistrer la contribution dans la galerie.");
+      throw new Error(
+        "Impossible d'enregistrer la contribution dans la galerie. / تعذر حفظ المساهمة في المعرض."
+      );
     }
 
     return {

@@ -8,13 +8,19 @@ export async function POST(req: NextRequest) {
   try {
     const presenter = await verifyPresenterSession();
     if (!presenter) {
-      return NextResponse.json({ error: "Accès réservé à l'animateur." }, { status: 401 });
+      return NextResponse.json(
+        { error: "Accès réservé à l'animateur. / الولوج محصور في المنشط." },
+        { status: 401 }
+      );
     }
 
     const body = await req.json().catch(() => null);
     const parsed = resetActivitySchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Clé d'activité invalide." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Clé d'activité invalide. / مفتاح النشاط غير صالح." },
+        { status: 400 }
+      );
     }
 
     const store = getWorkshopStore();
@@ -35,6 +41,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(snapshot);
   } catch (err) {
     console.error("[API /presenter/reset-activity]", err);
-    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur. / خطأ في الخادم." }, { status: 500 });
   }
 }

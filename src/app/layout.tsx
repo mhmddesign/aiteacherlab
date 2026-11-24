@@ -33,9 +33,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Teacher Lab · Atelier Provincial de Mediouna",
+  title: "AI Teacher Lab · Atelier Provincial de Mediouna | مختبر المعلم للذكاء الاصطناعي · مديونة",
   description:
-    "Plateforme interactive de partage d'expérience et de création d'applications pédagogiques par l'IA pour les enseignantes et enseignants du primaire — Province de Mediouna.",
+    "Plateforme interactive bilingue (FR/AR) de partage d'expérience et de création d'applications pédagogiques par l'IA pour les enseignants du primaire — إقليم مديونة.",
 };
 
 export default function RootLayout({

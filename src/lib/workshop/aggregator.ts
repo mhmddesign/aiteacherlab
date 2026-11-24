@@ -1,10 +1,11 @@
 import { ACTIVITIES } from "@/content/activities";
-import type {
-  ActivityAggregate,
-  AnonymizedSubmissionSnippet,
-  OptionTally,
-  QuestionTally,
-  ShowcaseCategoryTally,
+import {
+  bi,
+  type ActivityAggregate,
+  type AnonymizedSubmissionSnippet,
+  type OptionTally,
+  type QuestionTally,
+  type ShowcaseCategoryTally,
 } from "@/content/types";
 
 export interface RawResponseRow {
@@ -91,7 +92,7 @@ export function computeAggregate(
           return {
             optionId: opt.id,
             label: opt.label,
-            shortLabel: opt.label.slice(0, 26),
+            shortLabel: bi(opt.label.fr.slice(0, 26), opt.label.ar.slice(0, 26)),
             count,
             percentage: qRows.length > 0 ? Math.round((count / denom) * 100) : 0,
           };
@@ -148,8 +149,8 @@ export function computeAggregate(
       .slice(-8)
       .reverse()
       .map((r) => {
-        const grade = typeof r.payload.grade === "string" ? r.payload.grade : "Primaire";
-        const subject = typeof r.payload.subject === "string" ? r.payload.subject : "Classe";
+        const grade = typeof r.payload.grade === "string" ? r.payload.grade : "1AEP–6AEP";
+        const subject = typeof r.payload.subject === "string" ? r.payload.subject : "Classe / القسم";
         const objective =
           typeof r.payload.objective === "string" ? r.payload.objective : "";
         const assembledPrompt =
@@ -160,7 +161,7 @@ export function computeAggregate(
           id: r.id,
           label: `${grade} · ${subject}`,
           content: assembledPrompt.slice(0, 260),
-          secondary: objective ? `Objectif : ${objective}` : undefined,
+          secondary: objective ? `Objectif / الهدف : ${objective}` : undefined,
           createdAt: r.created_at,
         };
       });
@@ -192,7 +193,7 @@ export function computeAggregate(
               : "",
         secondary:
           typeof r.payload.roughIdea === "string"
-            ? `Idée : ${r.payload.roughIdea.slice(0, 120)}`
+            ? `Idée / الفكرة : ${r.payload.roughIdea.slice(0, 120)}`
             : undefined,
         createdAt: r.created_at,
       }));
@@ -205,15 +206,15 @@ export function computeAggregate(
       optionTallies: [
         {
           optionId: "fr",
-          label: "Méta-prompt en Français",
-          shortLabel: "Français",
+          label: bi("Méta-prompt en Français", "ميتا-برومبت بالفرنسية"),
+          shortLabel: bi("Français", "الفرنسية"),
           count: frCount,
           percentage: rows.length > 0 ? Math.round((frCount / denom) * 100) : 0,
         },
         {
           optionId: "ar",
-          label: "Méta-prompt en Arabe",
-          shortLabel: "العربية",
+          label: bi("Méta-prompt en Arabe", "ميتا-برومبت بالعربية"),
+          shortLabel: bi("Arabe", "العربية"),
           count: arCount,
           percentage: rows.length > 0 ? Math.round((arCount / denom) * 100) : 0,
         },
@@ -249,8 +250,10 @@ export function computeAggregate(
           typeof r.payload.commitment === "string" ? r.payload.commitment : "";
         return {
           id: r.id,
-          label: opt?.shortLabel ?? "Engagement",
-          content: commitment || opt?.label || "Engagement confirmé",
+          label: opt
+            ? `${opt.shortLabel.fr} · ${opt.shortLabel.ar}`
+            : "Engagement · التزام",
+          content: commitment || (opt ? `${opt.label.fr} / ${opt.label.ar}` : "Engagement confirmé / تم تأكيد الالتزام"),
           createdAt: r.created_at,
         };
       });
@@ -286,12 +289,14 @@ export function summarizeSubmission(
   }
   if (activityKey === "exit-ticket") {
     const commitment = typeof payload.commitment === "string" ? payload.commitment : "";
-    return commitment || selectedOption || "Engagement";
+    return commitment || selectedOption || "Engagement / التزام";
   }
   const def = ACTIVITIES[activityKey];
   if (def?.options) {
     const opt = def.options.find((o) => o.id === selectedOption);
-    if (opt) return `${itemKey !== "main" ? `[${itemKey}] ` : ""}${opt.label}`;
+    if (opt) {
+      return `${itemKey !== "main" ? `[${itemKey}] ` : ""}${opt.label.fr} · ${opt.label.ar}`;
+    }
   }
-  return `${itemKey}: ${selectedOption ?? "Soumis"}`;
+  return `${itemKey}: ${selectedOption ?? "Soumis / تم الإرسال"}`;
 }

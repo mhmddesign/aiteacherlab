@@ -4,6 +4,7 @@ import type {
   PresenterSubmissionRow,
 } from "./types";
 import { ACTIVITIES } from "./activities";
+import { bi } from "./types";
 
 export const DEMO_TEACHER_NAMES = [
   "Khadija B.",
@@ -29,57 +30,57 @@ export const DEMO_TEACHER_NAMES = [
 export const DEMO_GALLERY_CONTRIBUTIONS: GalleryContributionRecord[] = [
   {
     id: "demo-gal-1",
-    contributorName: "Khadija B. (Démo)",
-    appTitle: "Lecteur Progressif 4AEP",
+    contributorName: "Khadija B. (Démo / تجريبي)",
+    appTitle: "Lecteur Progressif 4AEP · القارئ المتدرج",
     gradeRange: "4AEP",
-    discipline: "Français",
-    language: "Français (LTR)",
+    discipline: "Français / الفرنسية",
+    language: "Français (LTR) + Arabe (RTL)",
     learningObjective:
-      "Lire un court récit du quotidien et répondre à 5 questions de compréhension.",
+      "Lire un court récit du quotidien et répondre à 5 questions de compréhension. / قراءة نص قصير والإجابة عن 5 أسئلة فهم.",
     description:
-      "Mini-application légère projetable en classe avec texte aéré, 5 questions à choix multiples et explications immédiates.",
+      "Mini-application légère projetable en classe avec texte aéré, 5 QCM et explications immédiates. / تطبيق مصغر خفيف للعرض في القسم مع تصحيح وتفسير فوري.",
     classroomInstructions:
-      "Projeter le texte 5 minutes, faire voter la classe à main levée puis afficher la correction commentée.",
+      "Projeter le texte 5 minutes puis afficher la correction commentée. / عرض النص 5 دقائق ثم إظهار التصحيح المفسر.",
     appResource: "Prototype intégré · Section 9 (/screen)",
-    testedFeatures: ["Mode hors ligne", "Feedback immédiat", "Affichage projecteur"],
+    testedFeatures: ["Mode hors ligne / بدون إنترنت", "Feedback immédiat / تغذية فورية", "Affichage projecteur / عرض المسلاط"],
     privacyConfirmed: true,
     isDemo: true,
     createdAt: "2026-11-24T10:15:00.000Z",
   },
   {
     id: "demo-gal-2",
-    contributorName: "Youssef E. (Démo)",
-    appTitle: "Abaque & Décomposition C/D/U",
+    contributorName: "Youssef E. (Démo / تجريبي)",
+    appTitle: "Abaque & Décomposition C/D/U · معداد التفكيك",
     gradeRange: "2AEP–4AEP",
-    discipline: "Mathématiques",
-    language: "Bilingue FR/AR",
+    discipline: "Mathématiques / الرياضيات",
+    language: "Bilingue FR/AR · ثنائي اللغة",
     learningObjective:
-      "Comprendre la valeur positionnelle (centaines, dizaines, unités) par manipulation visuelle.",
+      "Comprendre la valeur positionnelle (centaines, dizaines, unités). / فهم القيمة المكانية للمئات والعشرات والوحدات.",
     description:
-      "Outil interactif sans connexion permettant de manipuler des barres et carrés sur vidéoprojecteur ou tablette partagée.",
+      "Outil interactif sans connexion permettant de manipuler des barres et carrés sur projecteur. / أداة تفاعلية بدون إنترنت للمناولة البصرية.",
     classroomInstructions:
-      "Inviter un élève au tableau pour construire le nombre demandé puis vérifier en collectif.",
+      "Inviter un élève au tableau pour construire le nombre demandé. / دعوة تلميذ لتركيب العدد المطلوب أمام القسم.",
     appResource: "Prototype intégré · Galerie Section 10",
-    testedFeatures: ["Manipulation visuelle", "3 niveaux progressifs", "Zéro compte élève"],
+    testedFeatures: ["Manipulation visuelle / مناولة بصرية", "3 niveaux progressifs / 3 مستويات", "Zéro compte élève / دون حساب تلميذ"],
     privacyConfirmed: true,
     isDemo: true,
     createdAt: "2026-11-24T10:30:00.000Z",
   },
   {
     id: "demo-gal-3",
-    contributorName: "Amina H. (Démo)",
-    appTitle: "Cartes Syllabes & Sons (TaRL)",
+    contributorName: "Amina H. (Démo / تجريبي)",
+    appTitle: "Cartes Syllabes & Sons · بطاقات المقاطع الصوتية",
     gradeRange: "1AEP–3AEP",
-    discipline: "Langue Arabe",
-    language: "Arabe (RTL)",
+    discipline: "Langue Arabe / اللغة العربية",
+    language: "Arabe (RTL) · العربية",
     learningObjective:
-      "Consolider la reconnaissance des voyelles courtes (فتحة، ضمة، كسرة) en début de remédiation.",
+      "Consolider les voyelles courtes (فتحة، ضمة، كسرة). / ترسيخ قراءة الحركات القصيرة في بداية الدعم.",
     description:
-      "Cartes interactives droite-à-gauche grand format pour rituel de 10 minutes en début de séance.",
+      "Cartes interactives droite-à-gauche grand format pour rituel de 10 minutes. / بطاقات تفاعلية من اليمين لليسار بحجم كبير.",
     classroomInstructions:
-      "Lire collectivement puis faire passer les groupes selon leur niveau (Base / Intermédiaire / Défi).",
+      "Lire collectivement puis travailler selon les 3 paliers. / قراءة جماعية ثم عمل وفق المستويات الثلاثة.",
     appResource: "Prototype intégré · Galerie Section 10",
-    testedFeatures: ["Support RTL arabe", "Lisible au fond de la classe", "Imprimable"],
+    testedFeatures: ["Support RTL arabe / دعم RTL", "Lisible au fond de la classe / مقروء عن بعد", "Imprimable / قابل للطباعة"],
     privacyConfirmed: true,
     isDemo: true,
     createdAt: "2026-11-24T10:45:00.000Z",
@@ -94,7 +95,7 @@ export const DEMO_SUBMISSIONS_BY_ACTIVITY: Record<string, PresenterSubmissionRow
       itemKey: "main",
       selectedOption: "diff",
       isCorrect: null,
-      summary: "Différenciation pédagogique",
+      summary: "Différenciation pédagogique / التفريق البيداغوجي",
       createdAt: "2026-11-24T09:10:00.000Z",
     },
     {
@@ -103,7 +104,7 @@ export const DEMO_SUBMISSIONS_BY_ACTIVITY: Record<string, PresenterSubmissionRow
       itemKey: "main",
       selectedOption: "prep",
       isCorrect: null,
-      summary: "Préparation des cours",
+      summary: "Préparation des cours / تحضير الدروس والجذاذات",
       createdAt: "2026-11-24T09:11:00.000Z",
     },
   ],
@@ -172,7 +173,7 @@ export const DEMO_SUBMISSIONS_BY_ACTIVITY: Record<string, PresenterSubmissionRow
       itemKey: "main",
       selectedOption: "meta",
       isCorrect: null,
-      summary: "Utiliser le méta-prompt en arabe pour préparer mes séances de remédiation en décodage.",
+      summary: "استعمال الميتا-برومبت بالعربية لتحضير حصص الدعم في القراءة بالمستوى الثاني.",
       createdAt: "2026-11-24T11:57:00.000Z",
     },
     {
@@ -269,7 +270,7 @@ export function getDemoAggregate(
             return {
               optionId: opt.id,
               label: opt.label,
-              shortLabel: opt.label.slice(0, 26),
+              shortLabel: bi(opt.label.fr.slice(0, 26), opt.label.ar.slice(0, 26)),
               count: c,
               percentage: Math.round((c / total) * 100),
             };
@@ -291,7 +292,7 @@ export function getDemoAggregate(
           label: "4AEP · Français",
           content:
             "Rôle : Conseiller pédagogique primaire. Tâche : Mini-récit de 8 lignes + 5 questions graduées (Base / Intermédiaire / Défi).",
-          secondary: "Objectif : Comprendre la chronologie d'un récit",
+          secondary: "Objectif / الهدف : Comprendre la chronologie d'un récit",
           createdAt: "2026-11-24T09:42:00.000Z",
         },
         {
@@ -299,7 +300,7 @@ export function getDemoAggregate(
           label: "3AEP · Mathématiques",
           content:
             "Rôle : Enseignant du primaire. Tâche : 6 exercices de décomposition C/D/U avec manipulation visuelle et fiche imprimable.",
-          secondary: "Objectif : Décomposer les nombres à 3 chiffres",
+          secondary: "Objectif / الهدف : Décomposer les nombres à 3 chiffres",
           createdAt: "2026-11-24T09:44:00.000Z",
         },
         {
@@ -307,7 +308,7 @@ export function getDemoAggregate(
           label: "2AEP · اللغة العربية",
           content:
             "الدور: أستاذ التعليم الابتدائي. المهمة: نص قرائي قصير مشكول مع 3 أسئلة فهم وتدريب على الحركات القصيرة.",
-          secondary: "الهدف: التمييز بين الفتحة والمد بالألف",
+          secondary: "Objectif / الهدف : التمييز بين الفتحة والمد بالألف",
           createdAt: "2026-11-24T09:46:00.000Z",
         },
       ],
@@ -321,8 +322,20 @@ export function getDemoAggregate(
       totalRespondents: 14,
       totalSubmissions: 14,
       optionTallies: [
-        { optionId: "fr", label: "Méta-prompt en Français", shortLabel: "Français", count: 8, percentage: 57 },
-        { optionId: "ar", label: "Méta-prompt en Arabe", shortLabel: "العربية", count: 6, percentage: 43 },
+        {
+          optionId: "fr",
+          label: bi("Méta-prompt en Français", "ميتا-برومبت بالفرنسية"),
+          shortLabel: bi("Français", "الفرنسية"),
+          count: 8,
+          percentage: 57,
+        },
+        {
+          optionId: "ar",
+          label: bi("Méta-prompt en Arabe", "ميتا-برومبت بالعربية"),
+          shortLabel: bi("Arabe", "العربية"),
+          count: 6,
+          percentage: 43,
+        },
       ],
       recentSnippets: [
         {
@@ -387,16 +400,19 @@ export function getDemoAggregate(
       resetGeneration: 1,
       totalRespondents: total,
       totalSubmissions: total,
-      optionTallies: (def.options ?? []).map((opt) => ({
-        optionId: opt.id,
-        label: opt.label,
-        shortLabel: opt.shortLabel,
-        count: counts[opt.id] ?? 0,
-        percentage: Math.round(((counts[opt.id] ?? 0) / total) * 100),
-      })),
+      optionTallies: (def.options ?? []).map((opt) => {
+        const count = counts[opt.id] ?? 0;
+        return {
+          optionId: opt.id,
+          label: opt.label,
+          shortLabel: opt.shortLabel,
+          count,
+          percentage: Math.round((count / total) * 100),
+        };
+      }),
       recentSnippets: (DEMO_SUBMISSIONS_BY_ACTIVITY["exit-ticket"] ?? []).map((s) => ({
         id: s.id,
-        label: s.selectedOption ?? "Engagement",
+        label: s.selectedOption ?? "Engagement / التزام",
         content: s.summary,
         createdAt: s.createdAt,
       })),

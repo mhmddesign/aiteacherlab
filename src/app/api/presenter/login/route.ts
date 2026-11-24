@@ -16,7 +16,10 @@ export async function POST(req: NextRequest) {
     const allowed = await store.checkRateLimit(`presenter_login:${ip}`, 10, 300);
     if (!allowed) {
       return NextResponse.json(
-        { error: "Trop de tentatives. Veuillez patienter 5 minutes." },
+        {
+          error:
+            "Trop de tentatives. Veuillez patienter 5 minutes. / محاولات كثيرة، يرجى الانتظار 5 دقائق.",
+        },
         { status: 429 }
       );
     }
@@ -25,7 +28,11 @@ export async function POST(req: NextRequest) {
     const parsed = presenterLoginSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: parsed.error.issues[0]?.message ?? "Identifiant invalide." },
+        {
+          error:
+            parsed.error.issues[0]?.message ??
+            "Identifiant invalide. / معرف غير صالح.",
+        },
         { status: 400 }
       );
     }
@@ -33,7 +40,7 @@ export async function POST(req: NextRequest) {
     const expected = getFacilitatorPasscode();
     if (!safeEqualStrings(parsed.data.passcode, expected)) {
       return NextResponse.json(
-        { error: "Code animateur incorrect." },
+        { error: "Code animateur incorrect. / رمز المنشط غير صحيح." },
         { status: 401 }
       );
     }
@@ -45,6 +52,6 @@ export async function POST(req: NextRequest) {
     return res;
   } catch (err) {
     console.error("[API /presenter/login]", err);
-    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur. / خطأ في الخادم." }, { status: 500 });
   }
 }

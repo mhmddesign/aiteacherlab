@@ -7,6 +7,7 @@ import {
   buildGroupPromptFr,
   GROUP_PROJECTS,
 } from "@/content/gallery";
+import { BilingualBlock, BilingualInline } from "@/components/ui/Bilingual";
 import { CopyPromptButton } from "@/components/ui/CopyPromptButton";
 
 export function GroupProjectsBoard() {
@@ -14,16 +15,20 @@ export function GroupProjectsBoard() {
   const project = GROUP_PROJECTS.find((g) => g.id === selectedId) ?? GROUP_PROJECTS[0];
 
   const [customGrade, setCustomGrade] = useState(project.defaultGrade);
-  const [customSubject, setCustomSubject] = useState(project.defaultSubject);
-  const [customCompetency, setCustomCompetency] = useState(project.defaultCompetency);
+  const [customSubject, setCustomSubject] = useState(
+    `${project.defaultSubject.fr} / ${project.defaultSubject.ar}`
+  );
+  const [customCompetency, setCustomCompetency] = useState(
+    `${project.defaultCompetency.fr} / ${project.defaultCompetency.ar}`
+  );
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
 
   const selectGroup = (id: string) => {
     const next = GROUP_PROJECTS.find((g) => g.id === id) ?? GROUP_PROJECTS[0];
     setSelectedId(id);
     setCustomGrade(next.defaultGrade);
-    setCustomSubject(next.defaultSubject);
-    setCustomCompetency(next.defaultCompetency);
+    setCustomSubject(`${next.defaultSubject.fr} / ${next.defaultSubject.ar}`);
+    setCustomCompetency(`${next.defaultCompetency.fr} / ${next.defaultCompetency.ar}`);
   };
 
   const frPrompt = buildGroupPromptFr(project, customGrade, customSubject, customCompetency);
@@ -32,43 +37,62 @@ export function GroupProjectsBoard() {
   return (
     <div className="space-y-4">
       <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
-        {GROUP_PROJECTS.map((g) => (
-          <button
-            key={g.id}
-            type="button"
-            onClick={() => selectGroup(g.id)}
-            className={`rounded-2xl border p-3.5 text-left transition cursor-pointer ${
-              g.id === project.id
-                ? "border-teal-600 bg-teal-600 text-white shadow-sm"
-                : "border-slate-200 bg-white text-slate-900 hover:border-teal-400"
-            }`}
-          >
-            <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider opacity-85">
-              <Users className="h-3.5 w-3.5" />
-              <span>{g.groupLabel}</span>
-            </div>
-            <p className="mt-1 text-sm font-bold leading-snug">{g.title}</p>
-          </button>
-        ))}
+        {GROUP_PROJECTS.map((g) => {
+          const isSelected = g.id === project.id;
+          return (
+            <button
+              key={g.id}
+              type="button"
+              onClick={() => selectGroup(g.id)}
+              className={`rounded-2xl border p-3.5 text-left transition cursor-pointer ${
+                isSelected
+                  ? "border-teal-600 bg-teal-600 text-white shadow-sm"
+                  : "border-slate-200 bg-white text-slate-900 hover:border-teal-400"
+              }`}
+            >
+              <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider opacity-90">
+                <Users className="h-3.5 w-3.5 shrink-0" />
+                <BilingualInline text={g.groupLabel} />
+              </div>
+              <BilingualBlock
+                text={g.title}
+                className="mt-1.5"
+                frClassName="text-sm font-bold leading-snug"
+                arClassName={`text-xs font-bold leading-snug ${isSelected ? "text-teal-50" : "text-teal-900"}`}
+              />
+            </button>
+          );
+        })}
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
-          <div>
-            <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-900 border border-amber-200">
-              Prototype réalisable en 25 min · Objectif testable, pas produit fini
+          <div className="space-y-2">
+            <span className="inline-block rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-900 border border-amber-200">
+              <BilingualInline
+                text={{
+                  fr: "Prototype réalisable en 25 min · Objectif testable, pas produit fini",
+                  ar: "نموذج أولي في 25 دقيقة · قابل للتجريب وليس منتجاً نهائياً",
+                }}
+              />
             </span>
-            <h4 className="mt-2 font-display text-xl font-bold text-slate-900">
-              {project.title}
-            </h4>
-            <p className="mt-1 text-xs sm:text-sm text-slate-600">{project.expectedOutcome}</p>
+            <BilingualBlock
+              text={project.title}
+              frClassName="font-display text-xl font-bold text-slate-900"
+              arClassName="text-lg font-bold text-teal-900"
+            />
+            <BilingualBlock
+              text={project.expectedOutcome}
+              frClassName="text-xs sm:text-sm text-slate-600"
+              arClassName="text-xs sm:text-sm text-slate-700"
+            />
           </div>
         </div>
 
         {/* Customization bar */}
         <div className="grid gap-3 sm:grid-cols-3 rounded-xl border border-teal-200 bg-ivory-50 p-4">
           <label className="text-xs font-semibold text-slate-800">
-            Adapter le niveau (1AEP–6AEP)
+            <span>Adapter le niveau · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">المستوى (1AEP–6AEP)</span></span>
             <input
               type="text"
               value={customGrade}
@@ -77,7 +101,7 @@ export function GroupProjectsBoard() {
             />
           </label>
           <label className="text-xs font-semibold text-slate-800">
-            Adapter la discipline
+            <span>Adapter la discipline · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">المادة الدراسية</span></span>
             <input
               type="text"
               value={customSubject}
@@ -86,7 +110,7 @@ export function GroupProjectsBoard() {
             />
           </label>
           <label className="text-xs font-semibold text-slate-800">
-            Adapter la compétence ciblée
+            <span>Adapter la compétence · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">الكفاية المستهدفة</span></span>
             <input
               type="text"
               value={customCompetency}
@@ -98,13 +122,13 @@ export function GroupProjectsBoard() {
 
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-xl border border-slate-800 bg-[#0B1426] p-4 text-slate-100">
-            <div className="mb-2 flex items-center justify-between">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs font-bold uppercase text-cyan-300">
-                Prompt réutilisable · Français
+                Prompt réutilisable · Français · توجيه بالفرنسية
               </span>
-              <CopyPromptButton text={frPrompt} label="Copier FR" />
+              <CopyPromptButton text={frPrompt} label="Copier FR" labelAr="نسخ FR" />
             </div>
-            <pre className="font-mono-code whitespace-pre-wrap text-[11px] leading-relaxed">
+            <pre dir="ltr" className="font-mono-code whitespace-pre-wrap text-[11px] leading-relaxed">
               {frPrompt}
             </pre>
           </div>
@@ -114,12 +138,12 @@ export function GroupProjectsBoard() {
             lang="ar"
             className="font-arabic rounded-xl border border-teal-300 bg-teal-50/60 p-4 text-slate-900"
           >
-            <div className="mb-2 flex items-center justify-between">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs font-bold text-teal-900">
-                نموذج Prompt جاهز · العربية
+                نموذج Prompt جاهز · العربية · Prompt Arabe
               </span>
               <div dir="ltr">
-                <CopyPromptButton text={arPrompt} label="Copier AR" />
+                <CopyPromptButton text={arPrompt} label="Copier AR" labelAr="نسخ AR" />
               </div>
             </div>
             <pre className="font-arabic whitespace-pre-wrap text-xs leading-relaxed">
@@ -129,26 +153,35 @@ export function GroupProjectsBoard() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <h5 className="mb-2 flex items-center gap-1.5 text-xs font-bold text-slate-900">
-              <ClipboardList className="h-4 w-4 text-teal-700" />
-              Spécification technique simple
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+            <h5 className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+              <ClipboardList className="h-4 w-4 text-teal-700 shrink-0" />
+              <BilingualInline
+                text={{
+                  fr: "Spécification technique",
+                  ar: "المواصفات التقنية المبسطة",
+                }}
+              />
             </h5>
-            <ul className="space-y-1.5 text-xs text-slate-700">
+            <ul className="space-y-2 text-xs text-slate-700">
               {project.techSpec.map((t) => (
-                <li key={t}>• {t}</li>
+                <li key={t.fr}>
+                  <BilingualBlock text={t} />
+                </li>
               ))}
             </ul>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <h5 className="mb-2 flex items-center gap-1.5 text-xs font-bold text-slate-900">
-              <CheckSquare className="h-4 w-4 text-cyan-700" />
-              Checklist de test
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+            <h5 className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+              <CheckSquare className="h-4 w-4 text-cyan-700 shrink-0" />
+              <BilingualInline
+                text={{ fr: "Checklist de test", ar: "لائحة التحقق والاختبار" }}
+              />
             </h5>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {project.testingChecklist.map((item) => {
-                const k = `${project.id}:test:${item}`;
+                const k = `${project.id}:test:${item.fr}`;
                 return (
                   <label key={k} className="flex items-start gap-2 text-xs text-slate-700 cursor-pointer">
                     <input
@@ -157,23 +190,28 @@ export function GroupProjectsBoard() {
                       onChange={(e) =>
                         setCheckedItems((prev) => ({ ...prev, [k]: e.target.checked }))
                       }
-                      className="mt-0.5 accent-teal-600"
+                      className="mt-1 accent-teal-600"
                     />
-                    <span>{item}</span>
+                    <BilingualBlock text={item} />
                   </label>
                 );
               })}
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <h5 className="mb-2 flex items-center gap-1.5 text-xs font-bold text-slate-900">
-              <CheckSquare className="h-4 w-4 text-amber-600" />
-              Checklist de démonstration (2 min)
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+            <h5 className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+              <CheckSquare className="h-4 w-4 text-amber-600 shrink-0" />
+              <BilingualInline
+                text={{
+                  fr: "Checklist de démonstration (2 min)",
+                  ar: "لائحة العرض (دقيقتان)",
+                }}
+              />
             </h5>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {project.demoChecklist.map((item) => {
-                const k = `${project.id}:demo:${item}`;
+                const k = `${project.id}:demo:${item.fr}`;
                 return (
                   <label key={k} className="flex items-start gap-2 text-xs text-slate-700 cursor-pointer">
                     <input
@@ -182,9 +220,9 @@ export function GroupProjectsBoard() {
                       onChange={(e) =>
                         setCheckedItems((prev) => ({ ...prev, [k]: e.target.checked }))
                       }
-                      className="mt-0.5 accent-amber-600"
+                      className="mt-1 accent-amber-600"
                     />
-                    <span>{item}</span>
+                    <BilingualBlock text={item} />
                   </label>
                 );
               })}
