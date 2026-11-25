@@ -18,7 +18,7 @@ interface ExitTicketWidgetProps {
   aggregate: ActivityAggregate | null;
   myResponses?: ParticipantResponseItem[];
   canSubmit: boolean;
-  onSubmitted?: () => void;
+  onSubmitted?: (savedResponse?: ParticipantResponseItem) => void;
 }
 
 export function ExitTicketWidget({
@@ -76,7 +76,7 @@ export function ExitTicketWidget({
         );
         return;
       }
-      onSubmitted?.();
+      onSubmitted?.(data.response as ParticipantResponseItem | undefined);
     } catch {
       setError("Problème de connexion. Réessayez. / مشكل في الاتصال، حاولوا مجدداً.");
     } finally {
@@ -164,7 +164,7 @@ export function ExitTicketWidget({
               <Send className="h-3.5 w-3.5" />
               <span>
                 {submitting ? (
-                  "Envoi... / إرسال..."
+                  "Enregistrement... / جاري الحفظ..."
                 ) : (
                   <BilingualInline
                     text={{ fr: "Envoyer mon engagement", ar: "إرسال التزامي" }}

@@ -62,3 +62,21 @@
   - `node scripts/verify-api.mjs http://localhost:3000` : **Succès** (`ALL API SECURITY & WORKFLOW ASSERTIONS PASSED!`).
   - `node scripts/verify-e2e.mjs http://localhost:3000` : **Succès** (`ALL BILINGUAL 4-CONTEXT MULTI-SESSION E2E VERIFICATIONS PASSED WITH ZERO PAGE ERRORS!`).
   - `node --env-file=.env.local scripts/verify-supabase.mjs` : **Non exécuté** (clés Supabase absentes de `.env.local`, projet dédié non encore créé/relié).
+
+## Refonte « Présentation d'abord », Interactions Instantanées & Correction Realtime (`2026-11-25`)
+
+- **Diagnostic Supabase & Realtime (`atuqqdjiqkuhykkgosnx`) :**
+  - Vérification via MCP Supabase que les privilèges `service_role` (`5224ad5`), les 8 tables publiques et `has_realtime_channel_grant` sont actifs.
+  - Cause réelle de l'affichage `Synchro HTTP` identifiée dans `realtime_logs` : `createBrowserClient` (`@supabase/ssr`) imposait un callback `accessToken` lisant `auth.getSession()` (`null`), écrasant `realtime.setAuth()` par la clé `anon` (`Unauthorized: You do not have permissions to read from this Channel topic`).
+  - Correctif : client navigateur dédié `createRealtimeBrowserClient(getAccessToken)` (`src/lib/supabase/browser.ts`), cache token + reconnexion exponentielle automatique (`src/lib/realtime/client.ts`) et mot de passe déterministe HMAC dans `src/lib/realtime/server.ts`.
+- **Latence critique & SSR (`/presenter`, API) :**
+  - Diffusions Realtime déplacées hors chemin critique avec `after()` de `next/server` dans `/api/participant/respond`, `/api/participant/join` et `/api/presenter/control` (retour minimal `{ ok, state }`).
+  - `/presenter` SSR n'expose plus `workshopPinHint` avant authentification (`src/app/presenter/page.tsx`).
+- **Interface centrée sur la présentation & UI optimiste :**
+  - Page d'accueil `/` allégée (2 actions principales + lien `/screen`), `/presenter` recentré sur la diapositive avec tiroirs à la demande (`Plan`, `Notes`, `Tableau de bord`), raccourcis clavier complets (`←`/`→`/`Espace`/`PageUp`/`PageDown`/`Home`/`End`/`O`/`N`/`F`/`P`/`Q`/`R`), file ordonnée de navigation (`currentIdxRef`) et compositions éditoriales (`SlideRenderer.tsx`, `@media (prefers-reduced-motion: reduce)`).
+  - Réactions instantanées optimistes + annulation en cas d'erreur avec bouton **Réessayer** sur tous les widgets participants et suppression des rechargements `/api/participant/me` après réponse.
+- **Vérifications observées (`fix/presentation-first-instant-interactions`) :**
+  - `npm.cmd run typecheck` & `npm.cmd run lint` : **Succès** (`0` erreur).
+  - `npm.cmd run build` : **Succès** (`Next.js 16.4.6`, `18/18` routes).
+  - `node scripts/verify-api.mjs http://localhost:3000` : **Succès**.
+  - `node scripts/verify-e2e.mjs http://localhost:3000` : **Succès** sur `1440×900`, `1366×768`, `1920×1080` et `390×844` — latence locale clic réponse `86 ms`, clic navigation `123 ms`, `PATCH /api/presenter/control` `7–36 ms`, `POST /api/participant/respond` `15–42 ms`, `0` appel `/api/participant/me` supplémentaire pendant le vote, convergence 5× `ArrowRight` et rollback réseau vérifiés.

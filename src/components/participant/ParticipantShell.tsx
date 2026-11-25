@@ -53,8 +53,26 @@ export function ParticipantShell({
     }
   }, [refresh]);
 
+  const handleResponseSaved = useCallback(
+    (saved?: ParticipantResponseItem) => {
+      if (saved) {
+        setMyResponses((prev) => [
+          ...prev.filter((item) => item.itemKey !== saved.itemKey),
+          saved,
+        ]);
+        return;
+      }
+      void refreshMe();
+    },
+    [refreshMe]
+  );
+
+  const participantId = participant?.id ?? null;
+  const activeActivityKey = activeSnapshot.state.activeActivityKey;
+  const isActivityRevealed = activeSnapshot.state.activityStatus === "revealed";
+
   useEffect(() => {
-    if (!participant) return;
+    if (!participantId) return;
     let active = true;
     fetch("/api/participant/me", { cache: "no-store" })
       .then(async (res) => {
@@ -74,12 +92,7 @@ export function ParticipantShell({
     return () => {
       active = false;
     };
-  }, [
-    participant,
-    activeSnapshot.state.activeActivityKey,
-    activeSnapshot.state.activityStatus,
-    activeSnapshot.state.stateVersion,
-  ]);
+  }, [participantId, activeActivityKey, isActivityRevealed]);
 
   useEffect(() => {
     if (!participant) return;
@@ -306,7 +319,7 @@ export function ParticipantShell({
           totalParticipants={activeSnapshot.totalParticipants}
           myResponses={myResponses}
           participantName={participant.displayName}
-          onSubmitted={refreshMe}
+          onSubmitted={handleResponseSaved}
         />
       </main>
     </div>

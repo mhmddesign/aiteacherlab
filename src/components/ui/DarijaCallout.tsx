@@ -12,20 +12,23 @@ interface DarijaCalloutProps {
 export function DarijaCallout({ title, fr, arabic, large = false }: DarijaCalloutProps) {
   return (
     <div
-      className={`rounded-2xl border border-teal-500/25 bg-teal-50/85 text-slate-900 shadow-xs space-y-2.5 ${
-        large ? "p-6" : "p-4"
+      className={`border-l-4 border-teal-600 bg-[#F4F0E8]/70 rounded-r-xl text-slate-900 space-y-2 ${
+        large ? "px-6 py-4" : "px-4 py-3"
       }`}
     >
-      <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-teal-900">
-        <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-teal-600" />
+      <div className="text-[11px] font-bold uppercase tracking-wider text-teal-800">
         <BilingualInline text={title} />
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 md:items-start">
+      <div className="grid gap-4 md:grid-cols-2 md:items-start">
         <p
           dir="ltr"
           lang="fr"
-          className={large ? "text-base leading-relaxed text-slate-800" : "text-xs sm:text-sm leading-relaxed text-slate-800"}
+          className={
+            large
+              ? "text-base leading-relaxed text-slate-800"
+              : "text-xs sm:text-sm leading-relaxed text-slate-800"
+          }
         >
           {fr}
         </p>

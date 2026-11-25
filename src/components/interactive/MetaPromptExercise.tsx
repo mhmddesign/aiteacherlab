@@ -17,7 +17,7 @@ interface MetaPromptExerciseProps {
   aggregate: ActivityAggregate | null;
   myResponses?: ParticipantResponseItem[];
   canSubmit: boolean;
-  onSubmitted?: () => void;
+  onSubmitted?: (savedResponse?: ParticipantResponseItem) => void;
 }
 
 export function MetaPromptExercise({
@@ -93,7 +93,7 @@ Avant de générer le contenu ou le prototype :
         );
         return;
       }
-      onSubmitted?.();
+      onSubmitted?.(data.response as ParticipantResponseItem | undefined);
     } catch {
       setError("Problème de connexion. Réessayez. / مشكل في الاتصال، أعيدوا المحاولة.");
     } finally {
@@ -209,7 +209,7 @@ Avant de générer le contenu ou le prototype :
               <Send className="h-3.5 w-3.5" />
               <span>
                 {submitting ? (
-                  "Envoi... / إرسال..."
+                  "Enregistrement... / جاري الحفظ..."
                 ) : (
                   <BilingualInline text={{ fr: "Partager", ar: "مشاركة" }} />
                 )}

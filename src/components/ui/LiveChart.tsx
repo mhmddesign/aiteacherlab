@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useSyncExternalStore } from "react";
+import { useReducedMotion } from "motion/react";
 import {
   Bar,
   BarChart,
@@ -84,6 +85,7 @@ interface OptionBarChartProps {
 
 export function OptionBarChart({ data, height = 300, large = false }: OptionBarChartProps) {
   const isClient = useIsClient();
+  const prefersReducedMotion = useReducedMotion();
   const labelMap = new Map<string, { fr: string; ar: string }>();
 
   const chartData = data.map((item) => {
@@ -137,7 +139,13 @@ export function OptionBarChart({ data, height = 300, large = false }: OptionBarC
                 fontSize: "12px",
               }}
             />
-            <Bar dataKey="count" radius={[0, 8, 8, 0]} barSize={large ? 28 : 22}>
+            <Bar
+              dataKey="count"
+              radius={[0, 8, 8, 0]}
+              barSize={large ? 28 : 22}
+              isAnimationActive={!prefersReducedMotion}
+              animationDuration={320}
+            >
               {chartData.map((entry, idx) => (
                 <Cell key={entry.optionId} fill={PALETTE[idx % PALETTE.length]} />
               ))}
@@ -164,6 +172,7 @@ export function ShowcaseGroupedChart({
   height = 330,
 }: ShowcaseGroupedChartProps) {
   const isClient = useIsClient();
+  const prefersReducedMotion = useReducedMotion();
   const groups = ["group1", "group2", "group3", "group4"];
   const groupLabels: Record<string, string> = {
     group1: "G1 · Lecture / القراءة",
@@ -202,18 +211,24 @@ export function ShowcaseGroupedChart({
               name="Plus utile · الأكثر فائدة"
               fill="#0D9488"
               radius={[6, 6, 0, 0]}
+              isAnimationActive={!prefersReducedMotion}
+              animationDuration={320}
             />
             <Bar
               dataKey="best_pedagogy"
               name="Meilleure pédagogie · أفضل بيداغوجيا"
               fill="#06B6D4"
               radius={[6, 6, 0, 0]}
+              isAnimationActive={!prefersReducedMotion}
+              animationDuration={320}
             />
             <Bar
               dataKey="most_creative"
               name="Plus créative · الأكثر إبداعاً"
               fill="#D97706"
               radius={[6, 6, 0, 0]}
+              isAnimationActive={!prefersReducedMotion}
+              animationDuration={320}
             />
           </BarChart>
         </ResponsiveContainer>

@@ -19,7 +19,13 @@ interface QuizWidgetProps {
   myResponses?: ParticipantResponseItem[];
   canSubmit: boolean;
   large?: boolean;
-  onSubmitted?: () => void;
+  onSubmitted?: (savedResponse?: ParticipantResponseItem) => void;
+}
+
+interface QuestionLocalState {
+  optionId: string;
+  status: "saving" | "saved" | "error";
+  error?: string;
 }
 
 export function QuizWidget({
@@ -34,8 +40,7 @@ export function QuizWidget({
   onSubmitted,
 }: QuizWidgetProps) {
   const activity = getActivityByKey(activityKey);
-  const [pendingKey, setPendingKey] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [localByQuestion, setLocalByQuestion] = useState<Record<string, QuestionLocalState>>({});
 
   if (!activity || !activity.questions) return null;
 
@@ -43,11 +48,15 @@ export function QuizWidget({
   const isOpen = status === "open" && !isPaused;
 
   const handleAnswer = async (questionId: string, optionId: string) => {
-    if (!canSubmit || !isOpen || pendingKey) return;
-    if (myResponses.some((r) => r.itemKey === questionId)) return;
+    const existing = myResponses.find((r) => r.itemKey === questionId);
+    const currentLocal = localByQuestion[questionId];
+    if (!canSubmit || !isOpen || existing || currentLocal?.status === "saving") return;
 
-    setPendingKey(questionId);
-    setError(null);
+    setLocalByQuestion((prev) => ({
+      ...prev,
+      [questionId]: { optionId, status: "saving" },
+    }));
+
     try {
       const res = await fetch("/api/participant/respond", {
         method: "POST",
@@ -60,22 +69,42 @@ export function QuizWidget({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(
-          data.error ??
-            "Impossible d'enregistrer cette réponse. / تعذر حفظ هذه الإجابة."
-        );
+        setLocalByQuestion((prev) => ({
+          ...prev,
+          [questionId]: {
+            optionId,
+            status: "error",
+            error:
+              data.error ??
+              "Impossible d'enregistrer cette réponse. / تعذر حفظ هذه الإجابة.",
+          },
+        }));
         return;
       }
-      onSubmitted?.();
+      setLocalByQuestion((prev) => ({
+        ...prev,
+        [questionId]: { optionId, status: "saved" },
+      }));
+      onSubmitted?.(data.response as ParticipantResponseItem | undefined);
     } catch {
-      setError(
-        "Problème réseau : veuillez réessayer pour enregistrer votre réponse. / مشكل في الشبكة: يرجى المحاولة مرة أخرى."
-      );
-    } finally {
-      setPendingKey(null);
+      setLocalByQuestion((prev) => ({
+        ...prev,
+        [questionId]: {
+          optionId,
+          status: "error",
+          error:
+            "Problème réseau : veuillez réessayer. / مشكل في الشبكة: يرجى المحاولة مرة أخرى.",
+        },
+      }));
     }
   };
 
+  const answeredCount = new Set([
+    ...myResponses.map((r) => r.itemKey),
+    ...Object.entries(localByQuestion)
+      .filter(([, s]) => s.status === "saving" || s.status === "saved")
+      .map(([k]) => k),
+  ]).size;
   const myCorrectCount = myResponses.filter((r) => r.isCorrect).length;
 
   return (
@@ -83,9 +112,9 @@ export function QuizWidget({
       {canSubmit && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold">
           <span className="text-slate-700">
-            Progression : {myResponses.length} / {activity.questions.length} ·{" "}
+            Progression : {answeredCount} / {activity.questions.length} ·{" "}
             <span dir="rtl" lang="ar" className="font-arabic text-teal-800">
-              التقدم: {myResponses.length} / {activity.questions.length}
+              التقدم: {answeredCount} / {activity.questions.length}
             </span>
           </span>
           {isRevealed ? (
@@ -96,7 +125,7 @@ export function QuizWidget({
               </span>
             </span>
           ) : isOpen ? (
-            <span className="text-cyan-700">
+            <span className="text-teal-700">
               <BilingualInline
                 text={{
                   fr: "Répondez question par question",
@@ -117,16 +146,16 @@ export function QuizWidget({
         </div>
       )}
 
-      {error && (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-xs font-medium text-amber-900">
-          {error}
-        </div>
-      )}
-
       <div className={`grid gap-4 ${large ? "lg:grid-cols-2" : ""}`}>
         {activity.questions.map((q, idx) => {
           const mine = myResponses.find((r) => r.itemKey === q.id);
+          const localState = localByQuestion[q.id];
+          const isSaving = !mine && localState?.status === "saving";
+          const isSaved = Boolean(mine) || localState?.status === "saved";
+          const hasError = !mine && localState?.status === "error";
+          const chosenOptionId = mine?.selectedOption ?? (isSaving || localState?.status === "saved" ? localState?.optionId : undefined);
           const tally = aggregate?.questionTallies?.find((t) => t.questionId === q.id);
+          const questionLocked = !canSubmit || !isOpen || Boolean(mine) || isSaving;
 
           return (
             <div
@@ -135,9 +164,25 @@ export function QuizWidget({
             >
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div className="w-full space-y-1.5">
-                  <span className="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700">
-                    Q{idx + 1} · س{idx + 1}
-                  </span>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700">
+                      Q{idx + 1} · س{idx + 1}
+                    </span>
+                    {canSubmit && (
+                      <span className="text-[11px] font-semibold" aria-live="polite">
+                        {isSaving ? (
+                          <span className="text-teal-700">
+                            <BilingualInline text={{ fr: "Enregistrement...", ar: "جاري الحفظ..." }} />
+                          </span>
+                        ) : isSaved && !isRevealed ? (
+                          <span className="inline-flex items-center gap-1 text-teal-700">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            <BilingualInline text={{ fr: "Réponse enregistrée", ar: "تم حفظ الإجابة" }} />
+                          </span>
+                        ) : null}
+                      </span>
+                    )}
+                  </div>
                   <BilingualBlock
                     text={q.prompt}
                     frClassName={`font-bold text-slate-900 ${large ? "text-lg leading-snug" : "text-sm leading-snug"}`}
@@ -147,7 +192,7 @@ export function QuizWidget({
                     <p
                       dir="rtl"
                       lang="ar"
-                      className="font-arabic text-xs font-medium text-cyan-800"
+                      className="font-arabic text-xs font-medium text-teal-800"
                     >
                       {q.darijaHint}
                     </p>
@@ -166,7 +211,7 @@ export function QuizWidget({
 
               <div className="space-y-2">
                 {q.options.map((opt) => {
-                  const isMine = mine?.selectedOption === opt.id;
+                  const isMine = chosenOptionId === opt.id;
                   const isCorrectOpt = isRevealed && tally?.correctOptionId === opt.id;
                   const optTally = tally?.options.find((o) => o.optionId === opt.id);
 
@@ -174,15 +219,16 @@ export function QuizWidget({
                     <button
                       key={opt.id}
                       type="button"
-                      disabled={!canSubmit || !isOpen || Boolean(mine) || pendingKey === q.id}
+                      aria-pressed={isMine}
+                      disabled={questionLocked}
                       onClick={() => handleAnswer(q.id, opt.id)}
-                      className={`w-full rounded-xl border px-3.5 py-2.5 text-left transition ${
+                      className={`w-full rounded-xl border px-3.5 py-2.5 text-left transition-all duration-150 active:scale-[0.99] ${
                         isCorrectOpt
                           ? "border-teal-600 bg-teal-50 text-teal-950 font-semibold"
                           : isMine
-                            ? "border-cyan-600 bg-cyan-50 text-slate-950 font-semibold"
+                            ? "border-teal-600 bg-teal-50/90 text-slate-950 font-semibold ring-2 ring-teal-500/25"
                             : "border-slate-200 bg-slate-50/70 text-slate-800 hover:border-teal-400"
-                      } ${!canSubmit || !isOpen || Boolean(mine) ? "cursor-default" : "cursor-pointer"}`}
+                      } ${questionLocked ? "cursor-default" : "cursor-pointer"}`}
                     >
                       <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
                         <BilingualBlock
@@ -191,16 +237,36 @@ export function QuizWidget({
                           frClassName="text-xs sm:text-sm"
                           arClassName="text-xs sm:text-sm text-teal-900"
                         />
-                        {(showResults || isRevealed || !canSubmit) && optTally && (
-                          <span className="shrink-0 font-mono-code text-xs font-bold text-slate-600">
-                            {optTally.count} ({optTally.percentage}%)
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2 shrink-0">
+                          {isMine && !isRevealed && (
+                            <CheckCircle2 className="h-4 w-4 text-teal-600" />
+                          )}
+                          {(showResults || isRevealed || !canSubmit) && optTally && (
+                            <span className="font-mono-code text-xs font-bold text-slate-600">
+                              {optTally.count} ({optTally.percentage}%)
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </button>
                   );
                 })}
               </div>
+
+              {hasError && localState?.error && (
+                <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+                  <span>{localState.error}</span>
+                  {isOpen && (
+                    <button
+                      type="button"
+                      onClick={() => handleAnswer(q.id, localState.optionId)}
+                      className="rounded-lg bg-amber-600 px-2.5 py-1 font-bold text-white hover:bg-amber-700 cursor-pointer"
+                    >
+                      <BilingualInline text={{ fr: "Réessayer", ar: "إعادة المحاولة" }} />
+                    </button>
+                  )}
+                </div>
+              )}
 
               {isRevealed && tally?.explanation && (
                 <div className="mt-3 flex items-start gap-2 rounded-xl border border-teal-200 bg-teal-50/70 p-3 text-xs text-slate-800">

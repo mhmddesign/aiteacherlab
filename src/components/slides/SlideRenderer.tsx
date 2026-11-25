@@ -1,18 +1,8 @@
 "use client";
 
 import React from "react";
-import { motion } from "motion/react";
-import {
-  AlertTriangle,
-  ArrowRight,
-  BookOpenCheck,
-  CheckCircle2,
-  Cpu,
-  Laptop,
-  Layers,
-  ShieldCheck,
-  Users,
-} from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+import { ArrowRight } from "lucide-react";
 import type {
   ActivityAggregate,
   ActivityStatus,
@@ -49,7 +39,7 @@ interface SlideRendererProps {
   myResponses?: ParticipantResponseItem[];
   participantName?: string;
   joinPinHint?: string;
-  onSubmitted?: () => void;
+  onSubmitted?: (savedResponse?: ParticipantResponseItem) => void;
 }
 
 export function SlideRenderer({
@@ -69,33 +59,30 @@ export function SlideRenderer({
 }: SlideRendererProps) {
   const isProjector = mode === "projector";
   const canSubmit = mode === "participant";
+  const prefersReducedMotion = useReducedMotion();
 
-  return (
-    <motion.div
-      key={slide.id}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-      className="space-y-5"
-    >
-      {/* Editorial Bilingual Slide Header */}
-      <div className="rounded-3xl border border-slate-200/80 bg-[#F8F6F1] p-5 sm:p-7 shadow-sm space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-navy-900 px-3 py-1 text-xs font-bold text-white">
-              <BilingualInline text={slide.sectionTitle} />
+  const slideBody = (
+    <div className="space-y-6">
+      {/* Editorial Bilingual Slide Stage Header */}
+      <div className="space-y-4 border-b border-slate-200/90 pb-5">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2 font-semibold uppercase tracking-wider text-teal-800">
+            <BilingualInline text={slide.sectionTitle} />
+            <span aria-hidden="true" className="text-slate-300">
+              /
             </span>
-            <span className="rounded-full bg-teal-600/10 px-3 py-1 text-xs font-bold text-teal-800">
+            <span className="text-slate-500">
               <BilingualInline text={slide.timeRange} />
             </span>
           </div>
+
           {slide.techTerms.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {slide.techTerms.map((t) => (
                 <span
                   key={t.term}
                   title={`${t.explanation.fr} | ${t.explanation.ar}`}
-                  className="rounded-lg border border-cyan-300/60 bg-cyan-50 px-2.5 py-0.5 text-[11px] font-bold text-cyan-900"
+                  className="border-b border-dotted border-teal-600/60 pb-0.5 text-[11px] font-semibold text-slate-600"
                 >
                   {t.term}
                 </span>
@@ -106,39 +93,49 @@ export function SlideRenderer({
 
         <BilingualBlock
           text={slide.title}
-          frClassName={`font-display font-bold tracking-tight text-navy-900 ${
+          frClassName={`font-display font-bold tracking-tight text-[#0F172A] ${
             isProjector
-              ? "text-3xl sm:text-5xl leading-tight"
-              : "text-2xl sm:text-3xl leading-snug"
+              ? "text-3xl sm:text-5xl leading-[1.12]"
+              : "text-2xl sm:text-4xl leading-[1.16]"
           }`}
-          arClassName={`font-bold text-teal-900 ${
-            isProjector ? "text-xl sm:text-3xl leading-snug" : "text-lg sm:text-xl leading-snug"
+          arClassName={`font-bold text-teal-800 ${
+            isProjector ? "text-2xl sm:text-3xl leading-snug" : "text-lg sm:text-2xl leading-snug"
           }`}
         />
 
         <BilingualBlock
           text={slide.subtitle}
-          frClassName={`text-slate-600 ${isProjector ? "text-lg sm:text-xl" : "text-sm sm:text-base"}`}
-          arClassName={`text-slate-700 ${isProjector ? "text-base sm:text-lg" : "text-xs sm:text-sm"}`}
+          frClassName={`text-slate-600 max-w-4xl ${
+            isProjector ? "text-lg sm:text-xl leading-relaxed" : "text-sm sm:text-base leading-relaxed"
+          }`}
+          arClassName={`text-slate-700 ${
+            isProjector ? "text-base sm:text-xl leading-relaxed" : "text-sm sm:text-base leading-relaxed"
+          }`}
         />
 
         {slide.keyPoints.length > 0 && (
           <ul
-            className={`grid gap-2.5 ${
-              isProjector ? "sm:grid-cols-2 text-base" : "sm:grid-cols-2 text-xs sm:text-sm"
+            className={`grid gap-x-8 gap-y-3 pt-2 ${
+              slide.keyPoints.length > 2 ? "sm:grid-cols-2" : "sm:grid-cols-1 max-w-3xl"
             }`}
           >
-            {slide.keyPoints.map((pt) => (
+            {slide.keyPoints.map((pt, i) => (
               <li
                 key={pt.fr}
-                className="flex items-start gap-2 rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-slate-800"
+                className="flex items-start gap-3 border-l-2 border-teal-600/50 pl-3.5"
               >
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+                <span className="font-mono-code text-xs font-bold text-teal-700 pt-0.5 shrink-0">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
                 <BilingualBlock
                   text={pt}
                   className="flex-1"
-                  frClassName="font-medium text-slate-900"
-                  arClassName="text-teal-900"
+                  frClassName={`font-medium text-slate-900 ${
+                    isProjector ? "text-base" : "text-xs sm:text-sm"
+                  }`}
+                  arClassName={`text-teal-900 ${
+                    isProjector ? "text-base" : "text-xs sm:text-sm"
+                  }`}
                 />
               </li>
             ))}
@@ -146,58 +143,57 @@ export function SlideRenderer({
         )}
       </div>
 
-      {/* Specialized Slide Visuals & Functional Interactive Body */}
+      {/* Distinct Slide Compositions per Content Type */}
       {slide.kind === "welcome" && (
-        <div className="grid gap-5 lg:grid-cols-12">
-          <div className="lg:col-span-7 space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-xs">
-            <div className="inline-flex items-center gap-2 rounded-full bg-teal-50 px-3 py-1 text-xs font-bold text-teal-800">
-              <Users className="h-4 w-4 shrink-0" />
-              <BilingualInline
+        <div className="grid gap-8 lg:grid-cols-12 lg:items-center">
+          <div className="lg:col-span-7 space-y-6">
+            <div className="space-y-2">
+              <p className="text-xs font-bold uppercase tracking-widest text-teal-800">
+                <BilingualInline
+                  text={{
+                    fr: "Atelier Provincial · Province de Mediouna",
+                    ar: "الورشة الإقليمية · إقليم مديونة",
+                  }}
+                />
+              </p>
+              <BilingualBlock
                 text={{
-                  fr: "Atelier Provincial · Province de Mediouna",
-                  ar: "الورشة الإقليمية · إقليم مديونة",
+                  fr: "Rencontre d'échange entre collègues du primaire",
+                  ar: "لقاء تقاسم الخبرات بين أستاذات وأساتذة الابتدائي",
                 }}
+                frClassName={`font-display font-bold text-[#0F172A] ${isProjector ? "text-3xl" : "text-2xl"}`}
+                arClassName={`font-bold text-teal-800 ${isProjector ? "text-2xl" : "text-lg"}`}
+              />
+              <BilingualBlock
+                text={{
+                  fr: "Organisée en collaboration avec le Centre de Digitalisation : pratiques d'IA générative, Prompt Engineering et création de mini-applications pour vos classes (1AEP–6AEP).",
+                  ar: "بتنسيق مع مركز الرقمنة: ممارسات عملية في الذكاء الاصطناعي التوليدي، وهندسة التوجيهات، وبناء تطبيقات تعليمية مصغرة لأقسامنا (1AEP–6AEP).",
+                }}
+                frClassName={isProjector ? "text-lg text-slate-700 leading-relaxed" : "text-sm text-slate-600 leading-relaxed"}
+                arClassName={isProjector ? "text-lg text-slate-700 leading-relaxed" : "text-sm text-slate-700 leading-relaxed"}
               />
             </div>
 
-            <BilingualBlock
-              text={{
-                fr: "Rencontre d'échange entre collègues du primaire",
-                ar: "لقاء تقاسم الخبرات بين أستاذات وأساتذة الابتدائي",
-              }}
-              frClassName={`font-display font-bold text-navy-900 ${isProjector ? "text-3xl" : "text-xl"}`}
-              arClassName={`font-bold text-teal-900 ${isProjector ? "text-2xl" : "text-lg"}`}
-            />
-
-            <BilingualBlock
-              text={{
-                fr: "Organisée en collaboration avec le Centre de Digitalisation : partage de pratiques concrètes d'IA générative, de Prompt Engineering et de création de mini-applications pédagogiques pour vos classes (1AEP–6AEP).",
-                ar: "بتنسيق مع مركز الرقمنة: تقاسم ممارسات عملية في الذكاء الاصطناعي التوليدي، وهندسة التوجيهات، وبناء تطبيقات تعليمية مصغرة لأقسامنا (1AEP–6AEP).",
-              }}
-              frClassName={isProjector ? "text-lg text-slate-700" : "text-sm text-slate-600"}
-              arClassName={isProjector ? "text-base text-slate-700" : "text-sm text-slate-700"}
-            />
-
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <div className="rounded-2xl border border-teal-200 bg-teal-50/70 p-4">
-                <BilingualBlock
-                  text={{ fr: "Collègues connectés", ar: "الزملاء المتصلون" }}
-                  frClassName="text-xs font-semibold text-teal-800"
-                  arClassName="text-xs font-semibold text-teal-900"
-                />
-                <p className="mt-1 font-display text-3xl font-bold text-navy-900">
+            <div className="flex flex-wrap gap-10 border-t border-slate-200 pt-5">
+              <div>
+                <p className="font-display text-4xl sm:text-5xl font-bold text-teal-700 tabular-nums">
                   {connectedCount}
                 </p>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-ivory-50 p-4">
                 <BilingualBlock
-                  text={{ fr: "Inscrits session", ar: "المسجلون في الجلسة" }}
-                  frClassName="text-xs font-semibold text-slate-600"
-                  arClassName="text-xs font-semibold text-slate-700"
+                  text={{ fr: "Collègues connectés", ar: "الزملاء المتصلون" }}
+                  frClassName="mt-1 text-xs font-semibold text-slate-600"
+                  arClassName="text-xs font-semibold text-teal-900"
                 />
-                <p className="mt-1 font-display text-3xl font-bold text-navy-900">
+              </div>
+              <div className="border-l border-slate-200 pl-10">
+                <p className="font-display text-4xl sm:text-5xl font-bold text-slate-900 tabular-nums">
                   {totalParticipants}
                 </p>
+                <BilingualBlock
+                  text={{ fr: "Inscrits session", ar: "المسجلون في الجلسة" }}
+                  frClassName="mt-1 text-xs font-semibold text-slate-600"
+                  arClassName="text-xs font-semibold text-slate-700"
+                />
               </div>
             </div>
           </div>
@@ -211,9 +207,9 @@ export function SlideRenderer({
       )}
 
       {slide.kind === "vision" && (
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-2">
-            <span className="text-xs font-bold uppercase text-slate-500">
+        <div className="grid gap-8 md:grid-cols-2 py-2">
+          <div className="border-t-2 border-slate-300 pt-4 space-y-2.5">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               <BilingualInline text={{ fr: "Hier · Usage passif", ar: "بالأمس · استعمال سلبي" }} />
             </span>
             <BilingualBlock
@@ -221,21 +217,21 @@ export function SlideRenderer({
                 fr: "Consommateur d'outils génériques",
                 ar: "مجرد مستهلك لأدوات جاهزة وعامة",
               }}
-              frClassName="text-lg font-bold text-slate-900"
-              arClassName="text-base font-bold text-slate-800"
+              frClassName={`font-display font-bold text-slate-900 ${isProjector ? "text-2xl" : "text-xl"}`}
+              arClassName={`font-bold text-slate-700 ${isProjector ? "text-xl" : "text-base"}`}
             />
             <BilingualBlock
               text={{
                 fr: "Chercher des fiches toutes faites pensées pour d'autres pays, souvent déconnectées de vos effectifs, de l'arabe RTL ou des contraintes matérielles de l'école.",
                 ar: "البحث عن جذاذات جاهزة مصممة لسياقات أخرى، بعيدة غالباً عن واقع أقسامنا واللغة العربية وإكراهات التجهيز.",
               }}
-              frClassName="text-sm text-slate-600"
-              arClassName="text-sm text-slate-700"
+              frClassName="text-sm text-slate-600 leading-relaxed"
+              arClassName="text-sm text-slate-700 leading-relaxed"
             />
           </div>
 
-          <div className="rounded-2xl border-2 border-teal-500 bg-teal-50/50 p-5 shadow-xs space-y-2">
-            <span className="text-xs font-bold uppercase text-teal-700">
+          <div className="border-t-2 border-teal-600 pt-4 space-y-2.5">
+            <span className="text-xs font-bold uppercase tracking-wider text-teal-700">
               <BilingualInline
                 text={{ fr: "Aujourd'hui · Pouvoir d'agir", ar: "اليوم · المبادرة والإبداع" }}
               />
@@ -245,26 +241,26 @@ export function SlideRenderer({
                 fr: "Créateur de solutions pédagogiques",
                 ar: "مبدع(ة) لحلول بيداغوجية ملائمة",
               }}
-              frClassName="text-lg font-bold text-navy-900"
-              arClassName="text-base font-bold text-teal-900"
+              frClassName={`font-display font-bold text-[#0F172A] ${isProjector ? "text-2xl" : "text-xl"}`}
+              arClassName={`font-bold text-teal-800 ${isProjector ? "text-xl" : "text-base"}`}
             />
             <BilingualBlock
               text={{
                 fr: "Partir d'un besoin réel de votre classe à Mediouna, rédiger un cahier des charges clair, générer un outil léger (projetable, hors ligne ou imprimable) et le partager entre collègues.",
                 ar: "الانطلاق من حاجة حقيقية في قسمكم بمديونة، وصياغة توصيف واضح لإنتاج أداة خفيفة (للعرض أو الطباعة أو بدون إنترنت) وتقاسمها مع الزملاء.",
               }}
-              frClassName="text-sm text-slate-700"
-              arClassName="text-sm text-slate-800"
+              frClassName="text-sm text-slate-700 leading-relaxed"
+              arClassName="text-sm text-slate-800 leading-relaxed"
             />
           </div>
         </div>
       )}
 
       {slide.kind === "concepts" && (
-        <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="divide-y divide-slate-200 border-y border-slate-200">
           {[
             {
-              icon: Cpu,
+              code: "01",
               title: { fr: "AI", ar: "الذكاء الاصطناعي" },
               desc: {
                 fr: "Systèmes capables d'exécuter des tâches associées à l'intelligence humaine.",
@@ -272,7 +268,7 @@ export function SlideRenderer({
               },
             },
             {
-              icon: Layers,
+              code: "02",
               title: { fr: "Generative AI", ar: "الذكاء الاصطناعي التوليدي" },
               desc: {
                 fr: "IA qui crée du nouveau contenu : textes, exercices, résumés ou code.",
@@ -280,7 +276,7 @@ export function SlideRenderer({
               },
             },
             {
-              icon: BookOpenCheck,
+              code: "03",
               title: { fr: "LLM", ar: "النموذج اللغوي الكبير" },
               desc: {
                 fr: "Modèle statistique qui prédit les mots les plus probables selon votre contexte.",
@@ -288,7 +284,7 @@ export function SlideRenderer({
               },
             },
             {
-              icon: ArrowRight,
+              code: "04",
               title: { fr: "Prompt", ar: "التوجيه (Prompt)" },
               desc: {
                 fr: "Votre consigne structurée (niveau, objectif, format, contraintes).",
@@ -296,93 +292,103 @@ export function SlideRenderer({
               },
             },
             {
-              icon: AlertTriangle,
+              code: "05",
               title: { fr: "Hallucination", ar: "الهلوسة المعرفية" },
               desc: {
                 fr: "Erreur affirmée avec assurance : l'enseignant relit et valide toujours.",
                 ar: "خطأ يُقدَّم بثقة كبيرة: لذا يراجع الأستاذ(ة) ويعتمد دائماً.",
               },
             },
-          ].map((c) => {
-            const Icon = c.icon;
-            return (
-              <div key={c.title.fr} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-1.5">
-                <Icon className="h-5 w-5 text-teal-600" />
+          ].map((c) => (
+            <div
+              key={c.code}
+              className="grid gap-3 py-3.5 sm:grid-cols-12 sm:items-baseline"
+            >
+              <div className="sm:col-span-4 flex items-baseline gap-3">
+                <span className="font-mono-code text-xs font-bold text-teal-700">{c.code}</span>
                 <BilingualBlock
                   text={c.title}
-                  frClassName="font-bold text-navy-900"
-                  arClassName="text-xs font-bold text-teal-800"
-                />
-                <BilingualBlock
-                  text={c.desc}
-                  frClassName="text-xs leading-relaxed text-slate-600"
-                  arClassName="text-xs leading-relaxed text-slate-700"
+                  frClassName="font-display text-base font-bold text-slate-900"
+                  arClassName="text-sm font-bold text-teal-800"
                 />
               </div>
-            );
-          })}
+              <div className="sm:col-span-8">
+                <BilingualBlock
+                  text={c.desc}
+                  frClassName="text-xs sm:text-sm text-slate-700"
+                  arClassName="text-xs sm:text-sm text-slate-800"
+                />
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
       {slide.kind === "pillars" && (
-        <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 pt-1">
           {[
             {
-              title: { fr: "1. Hallucinations", ar: "1. الهلوسات" },
+              num: "01",
+              title: { fr: "Hallucinations", ar: "الهلوسات" },
               desc: {
                 fr: "Vérifier dates, faits scientifiques, calculs et voyellation arabe.",
                 ar: "التحقق من التواريخ والوقائع العلمية والحسابات والشكل التام.",
               },
             },
             {
-              title: { fr: "2. Vérification", ar: "2. المراجعة والتحقق" },
+              num: "02",
+              title: { fr: "Vérification", ar: "المراجعة والتحقق" },
               desc: {
                 fr: "Relire tout brouillon avant impression ou projection devant la classe.",
                 ar: "قراءة كل مسودة وتعديلها قبل الطباعة أو العرض أمام التلاميذ.",
               },
             },
             {
-              title: { fr: "3. Adaptation à l'âge", ar: "3. الملاءمة للسن" },
+              num: "03",
+              title: { fr: "Adaptation à l'âge", ar: "الملاءمة للسن" },
               desc: {
                 fr: "Ajuster le vocabulaire aux réalités des élèves de 1AEP à 6AEP.",
                 ar: "ضبط المعجم حسب مستوى تلاميذ الأول إلى السادس ابتدائي.",
               },
             },
             {
-              title: { fr: "4. Biais culturels", ar: "4. التحيز الثقافي" },
+              num: "04",
+              title: { fr: "Biais culturels", ar: "التحيز الثقافي" },
               desc: {
                 fr: "Remplacer les exemples éloignés par un vécu local respectueux.",
                 ar: "تعويض الأمثلة البعيدة بوضعيات من المحيط المغربي المحترم.",
               },
             },
             {
-              title: { fr: "5. Confidentialité", ar: "5. حماية الخصوصية" },
+              num: "05",
+              title: { fr: "Confidentialité", ar: "حماية الخصوصية" },
               desc: {
                 fr: "Zéro nom d'élève, zéro code Massar, zéro donnée personnelle saisie.",
                 ar: "صفر اسم تلميذ، صفر رمز مسار، وصفر معطى شخصي.",
               },
             },
             {
-              title: { fr: "6. Responsabilité", ar: "6. المسؤولية التربوية" },
+              num: "06",
+              title: { fr: "Responsabilité", ar: "المسؤولية التربوية" },
               desc: {
                 fr: "L'IA assiste ; le jugement pédagogique reste 100 % humain.",
                 ar: "الذكاء الاصطناعي مساعد فقط؛ والحكم البيداغوجي يظل إنسانياً 100%.",
               },
             },
           ].map((p) => (
-            <div key={p.title.fr} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-1.5">
-              <div className="flex items-start gap-2">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+            <div key={p.num} className="border-t-2 border-slate-200 pt-3 space-y-1.5">
+              <div className="flex items-baseline gap-2.5">
+                <span className="font-mono-code text-xs font-bold text-teal-700">{p.num}</span>
                 <BilingualBlock
                   text={p.title}
-                  frClassName="text-sm font-bold text-navy-900"
+                  frClassName="text-sm font-bold text-slate-900"
                   arClassName="text-xs font-bold text-teal-800"
                 />
               </div>
               <BilingualBlock
                 text={p.desc}
-                frClassName="text-xs text-slate-600"
-                arClassName="text-xs text-slate-700"
+                frClassName="text-xs text-slate-600 leading-relaxed"
+                arClassName="text-xs text-slate-700 leading-relaxed"
               />
             </div>
           ))}
@@ -390,14 +396,14 @@ export function SlideRenderer({
       )}
 
       {slide.kind === "prompt-anatomy" && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 space-y-3">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="border-t-2 border-amber-500 bg-amber-50/50 p-5 space-y-3">
             <BilingualBlock
               text={WEAK_VS_STRONG_PROMPT.weak.label}
-              frClassName="text-xs font-bold uppercase text-amber-800"
+              frClassName="text-xs font-bold uppercase tracking-wider text-amber-800"
               arClassName="text-xs font-bold text-amber-900"
             />
-            <div className="rounded-xl bg-white p-3 border border-amber-200 space-y-1.5">
+            <div className="border-l-2 border-amber-400 bg-white/90 px-3.5 py-2.5 space-y-1.5">
               <p dir="ltr" className="font-mono-code text-xs text-slate-800">
                 « {WEAK_VS_STRONG_PROMPT.weak.promptFr} »
               </p>
@@ -414,22 +420,37 @@ export function SlideRenderer({
             </ul>
           </div>
 
-          <div className="rounded-2xl border border-teal-300 bg-white p-5 shadow-xs space-y-3">
+          <div className="border-t-2 border-teal-600 bg-white p-5 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <BilingualBlock
                 text={WEAK_VS_STRONG_PROMPT.strong.label}
-                frClassName="text-xs font-bold uppercase text-teal-800"
+                frClassName="text-xs font-bold uppercase tracking-wider text-teal-800"
                 arClassName="text-xs font-bold text-teal-900"
               />
               <div className="flex gap-1.5">
-                <CopyPromptButton text={WEAK_VS_STRONG_PROMPT.strong.promptFr} label="Copier FR" labelAr="نسخ FR" />
-                <CopyPromptButton text={WEAK_VS_STRONG_PROMPT.strong.promptAr} label="Copier AR" labelAr="نسخ AR" />
+                <CopyPromptButton
+                  text={WEAK_VS_STRONG_PROMPT.strong.promptFr}
+                  label="Copier FR"
+                  labelAr="نسخ FR"
+                />
+                <CopyPromptButton
+                  text={WEAK_VS_STRONG_PROMPT.strong.promptAr}
+                  label="Copier AR"
+                  labelAr="نسخ AR"
+                />
               </div>
             </div>
-            <pre dir="ltr" className="whitespace-pre-wrap rounded-xl bg-[#0B1426] p-3 font-mono-code text-[11px] leading-relaxed text-slate-100">
+            <pre
+              dir="ltr"
+              className="whitespace-pre-wrap rounded-xl bg-[#0B1220] p-3.5 font-mono-code text-[11px] leading-relaxed text-slate-100"
+            >
               {WEAK_VS_STRONG_PROMPT.strong.promptFr}
             </pre>
-            <pre dir="rtl" lang="ar" className="whitespace-pre-wrap rounded-xl bg-teal-50 p-3 font-arabic text-xs leading-relaxed text-slate-900 border border-teal-200">
+            <pre
+              dir="rtl"
+              lang="ar"
+              className="whitespace-pre-wrap rounded-xl bg-teal-50/70 p-3.5 font-arabic text-xs leading-relaxed text-slate-900 border border-teal-200"
+            >
               {WEAK_VS_STRONG_PROMPT.strong.promptAr}
             </pre>
             <ul className="space-y-1.5 text-xs text-teal-900">
@@ -444,57 +465,74 @@ export function SlideRenderer({
       )}
 
       {slide.kind === "meta-prompt-flow" && (
-        <div className="space-y-4">
-          <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="space-y-5">
+          {/* Process Flow Diagram */}
+          <div className="flex flex-wrap items-center gap-2 border-y border-slate-200 py-3">
             {[
-              { fr: "1. Idée brute", ar: "1. فكرة أولية" },
-              { fr: "2. Identifier les manques", ar: "2. تحديد النواقص" },
-              { fr: "3. Questions de l'IA", ar: "3. أسئلة توضيحية" },
-              { fr: "4. Prompt optimisé", ar: "4. توجيه محسّن" },
-              { fr: "5. Exécution", ar: "5. التنفيذ" },
-              { fr: "6. Validation humaine", ar: "6. المراجعة والاعتماد" },
-            ].map((step) => (
-              <div
-                key={step.fr}
-                className="rounded-xl border border-teal-200 bg-white px-3 py-2.5 text-center text-xs font-bold text-navy-900 shadow-xs"
-              >
-                <BilingualBlock
-                  text={step}
-                  frClassName="text-xs font-bold"
-                  arClassName="text-[11px] font-bold text-teal-800"
-                />
-              </div>
+              { n: "1", fr: "Idée brute", ar: "فكرة أولية" },
+              { n: "2", fr: "Manques", ar: "تحديد النواقص" },
+              { n: "3", fr: "5 questions IA", ar: "أسئلة توضيحية" },
+              { n: "4", fr: "Prompt optimisé", ar: "توجيه محسّن" },
+              { n: "5", fr: "Exécution", ar: "التنفيذ" },
+              { n: "6", fr: "Validation humaine", ar: "الاعتماد" },
+            ].map((step, i) => (
+              <React.Fragment key={step.n}>
+                <div className="flex items-center gap-2 rounded-lg bg-white px-2.5 py-1.5 border border-slate-200">
+                  <span className="font-mono-code text-[11px] font-bold text-teal-700">
+                    {step.n}
+                  </span>
+                  <BilingualBlock
+                    text={step}
+                    frClassName="text-xs font-bold text-slate-900"
+                    arClassName="text-[11px] font-semibold text-teal-800"
+                  />
+                </div>
+                {i < 5 && (
+                  <ArrowRight className="h-3.5 w-3.5 text-slate-400 shrink-0 hidden sm:block" />
+                )}
+              </React.Fragment>
             ))}
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-2">
+          <div className="grid gap-5 lg:grid-cols-2">
+            <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <BilingualBlock
                   text={META_PROMPT_EXAMPLES.fr.title}
                   frClassName="text-xs font-bold text-slate-900"
                   arClassName="text-xs font-bold text-teal-800"
                 />
-                <CopyPromptButton text={META_PROMPT_EXAMPLES.fr.metaPrompt} label="Copier FR" labelAr="نسخ FR" />
+                <CopyPromptButton
+                  text={META_PROMPT_EXAMPLES.fr.metaPrompt}
+                  label="Copier FR"
+                  labelAr="نسخ FR"
+                />
               </div>
-              <pre dir="ltr" className="whitespace-pre-wrap rounded-xl bg-[#0B1426] p-3 font-mono-code text-[11px] text-slate-100">
+              <pre
+                dir="ltr"
+                className="whitespace-pre-wrap rounded-xl bg-[#0B1220] p-4 font-mono-code text-[11px] leading-relaxed text-slate-100"
+              >
                 {META_PROMPT_EXAMPLES.fr.metaPrompt}
               </pre>
             </div>
 
-            <div className="rounded-2xl border border-teal-200 bg-teal-50/50 p-4 shadow-xs space-y-2">
+            <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <BilingualBlock
                   text={META_PROMPT_EXAMPLES.ar.title}
                   frClassName="text-xs font-bold text-slate-900"
                   arClassName="text-xs font-bold text-teal-900"
                 />
-                <CopyPromptButton text={META_PROMPT_EXAMPLES.ar.metaPrompt} label="Copier AR" labelAr="نسخ AR" />
+                <CopyPromptButton
+                  text={META_PROMPT_EXAMPLES.ar.metaPrompt}
+                  label="Copier AR"
+                  labelAr="نسخ AR"
+                />
               </div>
               <pre
                 dir="rtl"
                 lang="ar"
-                className="whitespace-pre-wrap rounded-xl bg-white p-3 font-arabic text-xs text-slate-900 border border-teal-200"
+                className="whitespace-pre-wrap rounded-xl bg-white p-4 font-arabic text-xs leading-relaxed text-slate-900 border border-teal-200"
               >
                 {META_PROMPT_EXAMPLES.ar.metaPrompt}
               </pre>
@@ -504,11 +542,11 @@ export function SlideRenderer({
       )}
 
       {slide.kind === "ecosystem" && (
-        <div className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="space-y-6">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 border-t border-slate-200 pt-4">
             {[
               {
-                step: { fr: "Étape 1", ar: "المرحلة 1" },
+                num: "01",
                 title: { fr: "Générer du contenu", ar: "إنتاج محتوى تربوي" },
                 desc: {
                   fr: "Produire un texte, des questions ou 3 niveaux d'exercices (brouillon).",
@@ -516,7 +554,7 @@ export function SlideRenderer({
                 },
               },
               {
-                step: { fr: "Étape 2", ar: "المرحلة 2" },
+                num: "02",
                 title: { fr: "Créer une application", ar: "إنشاء تطبيق تفاعلي" },
                 desc: {
                   fr: "Transformer ce besoin en interface interactive (HTML/CSS/JS).",
@@ -524,7 +562,7 @@ export function SlideRenderer({
                 },
               },
               {
-                step: { fr: "Étape 3", ar: "المرحلة 3" },
+                num: "03",
                 title: { fr: "Utiliser en vraie classe", ar: "الاستعمال الفعلي في القسم" },
                 desc: {
                   fr: "Projeter, partager sur tablette ou imprimer en A4 avec vos élèves.",
@@ -532,7 +570,7 @@ export function SlideRenderer({
                 },
               },
               {
-                step: { fr: "Étape 4", ar: "المرحلة 4" },
+                num: "04",
                 title: { fr: "Évaluer l'impact réel", ar: "تقويم الأثر التعلمي" },
                 desc: {
                   fr: "Observer si l'outil aide véritablement les élèves à progresser.",
@@ -540,67 +578,62 @@ export function SlideRenderer({
                 },
               },
             ].map((s) => (
-              <div key={s.step.fr} className="rounded-2xl border border-teal-200 bg-white p-4 shadow-xs space-y-1.5">
-                <span className="text-[11px] font-bold uppercase text-teal-700">
-                  <BilingualInline text={s.step} />
-                </span>
+              <div key={s.num} className="space-y-1.5">
+                <span className="font-mono-code text-xs font-bold text-teal-700">{s.num}</span>
                 <BilingualBlock
                   text={s.title}
-                  frClassName="text-sm font-bold text-navy-900"
-                  arClassName="text-xs font-bold text-teal-900"
+                  frClassName="text-sm font-bold text-slate-900"
+                  arClassName="text-xs font-bold text-teal-800"
                 />
                 <BilingualBlock
                   text={s.desc}
-                  frClassName="text-xs text-slate-600"
-                  arClassName="text-xs text-slate-700"
+                  frClassName="text-xs text-slate-600 leading-relaxed"
+                  arClassName="text-xs text-slate-700 leading-relaxed"
                 />
               </div>
             ))}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 border-t border-slate-200 pt-4">
             {[
               {
                 name: "ChatGPT",
                 desc: {
-                  fr: "Assistant conversationnel pour rédiger brouillons, idées et premiers codes.",
-                  ar: "مساعد حواري لصياغة المسودات والأفكار والشيفرات الأولية.",
+                  fr: "Rédiger brouillons, idées et premiers codes.",
+                  ar: "صياغة المسودات والأفكار والشيفرات الأولية.",
                 },
               },
               {
                 name: "Google Antigravity",
                 desc: {
-                  fr: "Environnement de création d'applications structurées, testées et fiables.",
-                  ar: "بيئة هندسية لبناء تطبيقات منظمة ومختبرة وموثوقة.",
+                  fr: "Structurer et tester des applications fiables.",
+                  ar: "بناء واختبار تطبيقات منظمة وموثوقة.",
                 },
               },
               {
                 name: "Browser Web App",
                 desc: {
-                  fr: "Outil ouvert directement dans Chrome/Edge/Safari sans installation.",
-                  ar: "تطبيق يُفتح مباشرة في المتصفح دون تثبيت.",
+                  fr: "Ouvert dans le navigateur sans installation.",
+                  ar: "يُفتح مباشرة في المتصفح دون تثبيت.",
                 },
               },
               {
                 name: "Prototype",
                 desc: {
-                  fr: "Première version testable en classe en 25 minutes pour valider l'idée.",
-                  ar: "نسخة أولية قابلة للتجريب في القسم خلال 25 دقيقة.",
+                  fr: "Testable en 25 min pour valider l'idée.",
+                  ar: "نسخة أولية قابلة للتجريب خلال 25 دقيقة.",
                 },
               },
               {
                 name: "Deployed App",
                 desc: {
-                  fr: "Application en ligne (ex. Vercel) partageable avec tout Mediouna par lien/QR.",
-                  ar: "تطبيق منشور على الإنترنت قابل للمشاركة بالرابط أو رمز QR.",
+                  fr: "Partageable avec tout Mediouna par lien/QR.",
+                  ar: "منشور للمشاركة بالرابط أو رمز QR.",
                 },
               },
             ].map((e) => (
-              <div key={e.name} className="rounded-xl border border-slate-200 bg-ivory-50 p-3.5 space-y-1.5">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-navy-900">
-                  <Laptop className="h-3.5 w-3.5 text-cyan-600" />
-                  <span>{e.name}</span>
-                </div>
+              <div key={e.name} className="space-y-1">
+                <p className="text-xs font-bold text-slate-900">{e.name}</p>
                 <BilingualBlock
                   text={e.desc}
                   frClassName="text-xs text-slate-600"
@@ -613,14 +646,22 @@ export function SlideRenderer({
       )}
 
       {slide.kind === "closing" && (
-        <div className="rounded-3xl border border-teal-400/40 bg-navy-900 p-7 sm:p-10 text-center text-white shadow-lg space-y-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-cyan-300">
+        <div className="rounded-2xl bg-[#0B1220] px-7 py-10 sm:px-12 sm:py-12 text-center text-white space-y-6">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-400">
             Province de Mediouna · Centre de Digitalisation · إقليم مديونة · مركز الرقمنة
           </p>
-          <blockquote dir="ltr" lang="fr" className="mx-auto max-w-3xl font-display text-2xl sm:text-4xl font-bold leading-snug text-ivory-50">
+          <blockquote
+            dir="ltr"
+            lang="fr"
+            className="mx-auto max-w-3xl font-display text-2xl sm:text-4xl font-bold leading-snug text-[#FAF8F4]"
+          >
             « Ne soyez pas seulement utilisateurs du numérique. Devenez créateurs de solutions pédagogiques. »
           </blockquote>
-          <blockquote dir="rtl" lang="ar" className="font-arabic mx-auto max-w-3xl text-xl sm:text-3xl font-bold leading-relaxed text-cyan-200">
+          <blockquote
+            dir="rtl"
+            lang="ar"
+            className="font-arabic mx-auto max-w-3xl text-xl sm:text-3xl font-bold leading-relaxed text-teal-300"
+          >
             « لا تكونوا مجرد مستعملين للتكنولوجيا الرقمية، بل كونوا صانعي حلول بيداغوجية. »
           </blockquote>
           <BilingualBlock
@@ -628,7 +669,7 @@ export function SlideRenderer({
               fr: "Identifier un problème → Écrire une spécification claire → Prototyper avec l'IA → Tester en classe → Améliorer → Partager dans la Galerie Collaborative de Mediouna.",
               ar: "تحديد الإشكال ← صياغة توصيف واضح ← بناء نموذج أولي ← التجريب في القسم ← التحسين ← التقاسم في المعرض التعاوني لمديونة.",
             }}
-            className="mx-auto max-w-2xl"
+            className="mx-auto max-w-2xl border-t border-slate-800 pt-5"
             frClassName="text-sm text-slate-300"
             arClassName="text-sm text-teal-200"
           />
@@ -728,6 +769,20 @@ export function SlideRenderer({
         arabic={slide.darijaNote.arabic}
         large={isProjector}
       />
-    </motion.div>
+    </div>
+  );
+
+  return (
+    <motion.article
+      key={slide.id}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.16, ease: "easeOut" }}
+      className={`rounded-2xl bg-[#FAF8F4] text-[#0F172A] shadow-lg ${
+        isProjector ? "p-7 sm:p-10" : "p-5 sm:p-8"
+      }`}
+    >
+      {slideBody}
+    </motion.article>
   );
 }

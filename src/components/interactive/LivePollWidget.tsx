@@ -20,7 +20,7 @@ interface LivePollWidgetProps {
   myResponses?: ParticipantResponseItem[];
   canSubmit: boolean;
   large?: boolean;
-  onSubmitted?: () => void;
+  onSubmitted?: (savedResponse?: ParticipantResponseItem) => void;
 }
 
 export function LivePollWidget({
@@ -36,19 +36,21 @@ export function LivePollWidget({
 }: LivePollWidgetProps) {
   const activity = getActivityByKey(activityKey);
   const existing = myResponses.find((r) => r.itemKey === "main");
-  const [selected, setSelected] = useState<string>("");
-  const [submitting, setSubmitting] = useState(false);
+  const [optimisticOption, setOptimisticOption] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [lastAttemptOption, setLastAttemptOption] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const activeSelection = existing?.selectedOption ?? selected;
+  const activeSelection = existing?.selectedOption ?? optimisticOption ?? "";
 
   if (!activity || !activity.options) return null;
 
   const isLocked = isPaused || status !== "open" || Boolean(existing);
 
   const handleSubmit = async (optionId: string) => {
-    if (!canSubmit || isLocked || submitting) return;
-    setSelected(optionId);
-    setSubmitting(true);
+    if (!canSubmit || isLocked || saveState === "saving") return;
+    setOptimisticOption(optionId);
+    setLastAttemptOption(optionId);
+    setSaveState("saving");
     setError(null);
     try {
       const res = await fetch("/api/participant/respond", {
@@ -62,19 +64,22 @@ export function LivePollWidget({
       });
       const data = await res.json();
       if (!res.ok) {
+        setOptimisticOption(null);
+        setSaveState("error");
         setError(
           data.error ??
             "Impossible d'envoyer votre vote. / تعذر إرسال تصويتكم."
         );
         return;
       }
-      onSubmitted?.();
+      setSaveState("saved");
+      onSubmitted?.(data.response as ParticipantResponseItem | undefined);
     } catch {
+      setOptimisticOption(null);
+      setSaveState("error");
       setError(
-        "Connexion instable : votre réponse n'a pas pu être envoyée. Réessayez. / اتصال غير مستقر: تعذر إرسال إجابتكم، حاولوا مرة أخرى."
+        "Connexion instable : votre réponse n'a pas pu être envoyée. / اتصال غير مستقر: تعذر إرسال إجابتكم."
       );
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -91,11 +96,19 @@ export function LivePollWidget({
               frClassName="text-slate-700"
               arClassName="text-teal-900 text-xs"
             />
-            <div className="flex flex-wrap items-center gap-1.5">
-              {existing && (
+            <div className="flex flex-wrap items-center gap-1.5" aria-live="polite">
+              {saveState === "saving" && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-teal-800 transition-opacity">
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                  <BilingualInline text={{ fr: "Enregistrement...", ar: "جاري الحفظ..." }} />
+                </span>
+              )}
+              {(existing || saveState === "saved") && saveState !== "saving" && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-3 py-1 text-teal-800">
                   <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                  <BilingualInline text={{ fr: "Vote enregistré", ar: "تم تسجيل التصويت" }} />
+                  <BilingualInline
+                    text={{ fr: "Réponse enregistrée", ar: "تم حفظ الإجابة" }}
+                  />
                 </span>
               )}
               {status !== "open" || isPaused ? (
@@ -109,7 +122,7 @@ export function LivePollWidget({
                     <BilingualInline text={{ fr: "En attente d'ouverture", ar: "في انتظار الفتح" }} />
                   )}
                 </span>
-              ) : !existing ? (
+              ) : !existing && saveState !== "saving" ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-cyan-50 px-3 py-1 text-cyan-800">
                   <Send className="h-3.5 w-3.5 shrink-0" />
                   <BilingualInline text={{ fr: "Ouvert aux votes", ar: "مفتوح للتصويت" }} />
@@ -120,31 +133,39 @@ export function LivePollWidget({
 
           <div className="grid gap-2.5 sm:grid-cols-2">
             {activity.options.map((opt) => {
-              const isChosen = activeSelection === opt.id && (Boolean(existing) || submitting);
+              const isChosen =
+                activeSelection === opt.id &&
+                (Boolean(existing) || saveState === "saving" || saveState === "saved");
               return (
                 <button
                   key={opt.id}
                   type="button"
-                  disabled={isLocked || submitting}
+                  aria-pressed={isChosen}
+                  disabled={isLocked || saveState === "saving"}
                   onClick={() => handleSubmit(opt.id)}
-                  className={`flex flex-col items-stretch rounded-2xl border p-4 text-left transition ${
+                  className={`flex items-start justify-between gap-3 rounded-2xl border p-4 text-left transition-all duration-150 active:scale-[0.99] ${
                     isChosen
                       ? "border-teal-600 bg-teal-50/90 text-teal-950 ring-2 ring-teal-500/30"
                       : "border-slate-200 bg-white text-slate-900 hover:border-teal-400 hover:bg-slate-50"
                   } ${isLocked ? "cursor-default opacity-85" : "cursor-pointer"}`}
                 >
-                  <BilingualBlock
-                    text={opt.label}
-                    frClassName="text-sm font-bold"
-                    arClassName="text-sm font-bold text-teal-900"
-                  />
-                  {opt.description && (
+                  <div className="flex-1">
                     <BilingualBlock
-                      text={opt.description}
-                      className="mt-1.5"
-                      frClassName="text-xs text-slate-600"
-                      arClassName="text-xs text-slate-600"
+                      text={opt.label}
+                      frClassName="text-sm font-bold"
+                      arClassName="text-sm font-bold text-teal-900"
                     />
+                    {opt.description && (
+                      <BilingualBlock
+                        text={opt.description}
+                        className="mt-1.5"
+                        frClassName="text-xs text-slate-600"
+                        arClassName="text-xs text-slate-600"
+                      />
+                    )}
+                  </div>
+                  {isChosen && (
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-teal-600" />
                   )}
                 </button>
               );
@@ -152,8 +173,17 @@ export function LivePollWidget({
           </div>
 
           {error && (
-            <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-xs font-medium text-amber-900">
-              {error}
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-xs font-medium text-amber-900">
+              <span>{error}</span>
+              {lastAttemptOption && status === "open" && !isPaused && (
+                <button
+                  type="button"
+                  onClick={() => handleSubmit(lastAttemptOption)}
+                  className="rounded-lg bg-amber-600 px-3 py-1 font-bold text-white hover:bg-amber-700 cursor-pointer"
+                >
+                  <BilingualInline text={{ fr: "Réessayer", ar: "إعادة المحاولة" }} />
+                </button>
+              )}
             </div>
           )}
         </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyPresenterSession } from "@/lib/auth/session";
+import { getWorkshopPin } from "@/lib/env";
 import { getWorkshopStore } from "@/lib/workshop/store";
 
 export async function GET() {
@@ -13,7 +14,10 @@ export async function GET() {
     }
     const store = getWorkshopStore();
     const snapshot = await store.getPresenterSnapshot();
-    return NextResponse.json(snapshot);
+    return NextResponse.json({
+      ...snapshot,
+      workshopPinHint: getWorkshopPin(),
+    });
   } catch (err) {
     console.error("[API /presenter/state]", err);
     return NextResponse.json({ error: "Erreur serveur. / خطأ في الخادم." }, { status: 500 });

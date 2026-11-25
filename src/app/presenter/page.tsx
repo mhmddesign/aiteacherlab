@@ -6,15 +6,25 @@ import { PresenterShell } from "@/components/presenter/PresenterShell";
 export const dynamic = "force-dynamic";
 
 export default async function PresenterPage() {
-  const presenter = await verifyPresenterSession();
-  const store = getWorkshopStore();
-  const initialSnapshot = presenter ? await store.getPresenterSnapshot() : null;
+  const presenter = await verifyPresenterSession().catch(() => null);
+  let initialSnapshot = null;
+  let workshopPinHint: string | undefined;
+
+  if (presenter) {
+    try {
+      const store = getWorkshopStore();
+      initialSnapshot = await store.getPresenterSnapshot();
+      workshopPinHint = getWorkshopPin();
+    } catch (err) {
+      console.error("[PresenterPage SSR]", err);
+    }
+  }
 
   return (
     <PresenterShell
-      initialAuthenticated={Boolean(presenter)}
+      initialAuthenticated={Boolean(presenter && initialSnapshot)}
       initialSnapshot={initialSnapshot}
-      workshopPinHint={getWorkshopPin()}
+      workshopPinHint={workshopPinHint}
     />
   );
 }

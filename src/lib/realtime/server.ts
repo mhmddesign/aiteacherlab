@@ -1,7 +1,12 @@
 import "server-only";
+import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
-import { randomTokenHex } from "@/lib/auth/crypto";
-import { getSupabasePublishableKey, getSupabaseUrl, isSupabaseConfigured } from "@/lib/env";
+import {
+  getSessionSecret,
+  getSupabasePublishableKey,
+  getSupabaseUrl,
+  isSupabaseConfigured,
+} from "@/lib/env";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export type RealtimeScope = "public" | "presenter";
@@ -16,6 +21,14 @@ interface CachedGrantToken {
 }
 
 const tokenCache = new Map<string, CachedGrantToken>();
+const grantsVerified = new Set<string>();
+
+function deriveRealtimeUserPassword(email: string): string {
+  return crypto
+    .createHmac("sha256", getSessionSecret())
+    .update(`realtime-user:${email}`)
+    .digest("hex");
+}
 
 export async function broadcastWorkshopEvent(
   workshopId: string,
@@ -70,73 +83,90 @@ export async function issueWorkshopRealtimeToken(
 
   try {
     const email = `rt-${role}-${workshopId.slice(0, 8)}@mediouna-workshop.local`;
-    const password = randomTokenHex(24);
+    const password = deriveRealtimeUserPassword(email);
 
-    // Find or create the scoped internal Realtime auth user
-    const { data: existingList } = await admin.auth.admin.listUsers({
-      page: 1,
-      perPage: 100,
-    });
-    let userId = existingList?.users?.find((u) => u.email === email)?.id ?? null;
-
-    if (!userId) {
-      const { data: created, error: createErr } = await admin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { workshopId, rtRole: role },
-      });
-      if (createErr || !created?.user) {
-        return null;
-      }
-      userId = created.user.id;
-    } else {
-      await admin.auth.admin.updateUserById(userId, { password });
-    }
-
-    // Ensure grant row(s) exist for realtime.messages RLS
-    const grants: Array<{ user_id: string; workshop_id: string; topic: string; role: string }> = [
-      {
-        user_id: userId,
-        workshop_id: workshopId,
-        topic: getWorkshopTopic(workshopId, "public"),
-        role,
-      },
-    ];
-    if (role === "presenter") {
-      grants.push({
-        user_id: userId,
-        workshop_id: workshopId,
-        topic: getWorkshopTopic(workshopId, "presenter"),
-        role,
-      });
-    }
-
-    await admin.from("realtime_channel_grants").upsert(grants, {
-      onConflict: "user_id,topic",
-    });
-
-    // Sign in once on the server using a non-persisted auth client to obtain the user's JWT
     const tempClient = createClient(url, pubKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
-    const { data: sessionData, error: signErr } = await tempClient.auth.signInWithPassword({
+
+    // Fast path: sign in directly with deterministic password derived from SESSION_SECRET
+    const { data: fastSign, error: fastErr } = await tempClient.auth.signInWithPassword({
       email,
       password,
     });
-    if (signErr || !sessionData.session) {
-      return null;
+
+    let session = fastSign?.session ?? null;
+    let userId = fastSign?.user?.id ?? null;
+
+    if (fastErr || !session || !userId) {
+      // Cold provision or password rotation path
+      const { data: existingList } = await admin.auth.admin.listUsers({
+        page: 1,
+        perPage: 100,
+      });
+      userId = existingList?.users?.find((u) => u.email === email)?.id ?? null;
+
+      if (!userId) {
+        const { data: created, error: createErr } = await admin.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: { workshopId, rtRole: role },
+        });
+        if (createErr || !created?.user) {
+          return null;
+        }
+        userId = created.user.id;
+      } else {
+        await admin.auth.admin.updateUserById(userId, { password });
+      }
+
+      const { data: retrySign, error: retryErr } = await tempClient.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (retryErr || !retrySign.session) {
+        return null;
+      }
+      session = retrySign.session;
+      grantsVerified.delete(cacheKey);
     }
 
-    const expiresAtMs = (sessionData.session.expires_at ?? Math.floor(Date.now() / 1000) + 3600) * 1000;
+    if (!grantsVerified.has(cacheKey) && userId) {
+      const grants: Array<{ user_id: string; workshop_id: string; topic: string; role: string }> = [
+        {
+          user_id: userId,
+          workshop_id: workshopId,
+          topic: getWorkshopTopic(workshopId, "public"),
+          role,
+        },
+      ];
+      if (role === "presenter") {
+        grants.push({
+          user_id: userId,
+          workshop_id: workshopId,
+          topic: getWorkshopTopic(workshopId, "presenter"),
+          role,
+        });
+      }
+
+      const { error: grantErr } = await admin.from("realtime_channel_grants").upsert(grants, {
+        onConflict: "user_id,topic",
+      });
+      if (!grantErr) {
+        grantsVerified.add(cacheKey);
+      }
+    }
+
+    const expiresAtMs = (session.expires_at ?? Math.floor(Date.now() / 1000) + 3600) * 1000;
     tokenCache.set(cacheKey, {
-      accessToken: sessionData.session.access_token,
+      accessToken: session.access_token,
       expiresAtMs,
     });
 
     return {
       topic,
-      token: sessionData.session.access_token,
+      token: session.access_token,
       expiresAt: expiresAtMs,
     };
   } catch (err) {

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { getSlideById } from "@/content/slides";
 import { verifyPresenterSession } from "@/lib/auth/session";
 import { broadcastWorkshopEvent } from "@/lib/realtime/server";
@@ -46,17 +46,18 @@ export async function PATCH(req: NextRequest) {
     const store = getWorkshopStore();
     const updatedState = await store.updatePresenterControl(patch);
 
-    await Promise.all([
-      broadcastWorkshopEvent(updatedState.workshopId, "public", "state_updated", {
-        stateVersion: updatedState.stateVersion,
-      }),
-      broadcastWorkshopEvent(updatedState.workshopId, "presenter", "state_updated", {
-        stateVersion: updatedState.stateVersion,
-      }),
-    ]);
+    after(async () => {
+      await Promise.all([
+        broadcastWorkshopEvent(updatedState.workshopId, "public", "state_updated", {
+          stateVersion: updatedState.stateVersion,
+        }),
+        broadcastWorkshopEvent(updatedState.workshopId, "presenter", "state_updated", {
+          stateVersion: updatedState.stateVersion,
+        }),
+      ]);
+    });
 
-    const snapshot = await store.getPresenterSnapshot();
-    return NextResponse.json(snapshot);
+    return NextResponse.json({ ok: true, state: updatedState });
   } catch (err) {
     console.error("[API /presenter/control]", err);
     return NextResponse.json({ error: "Erreur serveur. / خطأ في الخادم." }, { status: 500 });

@@ -7,12 +7,13 @@
   --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
 
   --color-navy-950: #060b16;
-  --color-navy-900: #0b1426;
-  --color-navy-800: #111e38;
-  --color-navy-700: #1a2c4e;
-  --color-ivory-50: #fcfbf8;
-  --color-ivory-100: #f8f6f1;
-  --color-ivory-200: #efeae0;
+  --color-navy-900: #0b1220;
+  --color-navy-800: #111c33;
+  --color-navy-700: #1a2a4a;
+  --color-ivory-50: #faf8f4;
+  --color-ivory-100: #f4f0e8;
+  --color-ivory-200: #e9e3d6;
+  --color-teal-700: #0f766e;
   --color-teal-600: #0d9488;
   --color-teal-500: #14b8a6;
   --color-cyan-500: #06b6d4;
@@ -25,7 +26,7 @@
   }
 
   body {
-    background-color: #0b1426;
+    background-color: #0b1220;
     color: #0f172a;
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
@@ -46,14 +47,25 @@
   font-family: var(--font-mono);
 }
 
-/* Custom editorial scrollbar for dark presenter rail */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Custom editorial scrollbar for drawers */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.06);
+  background: rgba(15, 23, 42, 0.05);
 }
 
 ::-webkit-scrollbar-thumb {

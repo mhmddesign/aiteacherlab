@@ -16,7 +16,7 @@ interface PromptBuilderWidgetProps {
   aggregate: ActivityAggregate | null;
   myResponses?: ParticipantResponseItem[];
   canSubmit: boolean;
-  onSubmitted?: () => void;
+  onSubmitted?: (savedResponse?: ParticipantResponseItem) => void;
 }
 
 const GRADES = ["1AEP", "2AEP", "3AEP", "4AEP", "5AEP", "6AEP"];
@@ -188,7 +188,7 @@ export function PromptBuilderWidget({
         );
         return;
       }
-      onSubmitted?.();
+      onSubmitted?.(data.response as ParticipantResponseItem | undefined);
     } catch {
       setError(
         "Erreur réseau lors de l'envoi. Votre prompt reste copiable ci-contre. / خطأ في الشبكة أثناء الإرسال، يمكنكم نسخ التوجيه."
@@ -395,7 +395,7 @@ export function PromptBuilderWidget({
               <Sparkles className="h-3.5 w-3.5 shrink-0" />
               <span>
                 {submitting ? (
-                  "Envoi... / جاري الإرسال..."
+                  "Enregistrement... / جاري الحفظ..."
                 ) : (
                   <BilingualInline
                     text={{ fr: "Partager avec l'atelier", ar: "مشاركة مع الورشة" }}

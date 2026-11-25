@@ -266,4 +266,5 @@ export interface PresenterSubmissionRow {
 export interface PresenterSnapshot extends PublicWorkshopSnapshot {
   recentSubmissions: PresenterSubmissionRow[];
   activityCounts: Record<string, number>;
+  workshopPinHint?: string;
 }

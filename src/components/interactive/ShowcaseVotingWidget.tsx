@@ -19,7 +19,13 @@ interface ShowcaseVotingWidgetProps {
   myResponses?: ParticipantResponseItem[];
   canSubmit: boolean;
   defaultContributorName?: string;
-  onSubmitted?: () => void;
+  onSubmitted?: (savedResponse?: ParticipantResponseItem) => void;
+}
+
+interface CategoryLocalVote {
+  groupId: string;
+  status: "saving" | "saved" | "error";
+  error?: string;
 }
 
 export function ShowcaseVotingWidget({
@@ -33,7 +39,7 @@ export function ShowcaseVotingWidget({
   onSubmitted,
 }: ShowcaseVotingWidgetProps) {
   const activity = getActivityByKey("vote-showcase");
-  const [submittingKey, setSubmittingKey] = useState<string | null>(null);
+  const [localVotes, setLocalVotes] = useState<Record<string, CategoryLocalVote>>({});
   const [error, setError] = useState<string | null>(null);
 
   const [showGalleryForm, setShowGalleryForm] = useState(false);
@@ -54,10 +60,14 @@ export function ShowcaseVotingWidget({
   const isOpen = status === "open" && !isPaused;
 
   const handleVote = async (categoryId: string, groupId: string) => {
-    if (!canSubmit || !isOpen || submittingKey) return;
-    if (myResponses.some((r) => r.itemKey === categoryId)) return;
+    const existing = myResponses.find((r) => r.itemKey === categoryId);
+    const cur = localVotes[categoryId];
+    if (!canSubmit || !isOpen || existing || cur?.status === "saving") return;
 
-    setSubmittingKey(categoryId);
+    setLocalVotes((prev) => ({
+      ...prev,
+      [categoryId]: { groupId, status: "saving" },
+    }));
     setError(null);
     try {
       const res = await fetch("/api/participant/respond", {
@@ -71,16 +81,28 @@ export function ShowcaseVotingWidget({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(
-          data.error ?? "Impossible d'enregistrer le vote. / تعذر حفظ التصويت."
-        );
+        const msg =
+          data.error ?? "Impossible d'enregistrer le vote. / تعذر حفظ التصويت.";
+        setLocalVotes((prev) => ({
+          ...prev,
+          [categoryId]: { groupId, status: "error", error: msg },
+        }));
         return;
       }
-      onSubmitted?.();
+      setLocalVotes((prev) => ({
+        ...prev,
+        [categoryId]: { groupId, status: "saved" },
+      }));
+      onSubmitted?.(data.response as ParticipantResponseItem | undefined);
     } catch {
-      setError("Erreur de connexion. Réessayez. / خطأ في الاتصال، حاولوا مجدداً.");
-    } finally {
-      setSubmittingKey(null);
+      setLocalVotes((prev) => ({
+        ...prev,
+        [categoryId]: {
+          groupId,
+          status: "error",
+          error: "Erreur de connexion. Réessayez. / خطأ في الاتصال، حاولوا مجدداً.",
+        },
+      }));
     }
   };
 
@@ -161,6 +183,12 @@ export function ShowcaseVotingWidget({
           <div className="grid gap-4 md:grid-cols-3">
             {activity.categories.map((cat) => {
               const mine = myResponses.find((r) => r.itemKey === cat.id);
+              const localVote = localVotes[cat.id];
+              const isSaving = !mine && localVote?.status === "saving";
+              const isSaved = Boolean(mine) || localVote?.status === "saved";
+              const chosenGroupId =
+                mine?.selectedOption ??
+                (isSaving || localVote?.status === "saved" ? localVote.groupId : undefined);
               return (
                 <div key={cat.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3">
                   <div className="flex items-start justify-between gap-2">
@@ -180,29 +208,57 @@ export function ShowcaseVotingWidget({
                         arClassName="text-xs text-slate-600"
                       />
                     </div>
-                    {mine && <CheckCircle2 className="h-4 w-4 shrink-0 text-teal-600" />}
+                    {isSaved && <CheckCircle2 className="h-4 w-4 shrink-0 text-teal-600" />}
                   </div>
+
+                  {(isSaving || isSaved) && (
+                    <p className="text-[11px] font-semibold text-teal-700" aria-live="polite">
+                      {isSaving ? (
+                        <BilingualInline text={{ fr: "Enregistrement...", ar: "جاري الحفظ..." }} />
+                      ) : (
+                        <BilingualInline text={{ fr: "Réponse enregistrée", ar: "تم حفظ الإجابة" }} />
+                      )}
+                    </p>
+                  )}
 
                   <div className="space-y-2">
                     {activity.options!.map((opt) => {
-                      const chosen = mine?.selectedOption === opt.id;
+                      const chosen = chosenGroupId === opt.id;
+                      const locked = !isOpen || Boolean(mine) || isSaving;
                       return (
                         <button
                           key={opt.id}
                           type="button"
-                          disabled={!isOpen || Boolean(mine) || submittingKey === cat.id}
+                          aria-pressed={chosen}
+                          disabled={locked}
                           onClick={() => handleVote(cat.id, opt.id)}
-                          className={`w-full rounded-xl border px-3 py-2 text-left text-xs font-semibold transition ${
+                          className={`flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-all duration-150 active:scale-[0.99] ${
                             chosen
-                              ? "border-teal-600 bg-teal-50 text-teal-950"
+                              ? "border-teal-600 bg-teal-50 text-teal-950 ring-2 ring-teal-500/25"
                               : "border-slate-200 bg-slate-50 text-slate-800 hover:border-teal-400"
-                          } ${!isOpen || Boolean(mine) ? "cursor-default" : "cursor-pointer"}`}
+                          } ${locked ? "cursor-default" : "cursor-pointer"}`}
                         >
-                          <BilingualBlock text={opt.label} />
+                          <BilingualBlock text={opt.label} className="flex-1" />
+                          {chosen && <CheckCircle2 className="h-4 w-4 shrink-0 text-teal-600" />}
                         </button>
                       );
                     })}
                   </div>
+
+                  {!mine && localVote?.status === "error" && localVote.error && (
+                    <div className="flex items-center justify-between gap-2 rounded-xl bg-amber-50 px-3 py-2 text-[11px] font-medium text-amber-900">
+                      <span>{localVote.error}</span>
+                      {isOpen && (
+                        <button
+                          type="button"
+                          onClick={() => handleVote(cat.id, localVote.groupId)}
+                          className="rounded-lg bg-amber-600 px-2 py-0.5 font-bold text-white cursor-pointer"
+                        >
+                          <BilingualInline text={{ fr: "Réessayer", ar: "إعادة" }} />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

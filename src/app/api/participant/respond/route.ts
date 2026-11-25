@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { extractClientIp } from "@/lib/auth/crypto";
 import { verifyParticipantSession } from "@/lib/auth/session";
 import { broadcastWorkshopEvent } from "@/lib/realtime/server";
@@ -15,13 +15,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const bodyPromise = req.json().catch(() => null);
     const store = getWorkshopStore();
     const ip = extractClientIp(req.headers);
-    const allowed = await store.checkRateLimit(
-      `respond:${claims.participantId}:${ip}`,
-      60,
-      60
-    );
+
+    const [allowed, participant, body] = await Promise.all([
+      store.checkRateLimit(`respond:${claims.participantId}:${ip}`, 60, 60),
+      store.getParticipantBySession(claims.participantId, claims.tokenHash),
+      bodyPromise,
+    ]);
+
     if (!allowed) {
       return NextResponse.json(
         {
@@ -32,10 +35,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const participant = await store.getParticipantBySession(
-      claims.participantId,
-      claims.tokenHash
-    );
     if (!participant) {
       return NextResponse.json(
         { error: "Session invalide. / جلسة غير صالحة." },
@@ -43,7 +42,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json().catch(() => null);
     const parsed = participantResponseSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -68,14 +66,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
-    await Promise.all([
-      broadcastWorkshopEvent(participant.workshopId, "public", "aggregate_updated", {
-        activityKey: parsed.data.activityKey,
-      }),
-      broadcastWorkshopEvent(participant.workshopId, "presenter", "aggregate_updated", {
-        activityKey: parsed.data.activityKey,
-      }),
-    ]);
+    const workshopId = participant.workshopId;
+    const activityKey = parsed.data.activityKey;
+    after(async () => {
+      await Promise.all([
+        broadcastWorkshopEvent(workshopId, "public", "aggregate_updated", {
+          activityKey,
+        }),
+        broadcastWorkshopEvent(workshopId, "presenter", "aggregate_updated", {
+          activityKey,
+        }),
+      ]);
+    });
 
     return NextResponse.json({ ok: true, response: result.response });
   } catch (err) {

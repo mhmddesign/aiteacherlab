@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { extractClientIp } from "@/lib/auth/crypto";
 import {
   cookieOptions,
@@ -13,7 +13,11 @@ export async function POST(req: NextRequest) {
   try {
     const store = getWorkshopStore();
     const ip = extractClientIp(req.headers);
-    const allowed = await store.checkRateLimit(`join:${ip}`, 20, 300);
+    const [allowed, body] = await Promise.all([
+      store.checkRateLimit(`join:${ip}`, 20, 300),
+      req.json().catch(() => null),
+    ]);
+
     if (!allowed) {
       return NextResponse.json(
         {
@@ -24,7 +28,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json().catch(() => null);
     const parsed = joinWorkshopSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -49,14 +52,17 @@ export async function POST(req: NextRequest) {
       tokenHash: res.tokenHash,
     });
 
-    await Promise.all([
-      broadcastWorkshopEvent(res.workshopId, "public", "aggregate_updated", {
-        reason: "participant_joined",
-      }),
-      broadcastWorkshopEvent(res.workshopId, "presenter", "aggregate_updated", {
-        reason: "participant_joined",
-      }),
-    ]);
+    const workshopId = res.workshopId;
+    after(async () => {
+      await Promise.all([
+        broadcastWorkshopEvent(workshopId, "public", "aggregate_updated", {
+          reason: "participant_joined",
+        }),
+        broadcastWorkshopEvent(workshopId, "presenter", "aggregate_updated", {
+          reason: "participant_joined",
+        }),
+      ]);
+    });
 
     const response = NextResponse.json({
       participant: {
