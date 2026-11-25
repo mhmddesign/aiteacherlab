@@ -60,6 +60,15 @@ export function useWorkshopSync({
     minStateVersionRef.current = version;
   }, []);
 
+  const applySnapshot = useCallback((nextSnapshot: PublicWorkshopSnapshot) => {
+    minStateVersionRef.current = Math.max(
+      minStateVersionRef.current,
+      nextSnapshot.state.stateVersion
+    );
+    setSnapshot(nextSnapshot);
+    setError(null);
+  }, []);
+
   const fetchLatest = useCallback(
     async (options?: { forceState?: boolean }) => {
       try {
@@ -244,6 +253,7 @@ export function useWorkshopSync({
     error,
     refresh: fetchLatest,
     applyLocalState,
+    applySnapshot,
     resetMinStateVersion,
   };
 }

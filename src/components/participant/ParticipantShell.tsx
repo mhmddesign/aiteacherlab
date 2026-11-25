@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { LogOut, PauseCircle, ShieldCheck, Smartphone, Sparkles } from "lucide-react";
+import { Loader2, LogOut, PauseCircle, ShieldCheck, Smartphone, Sparkles } from "lucide-react";
 import type { ParticipantResponseItem, PublicWorkshopSnapshot } from "@/content/types";
 import { getSlideById, TOTAL_SECTIONS } from "@/content/slides";
 import { useWorkshopSync } from "@/lib/realtime/client";
@@ -26,6 +26,7 @@ export function ParticipantShell({
   const [displayName, setDisplayName] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   const { snapshot, connectionMode, error, refresh } = useWorkshopSync({
     mode: "public",
@@ -132,9 +133,14 @@ export function ParticipantShell({
   };
 
   const handleLeave = async () => {
-    await fetch("/api/participant/leave", { method: "POST" });
-    setParticipant(null);
-    setMyResponses([]);
+    setLeaving(true);
+    try {
+      await fetch("/api/participant/leave", { method: "POST" });
+      setParticipant(null);
+      setMyResponses([]);
+    } finally {
+      setLeaving(false);
+    }
   };
 
   if (!participant) {
@@ -214,23 +220,27 @@ export function ParticipantShell({
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={joining}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-3 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-60 cursor-pointer"
-            >
-              <Sparkles className="h-4 w-4 shrink-0" />
-              {joining ? (
-                <span>Connexion... · جاري الدخول...</span>
-              ) : (
-                <BilingualInline
-                  text={{
-                    fr: "Entrer dans l'atelier",
-                    ar: "الدخول إلى الورشة",
-                  }}
-                />
-              )}
-            </button>
+              <button
+                type="submit"
+                disabled={joining}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-3 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-75 cursor-pointer"
+              >
+                {joining ? (
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4 shrink-0" />
+                )}
+                {joining ? (
+                  <span>Connexion... · جاري الدخول...</span>
+                ) : (
+                  <BilingualInline
+                    text={{
+                      fr: "Entrer dans l'atelier",
+                      ar: "الدخول إلى الورشة",
+                    }}
+                  />
+                )}
+              </button>
           </form>
 
           <div className="flex items-start gap-2 rounded-xl bg-ivory-100 p-3 text-[11px] text-slate-600">
@@ -275,13 +285,23 @@ export function ParticipantShell({
             />
             <button
               type="button"
+              disabled={leaving}
               onClick={handleLeave}
               title="Quitter la session / مغادرة الجلسة"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-slate-800 cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-slate-800 disabled:opacity-60 cursor-pointer"
             >
-              <LogOut className="h-3.5 w-3.5" />
+              {leaving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <LogOut className="h-3.5 w-3.5" />
+              )}
               <span className="hidden sm:inline">
-                <BilingualInline text={{ fr: "Quitter", ar: "خروج" }} />
+                <BilingualInline
+                  text={{
+                    fr: leaving ? "Déconnexion..." : "Quitter",
+                    ar: leaving ? "جاري الخروج..." : "خروج",
+                  }}
+                />
               </span>
             </button>
           </div>

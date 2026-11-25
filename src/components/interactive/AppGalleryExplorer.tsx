@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Globe, PlayCircle, Printer, ShieldCheck, WifiOff, X } from "lucide-react";
 import { GALLERY_CATEGORIES } from "@/content/gallery";
 import type { GalleryCategoryItem, GalleryContributionRecord } from "@/content/types";
@@ -11,6 +11,14 @@ export function AppGalleryExplorer() {
   const [selectedDemo, setSelectedDemo] = useState<GalleryCategoryItem | null>(null);
   const [tab, setTab] = useState<"catalog" | "provincial">("catalog");
   const [contributions, setContributions] = useState<GalleryContributionRecord[]>([]);
+  const demoPanelRef = useRef<HTMLDivElement | null>(null);
+
+  const openDemo = (item: GalleryCategoryItem) => {
+    setSelectedDemo(item);
+    requestAnimationFrame(() => {
+      demoPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  };
 
   useEffect(() => {
     fetch("/api/gallery", { cache: "no-store" })
@@ -69,7 +77,10 @@ export function AppGalleryExplorer() {
       </div>
 
       {selectedDemo?.demoKey && (
-        <div className="rounded-2xl border-2 border-teal-500 bg-white p-5 shadow-md">
+        <div
+          ref={demoPanelRef}
+          className="rounded-2xl border-2 border-teal-500 bg-white p-5 shadow-md"
+        >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <div>
               <span className="text-xs font-bold uppercase text-teal-700">
@@ -179,7 +190,7 @@ export function AppGalleryExplorer() {
                 {item.demoKey ? (
                   <button
                     type="button"
-                    onClick={() => setSelectedDemo(item)}
+                    onClick={() => openDemo(item)}
                     className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-teal-700 cursor-pointer"
                   >
                     <PlayCircle className="h-3.5 w-3.5" />

@@ -34,12 +34,16 @@ interface WorkshopRecord {
   join_pin_hash: string;
 }
 
-async function getWorkshopAndState(): Promise<{
-  workshop: WorkshopRecord;
-  state: PublicWorkshopState;
-}> {
-  const admin = mustAdmin();
-  const slug = getWorkshopSlug();
+const workshopMetaCache = new Map<string, WorkshopRecord>();
+const activitiesMapCache = new Map<
+  string,
+  { idToKey: Map<string, string>; keyToId: Map<string, string> }
+>();
+
+async function getWorkshopRecord(admin: SupabaseClient, slug: string): Promise<WorkshopRecord> {
+  const cached = workshopMetaCache.get(slug);
+  if (cached) return cached;
+
   const { data: workshop, error: wErr } = await admin
     .from("workshops")
     .select("id, slug, title, join_pin_hash")
@@ -51,6 +55,42 @@ async function getWorkshopAndState(): Promise<{
       `Workshop '${slug}' introuvable dans Supabase. Vérifiez l'exécution des migrations SQL. / الورشة غير موجودة في قاعدة البيانات.`
     );
   }
+
+  const rec = workshop as WorkshopRecord;
+  workshopMetaCache.set(slug, rec);
+  return rec;
+}
+
+async function getActivityMaps(admin: SupabaseClient, workshopId: string) {
+  const cached = activitiesMapCache.get(workshopId);
+  if (cached) return cached;
+
+  const { data: activities } = await admin
+    .from("activities")
+    .select("id, activity_key")
+    .eq("workshop_id", workshopId);
+
+  const idToKey = new Map<string, string>();
+  const keyToId = new Map<string, string>();
+  for (const a of activities ?? []) {
+    idToKey.set(a.id, a.activity_key);
+    keyToId.set(a.activity_key, a.id);
+  }
+
+  const maps = { idToKey, keyToId };
+  if (idToKey.size > 0) {
+    activitiesMapCache.set(workshopId, maps);
+  }
+  return maps;
+}
+
+async function getWorkshopAndState(): Promise<{
+  workshop: WorkshopRecord;
+  state: PublicWorkshopState;
+}> {
+  const admin = mustAdmin();
+  const slug = getWorkshopSlug();
+  const workshop = await getWorkshopRecord(admin, slug);
 
   const { data: st, error: sErr } = await admin
     .from("workshop_state")
@@ -65,7 +105,7 @@ async function getWorkshopAndState(): Promise<{
   }
 
   return {
-    workshop: workshop as WorkshopRecord,
+    workshop,
     state: {
       workshopId: workshop.id,
       workshopTitle: workshop.title,
@@ -264,28 +304,72 @@ export const supabaseStore = {
 
   async getPresenterSnapshot(): Promise<PresenterSnapshot> {
     const admin = mustAdmin();
-    const pub = await this.getPublicSnapshot();
-    const isDemo = pub.state.demoMode;
+    const { workshop, state } = await getWorkshopAndState();
+    const isDemo = state.demoMode;
+    const cutoffIso = new Date(Date.now() - 90_000).toISOString();
 
-    const { data: activities } = await admin
-      .from("activities")
-      .select("id, activity_key")
-      .eq("workshop_id", pub.state.workshopId);
+    const [
+      { idToKey, keyToId },
+      { count: totalParticipants },
+      { count: connectedCount },
+      { count: galleryCount },
+      { data: allResp },
+    ] = await Promise.all([
+      getActivityMaps(admin, workshop.id),
+      admin
+        .from("participants")
+        .select("id", { count: "exact", head: true })
+        .eq("workshop_id", workshop.id)
+        .eq("is_demo", isDemo),
+      isDemo
+        ? admin
+            .from("participants")
+            .select("id", { count: "exact", head: true })
+            .eq("workshop_id", workshop.id)
+            .eq("is_demo", true)
+        : admin
+            .from("participants")
+            .select("id", { count: "exact", head: true })
+            .eq("workshop_id", workshop.id)
+            .eq("is_demo", false)
+            .gte("last_seen_at", cutoffIso),
+      admin
+        .from("gallery_contributions")
+        .select("id", { count: "exact", head: true })
+        .eq("workshop_id", workshop.id)
+        .eq("is_demo", isDemo),
+      admin
+        .from("responses")
+        .select("id, activity_id, participant_id, item_key, selected_option, payload, is_correct, created_at")
+        .eq("workshop_id", workshop.id)
+        .eq("is_demo", isDemo)
+        .order("created_at", { ascending: false })
+        .limit(400),
+    ]);
 
-    const idToKey = new Map<string, string>();
-    const keyToId = new Map<string, string>();
-    for (const a of activities ?? []) {
-      idToKey.set(a.id, a.activity_key);
-      keyToId.set(a.activity_key, a.id);
+    const activeActId = state.activeActivityKey
+      ? keyToId.get(state.activeActivityKey)
+      : null;
+
+    let aggregate = null;
+    if (state.activeActivityKey && activeActId) {
+      const { data: act } = await admin
+        .from("activities")
+        .select("reset_generation")
+        .eq("id", activeActId)
+        .maybeSingle();
+
+      const activeRows = (allResp ?? []).filter((r) => r.activity_id === activeActId);
+      aggregate = computeAggregate(
+        state.activeActivityKey,
+        act?.reset_generation ?? 1,
+        activeRows as RawResponseRow[],
+        state.activityStatus === "revealed"
+      );
     }
 
-    const { data: allResp } = await admin
-      .from("responses")
-      .select("id, activity_id, participant_id, item_key, selected_option, payload, is_correct, created_at")
-      .eq("workshop_id", pub.state.workshopId)
-      .eq("is_demo", isDemo)
-      .order("created_at", { ascending: false })
-      .limit(400);
+    const total = totalParticipants ?? 0;
+    const respondents = aggregate?.totalRespondents ?? 0;
 
     const activityCounts: Record<string, number> = {};
     for (const key of Object.keys(ACTIVITIES)) {
@@ -297,10 +381,6 @@ export const supabaseStore = {
       );
       activityCounts[key] = set.size;
     }
-
-    const activeActId = pub.state.activeActivityKey
-      ? keyToId.get(pub.state.activeActivityKey)
-      : null;
 
     const recentSubmissions: PresenterSubmissionRow[] = (allResp ?? [])
       .filter((r) => (!activeActId ? true : r.activity_id === activeActId))
@@ -324,7 +404,12 @@ export const supabaseStore = {
       });
 
     return {
-      ...pub,
+      state,
+      connectedCount: connectedCount ?? 0,
+      totalParticipants: total,
+      responseRate: total > 0 ? Math.min(100, Math.round((respondents / total) * 100)) : 0,
+      aggregate,
+      galleryContributionsCount: galleryCount ?? 0,
       recentSubmissions,
       activityCounts,
     };

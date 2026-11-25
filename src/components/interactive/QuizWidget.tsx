@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { CheckCircle2, HelpCircle, Lock, XCircle } from "lucide-react";
+import { CheckCircle2, HelpCircle, Loader2, Lock, XCircle } from "lucide-react";
 import { getActivityByKey } from "@/content/activities";
 import type {
   ActivityAggregate,
@@ -239,7 +239,11 @@ export function QuizWidget({
                         />
                         <div className="flex items-center gap-2 shrink-0">
                           {isMine && !isRevealed && (
-                            <CheckCircle2 className="h-4 w-4 text-teal-600" />
+                            isSaving ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-teal-600" />
+                            ) : (
+                              <CheckCircle2 className="h-4 w-4 text-teal-600" />
+                            )
                           )}
                           {(showResults || isRevealed || !canSubmit) && optTally && (
                             <span className="font-mono-code text-xs font-bold text-slate-600">

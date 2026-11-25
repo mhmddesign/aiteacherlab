@@ -13,6 +13,7 @@ import {
   Eye,
   FileText,
   ListOrdered,
+  Loader2,
   Lock,
   LogOut,
   Maximize2,
@@ -62,6 +63,12 @@ export function PresenterShell({
   const [authenticated, setAuthenticated] = useState(initialAuthenticated);
   const [passcode, setPasscode] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [loggingIn, setLoggingIn] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [purging, setPurging] = useState(false);
+  const [openingScreen, setOpeningScreen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [drawer, setDrawer] = useState<"none" | "outline" | "notes" | "tools">("none");
   const [showPurgeModal, setShowPurgeModal] = useState(false);
   const [purgeText, setPurgeText] = useState("");
@@ -73,6 +80,7 @@ export function PresenterShell({
     snapshot,
     connectionMode,
     refresh,
+    applySnapshot,
     applyLocalState,
     resetMinStateVersion,
   } = useWorkshopSync({
@@ -130,6 +138,7 @@ export function PresenterShell({
   const drainQueue = useCallback(async () => {
     if (drainingRef.current) return;
     drainingRef.current = true;
+    setSyncing(true);
     try {
       while (queueRef.current.length > 0) {
         // Coalesce consecutive navigation-only patches so rapid clicks flush directly to final slide
@@ -191,6 +200,7 @@ export function PresenterShell({
       await refresh({ forceState: true });
     } finally {
       drainingRef.current = false;
+      setSyncing(false);
     }
   }, [applyLocalState, refresh, resetMinStateVersion]);
 
@@ -289,47 +299,79 @@ export function PresenterShell({
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loggingIn) return;
     setLoginError(null);
-    const res = await fetch("/api/presenter/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ passcode }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setLoginError(data.error ?? "Accès refusé. / تم رفض الولوج.");
-      return;
+    setLoggingIn(true);
+    try {
+      const res = await fetch("/api/presenter/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passcode }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setLoginError(data.error ?? "Accès refusé. / تم رفض الولوج.");
+        return;
+      }
+      if (data.snapshot) {
+        applySnapshot(data.snapshot);
+        setAuthenticated(true);
+      } else {
+        setAuthenticated(true);
+        await refresh({ forceState: true });
+      }
+    } catch {
+      setLoginError(
+        "Erreur de connexion. Veuillez réessayer. / خطأ في الاتصال. يرجى المحاولة مرة أخرى."
+      );
+    } finally {
+      setLoggingIn(false);
     }
-    setAuthenticated(true);
-    await refresh({ forceState: true });
   };
 
   const handleLogout = async () => {
-    await fetch("/api/presenter/logout", { method: "POST" });
-    setAuthenticated(false);
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await fetch("/api/presenter/logout", { method: "POST" });
+      setAuthenticated(false);
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   const handleResetActivity = async () => {
-    if (!active?.state.activeActivityKey) return;
-    await fetch("/api/presenter/reset-activity", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ activityKey: active.state.activeActivityKey }),
-    });
-    await refresh({ forceState: true });
+    if (!active?.state.activeActivityKey || resetting) return;
+    setResetting(true);
+    try {
+      await fetch("/api/presenter/reset-activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ activityKey: active.state.activeActivityKey }),
+      });
+      await refresh({ forceState: true });
+    } finally {
+      setResetting(false);
+    }
   };
 
   const handlePurge = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch("/api/presenter/participants", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ confirmation: purgeText }),
-    });
-    if (res.ok) {
-      setShowPurgeModal(false);
-      setPurgeText("");
-      await refresh({ forceState: true });
+    if (purging) return;
+    setPurging(true);
+    try {
+      const res = await fetch("/api/presenter/participants", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: purgeText }),
+      });
+      if (res.ok) {
+        setShowPurgeModal(false);
+        setPurgeText("");
+        await refresh({ forceState: true });
+      }
+    } finally {
+      setPurging(false);
     }
   };
 
@@ -389,13 +431,23 @@ export function PresenterShell({
             )}
             <button
               type="submit"
-              className="w-full rounded-xl bg-[#0F766E] px-4 py-3 text-sm font-bold text-white hover:bg-[#0D655E] cursor-pointer"
+              disabled={loggingIn}
+              aria-busy={loggingIn}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#0F766E] px-4 py-3 text-sm font-bold text-white hover:bg-[#0D655E] disabled:opacity-75 cursor-pointer"
             >
+              {loggingIn && <Loader2 className="h-4 w-4 animate-spin shrink-0" />}
               <BilingualInline
-                text={{
-                  fr: "Ouvrir le poste de contrôle",
-                  ar: "فتح مركز التحكم",
-                }}
+                text={
+                  loggingIn
+                    ? {
+                        fr: "Connexion...",
+                        ar: "جاري الاتصال...",
+                      }
+                    : {
+                        fr: "Ouvrir le poste de contrôle",
+                        ar: "فتح مركز التحكم",
+                      }
+                }
               />
             </button>
           </form>
@@ -428,6 +480,12 @@ export function PresenterShell({
               demoMode={active.state.demoMode}
               compact
             />
+            {syncing && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-teal-500/40 bg-teal-500/15 px-2 py-0.5 text-[11px] font-semibold text-teal-200">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                <BilingualInline text={{ fr: "Synchro...", ar: "مزامنة..." }} />
+              </span>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
@@ -502,10 +560,24 @@ export function PresenterShell({
             <Link
               href="/screen"
               target="_blank"
+              onClick={() => {
+                setOpeningScreen(true);
+                window.setTimeout(() => setOpeningScreen(false), 1200);
+              }}
               className="inline-flex items-center gap-1.5 rounded-lg border border-teal-500/40 bg-teal-500/10 px-2.5 py-1.5 text-xs font-bold text-teal-200 hover:bg-teal-500/20"
             >
-              <ExternalLink className="h-3.5 w-3.5" />
-              <BilingualInline text={{ fr: "/screen", ar: "العرض" }} />
+              {openingScreen ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <ExternalLink className="h-3.5 w-3.5" />
+              )}
+              <BilingualInline
+                text={
+                  openingScreen
+                    ? { fr: "Ouverture...", ar: "جاري الفتح..." }
+                    : { fr: "/screen", ar: "العرض" }
+                }
+              />
             </Link>
 
             <button
@@ -525,11 +597,17 @@ export function PresenterShell({
             <button
               type="button"
               onClick={handleLogout}
+              disabled={loggingOut}
+              aria-busy={loggingOut}
               aria-label="Déconnexion / تسجيل الخروج"
               title="Déconnexion / تسجيل الخروج"
-              className="rounded-lg border border-slate-700 p-1.5 text-slate-300 hover:text-white cursor-pointer"
+              className="rounded-lg border border-slate-700 p-1.5 text-slate-300 hover:text-white disabled:opacity-60 cursor-pointer"
             >
-              <LogOut className="h-3.5 w-3.5" />
+              {loggingOut ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <LogOut className="h-3.5 w-3.5" />
+              )}
             </button>
           </div>
         </div>
@@ -584,22 +662,37 @@ export function PresenterShell({
             <div className="flex flex-wrap items-center gap-1.5">
               <button
                 type="button"
+                aria-pressed={active.state.activityStatus === "open"}
                 onClick={() => sendControl({ activityStatus: "open" })}
-                className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-teal-500 cursor-pointer"
+                className={`rounded-lg px-3 py-1.5 text-xs font-bold text-white cursor-pointer transition ${
+                  active.state.activityStatus === "open"
+                    ? "bg-teal-500 ring-2 ring-teal-300 shadow-sm"
+                    : "bg-teal-600/85 hover:bg-teal-500"
+                }`}
               >
                 <BilingualInline text={{ fr: "Ouvrir / Rouvrir", ar: "فتح / إعادة فتح" }} />
               </button>
               <button
                 type="button"
+                aria-pressed={active.state.activityStatus === "closed"}
                 onClick={() => sendControl({ activityStatus: "closed", showResults: true })}
-                className="rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-600 cursor-pointer"
+                className={`rounded-lg px-3 py-1.5 text-xs font-bold text-white cursor-pointer transition ${
+                  active.state.activityStatus === "closed"
+                    ? "bg-slate-600 ring-2 ring-slate-300 shadow-sm"
+                    : "bg-slate-700 hover:bg-slate-600"
+                }`}
               >
                 <BilingualInline text={{ fr: "Fermer", ar: "إغلاق" }} />
               </button>
               <button
                 type="button"
+                aria-pressed={active.state.showResults}
                 onClick={() => sendControl({ showResults: !active.state.showResults })}
-                className="inline-flex items-center gap-1 rounded-lg border border-teal-500/50 px-3 py-1.5 text-xs font-bold text-teal-200 hover:bg-teal-500/15 cursor-pointer"
+                className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-bold cursor-pointer transition ${
+                  active.state.showResults
+                    ? "border-teal-300 bg-teal-500/25 text-white ring-1 ring-teal-300/60"
+                    : "border-teal-500/50 text-teal-200 hover:bg-teal-500/15"
+                }`}
               >
                 <Eye className="h-3.5 w-3.5 shrink-0" />
                 {active.state.showResults ? (
@@ -612,10 +705,15 @@ export function PresenterShell({
                 activeActivityDef.type === "tf_quiz") && (
                 <button
                   type="button"
+                  aria-pressed={active.state.activityStatus === "revealed"}
                   onClick={() =>
                     sendControl({ activityStatus: "revealed", showResults: true })
                   }
-                  className="inline-flex items-center gap-1 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-500 cursor-pointer"
+                  className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold text-white cursor-pointer transition ${
+                    active.state.activityStatus === "revealed"
+                      ? "bg-amber-500 ring-2 ring-amber-300 shadow-sm"
+                      : "bg-amber-600 hover:bg-amber-500"
+                  }`}
                 >
                   <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                   <BilingualInline text={{ fr: "Révéler réponses", ar: "كشف الإجابات" }} />
@@ -623,11 +721,23 @@ export function PresenterShell({
               )}
               <button
                 type="button"
+                disabled={resetting}
+                aria-busy={resetting}
                 onClick={handleResetActivity}
-                className="inline-flex items-center gap-1 rounded-lg border border-amber-500/40 px-2.5 py-1.5 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 cursor-pointer"
+                className="inline-flex items-center gap-1 rounded-lg border border-amber-500/40 px-2.5 py-1.5 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-60 cursor-pointer"
               >
-                <RotateCcw className="h-3.5 w-3.5 shrink-0" />
-                <BilingualInline text={{ fr: "Réinitialiser", ar: "إعادة ضبط" }} />
+                {resetting ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                ) : (
+                  <RotateCcw className="h-3.5 w-3.5 shrink-0" />
+                )}
+                <BilingualInline
+                  text={
+                    resetting
+                      ? { fr: "Réinitialisation...", ar: "إعادة الضبط..." }
+                      : { fr: "Réinitialiser", ar: "إعادة ضبط" }
+                  }
+                />
               </button>
             </div>
           </div>
@@ -1127,11 +1237,17 @@ export function PresenterShell({
               </button>
               <button
                 type="submit"
-                disabled={purgeText !== "SUPPRIMER"}
-                className="rounded-xl bg-amber-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-50 cursor-pointer"
+                disabled={purgeText !== "SUPPRIMER" || purging}
+                aria-busy={purging}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-50 cursor-pointer"
               >
+                {purging && <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />}
                 <BilingualInline
-                  text={{ fr: "Confirmer l'effacement", ar: "تأكيد المسح" }}
+                  text={
+                    purging
+                      ? { fr: "Effacement...", ar: "جاري المسح..." }
+                      : { fr: "Confirmer l'effacement", ar: "تأكيد المسح" }
+                  }
                 />
               </button>
             </div>

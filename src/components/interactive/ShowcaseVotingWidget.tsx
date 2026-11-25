@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Award, CheckCircle2, Lock, PlusCircle, ShieldCheck } from "lucide-react";
+import { Award, CheckCircle2, Loader2, Lock, PlusCircle, ShieldCheck } from "lucide-react";
 import { getActivityByKey } from "@/content/activities";
 import type {
   ActivityAggregate,
@@ -53,6 +53,7 @@ export function ShowcaseVotingWidget({
   const [classroomInstructions, setClassroomInstructions] = useState("");
   const [appResource, setAppResource] = useState("");
   const [privacyConfirmed, setPrivacyConfirmed] = useState(false);
+  const [contributing, setContributing] = useState(false);
   const [galleryMsg, setGalleryMsg] = useState<string | null>(null);
 
   if (!activity || !activity.categories || !activity.options) return null;
@@ -108,6 +109,8 @@ export function ShowcaseVotingWidget({
 
   const handleContribute = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (contributing) return;
+    setContributing(true);
     setGalleryMsg(null);
     try {
       const res = await fetch("/api/gallery/contribute", {
@@ -149,6 +152,8 @@ export function ShowcaseVotingWidget({
       onSubmitted?.();
     } catch {
       setGalleryMsg("Erreur réseau lors de l'envoi. / خطأ في الشبكة أثناء الإرسال.");
+    } finally {
+      setContributing(false);
     }
   };
 
@@ -239,7 +244,13 @@ export function ShowcaseVotingWidget({
                           } ${locked ? "cursor-default" : "cursor-pointer"}`}
                         >
                           <BilingualBlock text={opt.label} className="flex-1" />
-                          {chosen && <CheckCircle2 className="h-4 w-4 shrink-0 text-teal-600" />}
+                          {chosen && (
+                            isSaving ? (
+                              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-teal-600" />
+                            ) : (
+                              <CheckCircle2 className="h-4 w-4 shrink-0 text-teal-600" />
+                            )
+                          )}
                         </button>
                       );
                     })}
@@ -385,13 +396,18 @@ export function ShowcaseVotingWidget({
                   )}
                   <button
                     type="submit"
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700 cursor-pointer"
+                    disabled={contributing}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700 disabled:opacity-70 cursor-pointer"
                   >
-                    <ShieldCheck className="h-3.5 w-3.5" />
+                    {contributing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                    )}
                     <BilingualInline
                       text={{
-                        fr: "Publier dans la Galerie Provinciale",
-                        ar: "نشر في المعرض الإقليمي",
+                        fr: contributing ? "Publication..." : "Publier dans la Galerie Provinciale",
+                        ar: contributing ? "جاري النشر..." : "نشر في المعرض الإقليمي",
                       }}
                     />
                   </button>

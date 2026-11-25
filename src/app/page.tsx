@@ -1,6 +1,6 @@
-import Link from "next/link";
-import { ArrowRight, Monitor, Presentation, Smartphone } from "lucide-react";
+import { Monitor, Presentation, Smartphone } from "lucide-react";
 import { BilingualBlock, BilingualInline } from "@/components/ui/Bilingual";
+import { NavActionLink } from "@/components/ui/NavActionLink";
 
 export default function HomePage() {
   return (
@@ -42,70 +42,36 @@ export default function HomePage() {
         </header>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Link
+          <NavActionLink
             href="/presenter"
-            className="group flex flex-col justify-between rounded-2xl bg-[#FAF8F4] p-6 sm:p-7 text-[#0F172A] shadow-xl transition hover:bg-white active:scale-[0.99]"
-          >
-            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-teal-800">
-              <span className="inline-flex items-center gap-2">
-                <Presentation className="h-4 w-4" />
-                <span>/presenter</span>
-              </span>
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </div>
+            routeLabel="/presenter"
+            icon={<Presentation className="h-4 w-4" />}
+            titleFr="Ouvrir la présentation"
+            titleAr="فتح العرض التقديمي"
+            variant="primary"
+          />
 
-            <div className="mt-6">
-              <BilingualBlock
-                text={{
-                  fr: "Ouvrir la présentation",
-                  ar: "فتح العرض التقديمي",
-                }}
-                frClassName="font-display text-2xl font-bold text-slate-900"
-                arClassName="text-xl font-bold text-teal-800"
-              />
-            </div>
-          </Link>
-
-          <Link
+          <NavActionLink
             href="/join"
-            className="group flex flex-col justify-between rounded-2xl border border-teal-500/40 bg-[#111C33] p-6 sm:p-7 text-white transition hover:border-teal-400 hover:bg-[#152340] active:scale-[0.99]"
-          >
-            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-teal-300">
-              <span className="inline-flex items-center gap-2">
-                <Smartphone className="h-4 w-4" />
-                <span>/join</span>
-              </span>
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </div>
-
-            <div className="mt-6">
-              <BilingualBlock
-                text={{
-                  fr: "Rejoindre l'atelier",
-                  ar: "الانضمام إلى الورشة",
-                }}
-                frClassName="font-display text-2xl font-bold text-[#FAF8F4]"
-                arClassName="text-xl font-bold text-teal-300"
-              />
-            </div>
-          </Link>
+            routeLabel="/join"
+            icon={<Smartphone className="h-4 w-4" />}
+            titleFr="Rejoindre l'atelier"
+            titleAr="الانضمام إلى الورشة"
+            variant="secondary"
+          />
         </div>
       </div>
 
       <footer className="mx-auto w-full max-w-3xl border-t border-slate-800/80 pt-5 mt-10 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400">
         <span>12 sections · 21 diapositives · FR / AR</span>
-        <Link
+        <NavActionLink
           href="/screen"
-          className="inline-flex items-center gap-2 font-semibold text-slate-300 hover:text-teal-300 transition-colors"
-        >
-          <Monitor className="h-3.5 w-3.5" />
-          <BilingualInline
-            text={{
-              fr: "Écran projecteur (/screen)",
-              ar: "شاشة المسلاط (/screen)",
-            }}
-          />
-        </Link>
+          routeLabel="/screen"
+          icon={<Monitor className="h-3.5 w-3.5" />}
+          titleFr="Écran projecteur (/screen)"
+          titleAr="شاشة المسلاط (/screen)"
+          variant="footer"
+        />
       </footer>
     </div>
   );

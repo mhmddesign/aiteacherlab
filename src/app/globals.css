@@ -32,6 +32,14 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  button:not(:disabled) {
+    transition: transform 90ms ease-out, opacity 120ms ease-out, background-color 120ms ease-out, border-color 120ms ease-out;
+  }
+
+  button:not(:disabled):active {
+    transform: scale(0.98);
+  }
 }
 
 .font-display {

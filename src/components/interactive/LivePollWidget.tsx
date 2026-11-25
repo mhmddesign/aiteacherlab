@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { CheckCircle2, Lock, Send } from "lucide-react";
+import { CheckCircle2, Loader2, Lock, Send } from "lucide-react";
 import { getActivityByKey } from "@/content/activities";
 import type {
   ActivityAggregate,
@@ -165,7 +165,11 @@ export function LivePollWidget({
                     )}
                   </div>
                   {isChosen && (
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-teal-600" />
+                    saveState === "saving" ? (
+                      <Loader2 className="mt-0.5 h-5 w-5 shrink-0 animate-spin text-teal-600" />
+                    ) : (
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-teal-600" />
+                    )
                   )}
                 </button>
               );

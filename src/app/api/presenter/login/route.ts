@@ -5,7 +5,7 @@ import {
   PRESENTER_COOKIE,
   signPresenterCookie,
 } from "@/lib/auth/session";
-import { getFacilitatorPasscode } from "@/lib/env";
+import { getFacilitatorPasscode, getWorkshopPin } from "@/lib/env";
 import { presenterLoginSchema } from "@/lib/validation/schemas";
 import { getWorkshopStore } from "@/lib/workshop/store";
 
@@ -13,7 +13,10 @@ export async function POST(req: NextRequest) {
   try {
     const store = getWorkshopStore();
     const ip = extractClientIp(req.headers);
-    const allowed = await store.checkRateLimit(`presenter_login:${ip}`, 10, 300);
+    const [allowed, body] = await Promise.all([
+      store.checkRateLimit(`presenter_login:${ip}`, 10, 300),
+      req.json().catch(() => null),
+    ]);
     if (!allowed) {
       return NextResponse.json(
         {
@@ -24,7 +27,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json().catch(() => null);
     const parsed = presenterLoginSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -45,9 +47,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const workshopId = await store.getWorkshopId();
-    const jwt = await signPresenterCookie(workshopId);
-    const res = NextResponse.json({ ok: true });
+    const snapshot = await store.getPresenterSnapshot();
+    const jwt = await signPresenterCookie(snapshot.state.workshopId);
+    const res = NextResponse.json({
+      ok: true,
+      snapshot: {
+        ...snapshot,
+        workshopPinHint: getWorkshopPin(),
+      },
+    });
     res.cookies.set(PRESENTER_COOKIE, jwt, cookieOptions());
     return res;
   } catch (err) {

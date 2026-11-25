@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { CheckCircle2, Lock, Send } from "lucide-react";
+import { CheckCircle2, Loader2, Lock, Send } from "lucide-react";
 import type {
   ActivityAggregate,
   ActivityStatus,
@@ -206,7 +206,11 @@ Avant de générer le contenu ou le prototype :
               disabled={isLocked || submitting}
               className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700 disabled:opacity-50 cursor-pointer"
             >
-              <Send className="h-3.5 w-3.5" />
+              {submitting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Send className="h-3.5 w-3.5" />
+              )}
               <span>
                 {submitting ? (
                   "Enregistrement... / جاري الحفظ..."
