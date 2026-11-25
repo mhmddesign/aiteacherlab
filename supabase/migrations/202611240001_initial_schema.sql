@@ -138,12 +138,16 @@ create index if not exists idx_realtime_grants_topic
 create or replace function public.touch_workshop_state_updated_at()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   new.updated_at = now();
   return new;
 end;
 $$;
+
+revoke all on function public.touch_workshop_state_updated_at()
+  from public, anon, authenticated;
 
 drop trigger if exists trg_workshop_state_updated_at on public.workshop_state;
 create trigger trg_workshop_state_updated_at
@@ -184,6 +188,11 @@ begin
 end;
 $$;
 
+revoke all on function public.check_rate_limit(text, integer, integer)
+  from public, anon, authenticated;
+grant execute on function public.check_rate_limit(text, integer, integer)
+  to service_role;
+
 -- Strict Default-Deny Row Level Security on ALL public tables
 -- All privileged queries and writes pass through authenticated Next.js Route Handlers
 alter table public.workshops enable row level security;
@@ -204,6 +213,28 @@ revoke all on public.gallery_contributions from anon, authenticated;
 revoke all on public.rate_limits from anon, authenticated;
 revoke all on public.realtime_channel_grants from anon, authenticated;
 
+-- Private Realtime helper (allows realtime.messages RLS to inspect grants safely
+-- while public.realtime_channel_grants stays default-deny for authenticated clients)
+create or replace function public.has_realtime_channel_grant(p_topic text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.realtime_channel_grants g
+    where g.user_id = (select auth.uid())
+      and g.topic = p_topic
+  );
+$$;
+
+revoke all on function public.has_realtime_channel_grant(text)
+  from public, anon;
+grant execute on function public.has_realtime_channel_grant(text)
+  to authenticated, service_role;
+
 -- Private Realtime Channel Authorization on realtime.messages
 -- Note: RLS on realtime.messages is already enabled by Supabase; do not alter that table.
 drop policy if exists "Authorized workshop members can receive private broadcasts" on realtime.messages;
@@ -211,11 +242,4 @@ create policy "Authorized workshop members can receive private broadcasts"
   on realtime.messages
   for select
   to authenticated
-  using (
-    exists (
-      select 1
-      from public.realtime_channel_grants g
-      where g.user_id = (select auth.uid())
-        and g.topic = realtime.topic()
-    )
-  );
+  using (public.has_realtime_channel_grant(realtime.topic()));

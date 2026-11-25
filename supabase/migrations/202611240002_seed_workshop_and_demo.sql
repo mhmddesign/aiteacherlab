@@ -29,6 +29,8 @@ declare
     'group3', 'group1', 'group3', 'group2', 'group4', 'group1', 'group3', 'group2', 'group4', 'group3'
   ];
 begin
+  perform set_config('search_path', 'public, extensions', true);
+
   -- Upsert workshop (PIN verification is enforced strictly from server-side WORKSHOP_PIN env)
   insert into public.workshops (slug, title, join_pin_hash, is_active)
   values (
