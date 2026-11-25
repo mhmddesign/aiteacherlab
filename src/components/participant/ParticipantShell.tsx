@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { Loader2, LogOut, PauseCircle, ShieldCheck, Smartphone, Sparkles } from "lucide-react";
+import { Loader2, LogOut, MonitorPlay, PauseCircle, ShieldCheck, Smartphone, Sparkles } from "lucide-react";
 import type { ParticipantResponseItem, PublicWorkshopSnapshot } from "@/content/types";
 import { getSlideById, TOTAL_SECTIONS } from "@/content/slides";
 import { useWorkshopSync } from "@/lib/realtime/client";
+import { PresentationViewport } from "@/components/slides/PresentationViewport";
 import { SlideRenderer } from "@/components/slides/SlideRenderer";
 import { BilingualBlock, BilingualInline } from "@/components/ui/Bilingual";
 import { ConnectionBadge } from "@/components/ui/ConnectionBadge";
@@ -27,6 +28,7 @@ export function ParticipantShell({
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [showSlidePreview, setShowSlidePreview] = useState(false);
 
   const { snapshot, connectionMode, error, refresh } = useWorkshopSync({
     mode: "public",
@@ -278,6 +280,18 @@ export function ParticipantShell({
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowSlidePreview((s) => !s)}
+              className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs font-semibold cursor-pointer ${
+                showSlidePreview
+                  ? "border-teal-400 bg-teal-600 text-white"
+                  : "border-slate-700 text-slate-200 hover:border-teal-400"
+              }`}
+            >
+              <MonitorPlay className="h-3.5 w-3.5 shrink-0" />
+              <BilingualInline text={{ fr: "Aperçu 16:9", ar: "معاينة الشريحة" }} />
+            </button>
             <ConnectionBadge
               mode={connectionMode}
               demoMode={activeSnapshot.state.demoMode}
@@ -324,6 +338,27 @@ export function ParticipantShell({
                 ar: "استراحة في الورشة: تم تعليق الإرسالات مؤقتاً من طرف المنشط لنتبادل النقاش في القاعة.",
               }}
             />
+          </div>
+        )}
+
+        {showSlidePreview && (
+          <div
+            data-participant-slide-preview="true"
+            className="w-full aspect-video rounded-xl overflow-hidden border border-slate-700/80 bg-[#060B16] shadow-lg"
+          >
+            <PresentationViewport interactive={false} rounded={false}>
+              <SlideRenderer
+                slide={slide}
+                mode="projector"
+                activityStatus={activeSnapshot.state.activityStatus}
+                showResults={activeSnapshot.state.showResults}
+                showQrOverlay={false}
+                isPaused={activeSnapshot.state.isPaused}
+                aggregate={activeSnapshot.aggregate}
+                connectedCount={activeSnapshot.connectedCount}
+                totalParticipants={activeSnapshot.totalParticipants}
+              />
+            </PresentationViewport>
           </div>
         )}
 

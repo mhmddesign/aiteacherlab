@@ -19,6 +19,7 @@ interface ShowcaseVotingWidgetProps {
   myResponses?: ParticipantResponseItem[];
   canSubmit: boolean;
   defaultContributorName?: string;
+  canvas?: boolean;
   onSubmitted?: (savedResponse?: ParticipantResponseItem) => void;
 }
 
@@ -36,6 +37,7 @@ export function ShowcaseVotingWidget({
   myResponses = [],
   canSubmit,
   defaultContributorName = "",
+  canvas = false,
   onSubmitted,
 }: ShowcaseVotingWidgetProps) {
   const activity = getActivityByKey("vote-showcase");
@@ -435,7 +437,10 @@ export function ShowcaseVotingWidget({
                 <span className="font-arabic">{aggregate.totalRespondents} مصوت(ة)</span>
               </span>
             </div>
-            <ShowcaseGroupedChart tallies={aggregate.showcaseTallies} />
+            <ShowcaseGroupedChart
+              tallies={aggregate.showcaseTallies}
+              height={canvas ? 440 : 330}
+            />
           </div>
         )}
     </div>

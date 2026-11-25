@@ -18,6 +18,7 @@ interface ExitTicketWidgetProps {
   aggregate: ActivityAggregate | null;
   myResponses?: ParticipantResponseItem[];
   canSubmit: boolean;
+  canvas?: boolean;
   onSubmitted?: (savedResponse?: ParticipantResponseItem) => void;
 }
 
@@ -28,6 +29,7 @@ export function ExitTicketWidget({
   aggregate,
   myResponses = [],
   canSubmit,
+  canvas = false,
   onSubmitted,
 }: ExitTicketWidgetProps) {
   const activity = getActivityByKey("exit-ticket");
@@ -181,9 +183,13 @@ export function ExitTicketWidget({
       )}
 
       {(showResults || status === "revealed" || status === "closed" || !canSubmit) && aggregate && (
-        <div className="grid gap-4 lg:grid-cols-12">
+        <div className={canvas ? "grid grid-cols-12 gap-6 items-stretch" : "grid gap-4 lg:grid-cols-12"}>
           {aggregate.optionTallies && (
-            <div className="lg:col-span-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+            <div
+              className={`${
+                canvas ? "col-span-6 p-5" : "lg:col-span-6 p-4"
+              } rounded-2xl border border-slate-200 bg-white shadow-xs`}
+            >
               <BilingualBlock
                 text={{
                   fr: "Axes choisis cette semaine",
@@ -193,11 +199,19 @@ export function ExitTicketWidget({
                 frClassName="text-sm font-bold text-slate-900"
                 arClassName="text-xs font-bold text-teal-800"
               />
-              <OptionBarChart data={aggregate.optionTallies} height={270} />
+              <OptionBarChart
+                data={aggregate.optionTallies}
+                height={canvas ? 380 : 270}
+                fixedHeight={canvas}
+              />
             </div>
           )}
 
-          <div className="lg:col-span-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+          <div
+            className={`${
+              canvas ? "col-span-6 p-5" : "lg:col-span-6 p-4"
+            } rounded-2xl border border-slate-200 bg-white shadow-xs flex flex-col`}
+          >
             <h4 className="mb-3 flex items-center gap-1.5 text-sm font-bold text-slate-900">
               <MessageSquareHeart className="h-4 w-4 text-teal-600 shrink-0" />
               <BilingualInline
@@ -207,7 +221,11 @@ export function ExitTicketWidget({
                 }}
               />
             </h4>
-            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+            <div
+              className={`space-y-2 overflow-y-auto pr-1 ${
+                canvas ? "max-h-[410px]" : "max-h-64"
+              }`}
+            >
               {aggregate.recentSnippets && aggregate.recentSnippets.length > 0 ? (
                 aggregate.recentSnippets.map((item) => (
                   <div

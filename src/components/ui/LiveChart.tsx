@@ -81,9 +81,15 @@ interface OptionBarChartProps {
   data: OptionTally[];
   height?: number;
   large?: boolean;
+  fixedHeight?: boolean;
 }
 
-export function OptionBarChart({ data, height = 300, large = false }: OptionBarChartProps) {
+export function OptionBarChart({
+  data,
+  height = 300,
+  large = false,
+  fixedHeight = false,
+}: OptionBarChartProps) {
   const isClient = useIsClient();
   const prefersReducedMotion = useReducedMotion();
   const labelMap = new Map<string, { fr: string; ar: string }>();
@@ -101,10 +107,12 @@ export function OptionBarChart({ data, height = 300, large = false }: OptionBarC
     };
   });
 
-  const computedHeight = Math.max(height, data.length * (large ? 64 : 52));
+  const computedHeight = fixedHeight
+    ? height
+    : Math.max(height, data.length * (large ? 64 : 52));
 
   return (
-    <div style={{ width: "100%", height: computedHeight }} className="min-h-[220px]">
+    <div style={{ width: "100%", height: computedHeight }} className="min-h-[200px]">
       {!isClient ? (
         <div className="h-full w-full rounded-xl bg-slate-100/70 animate-pulse" />
       ) : (
@@ -112,14 +120,14 @@ export function OptionBarChart({ data, height = 300, large = false }: OptionBarC
           <BarChart
             data={chartData}
             layout="vertical"
-            margin={{ top: 10, right: 68, left: 10, bottom: 10 }}
+            margin={{ top: 10, right: 80, left: 10, bottom: 10 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" horizontal={false} />
             <XAxis type="number" allowDecimals={false} tick={{ fill: "#475569", fontSize: 12 }} />
             <YAxis
               type="category"
               dataKey="optionId"
-              width={large ? 275 : 170}
+              width={large ? 305 : 170}
               interval={0}
               tick={<BilingualYAxisTick large={large} labelMap={labelMap} />}
             />

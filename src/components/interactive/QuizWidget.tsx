@@ -19,6 +19,7 @@ interface QuizWidgetProps {
   myResponses?: ParticipantResponseItem[];
   canSubmit: boolean;
   large?: boolean;
+  canvas?: boolean;
   onSubmitted?: (savedResponse?: ParticipantResponseItem) => void;
 }
 
@@ -37,6 +38,7 @@ export function QuizWidget({
   myResponses = [],
   canSubmit,
   large = false,
+  canvas = false,
   onSubmitted,
 }: QuizWidgetProps) {
   const activity = getActivityByKey(activityKey);
@@ -106,6 +108,94 @@ export function QuizWidget({
       .map(([k]) => k),
   ]).size;
   const myCorrectCount = myResponses.filter((r) => r.isCorrect).length;
+
+  if (canvas && !canSubmit) {
+    const renderQuestionCard = (q: NonNullable<typeof activity.questions>[number], idx: number) => {
+      const tally = aggregate?.questionTallies?.find((t) => t.questionId === q.id);
+      const isTwoOpt = q.options.length === 2;
+      return (
+        <div
+          key={q.id}
+          className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs flex flex-col justify-between space-y-2"
+        >
+          <div className="space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-[12px] font-bold text-slate-700">
+                Q{idx + 1} · س{idx + 1}
+              </span>
+              {q.darijaHint && (
+                <span dir="rtl" lang="ar" className="font-arabic text-[12px] font-semibold text-teal-800 truncate">
+                  {q.darijaHint}
+                </span>
+              )}
+            </div>
+            <BilingualBlock
+              text={q.prompt}
+              frClassName="text-[14px] font-bold leading-snug text-slate-900"
+              arClassName="text-[14px] font-bold leading-snug text-teal-900"
+            />
+          </div>
+
+          <div className={isTwoOpt ? "grid grid-cols-2 gap-2" : "space-y-1.5"}>
+            {q.options.map((opt) => {
+              const isCorrectOpt = isRevealed && tally?.correctOptionId === opt.id;
+              const optTally = tally?.options.find((o) => o.optionId === opt.id);
+              return (
+                <div
+                  key={opt.id}
+                  className={`rounded-xl border px-3 py-1.5 flex items-center justify-between gap-2 ${
+                    isCorrectOpt
+                      ? "border-teal-600 bg-teal-50 text-teal-950 font-semibold"
+                      : "border-slate-200 bg-slate-50/70 text-slate-800"
+                  }`}
+                >
+                  <BilingualBlock
+                    text={opt.label}
+                    className="flex-1 min-w-0"
+                    frClassName="text-[12px] leading-tight"
+                    arClassName="text-[12px] leading-tight text-teal-900"
+                  />
+                  {optTally && (
+                    <span className="font-mono-code text-[12px] font-bold text-slate-700 shrink-0">
+                      {optTally.count} ({optTally.percentage}%)
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {isRevealed && tally?.explanation && (
+            <div className="flex items-start gap-1.5 rounded-lg border border-teal-200 bg-teal-50/70 px-2.5 py-1.5 text-slate-800">
+              <HelpCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700" />
+              <BilingualBlock
+                text={tally.explanation}
+                className="flex-1"
+                frClassName="text-[11px] leading-tight"
+                arClassName="text-[11px] leading-tight text-teal-950"
+              />
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    const topRow = activity.questions.slice(0, 3);
+    const bottomRow = activity.questions.slice(3);
+
+    return (
+      <div className="space-y-3.5">
+        <div className="grid grid-cols-3 gap-4 items-stretch">
+          {topRow.map((q, idx) => renderQuestionCard(q, idx))}
+        </div>
+        {bottomRow.length > 0 && (
+          <div className="grid grid-cols-2 gap-4 items-stretch">
+            {bottomRow.map((q, idx) => renderQuestionCard(q, idx + 3))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

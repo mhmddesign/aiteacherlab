@@ -20,6 +20,7 @@ interface LivePollWidgetProps {
   myResponses?: ParticipantResponseItem[];
   canSubmit: boolean;
   large?: boolean;
+  canvas?: boolean;
   onSubmitted?: (savedResponse?: ParticipantResponseItem) => void;
 }
 
@@ -32,6 +33,7 @@ export function LivePollWidget({
   myResponses = [],
   canSubmit,
   large = false,
+  canvas = false,
   onSubmitted,
 }: LivePollWidgetProps) {
   const activity = getActivityByKey(activityKey);
@@ -194,16 +196,22 @@ export function LivePollWidget({
       )}
 
       {shouldShowChart && aggregate?.optionTallies && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs">
+        <div
+          className={`rounded-2xl border border-slate-200 bg-white shadow-xs ${
+            canvas ? "p-6" : "p-4 sm:p-6"
+          }`}
+        >
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h4 className={`font-bold text-slate-900 ${large ? "text-xl" : "text-sm"}`}>
+              <h4 className={`font-bold text-slate-900 ${large || canvas ? "text-xl" : "text-sm"}`}>
                 Résultats en direct
               </h4>
               <p
                 dir="rtl"
                 lang="ar"
-                className={`font-arabic font-bold text-teal-800 ${large ? "text-lg" : "text-xs"}`}
+                className={`font-arabic font-bold text-teal-800 ${
+                  large || canvas ? "text-lg" : "text-xs"
+                }`}
               >
                 النتائج المباشرة
               </p>
@@ -217,8 +225,9 @@ export function LivePollWidget({
           </div>
           <OptionBarChart
             data={aggregate.optionTallies}
-            height={large ? 360 : 280}
-            large={large}
+            height={canvas ? 450 : large ? 360 : 280}
+            large={large || canvas}
+            fixedHeight={canvas}
           />
         </div>
       )}

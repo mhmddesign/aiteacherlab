@@ -10,7 +10,7 @@ import {
 import { BilingualBlock, BilingualInline } from "@/components/ui/Bilingual";
 import { CopyPromptButton } from "@/components/ui/CopyPromptButton";
 
-export function GroupProjectsBoard() {
+export function GroupProjectsBoard({ canvas = false }: { canvas?: boolean }) {
   const [selectedId, setSelectedId] = useState<string>(GROUP_PROJECTS[0].id);
   const project = GROUP_PROJECTS.find((g) => g.id === selectedId) ?? GROUP_PROJECTS[0];
 
@@ -33,6 +33,182 @@ export function GroupProjectsBoard() {
 
   const frPrompt = buildGroupPromptFr(project, customGrade, customSubject, customCompetency);
   const arPrompt = buildGroupPromptAr(project, customGrade, customSubject, customCompetency);
+
+  if (canvas) {
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-4 gap-3">
+          {GROUP_PROJECTS.map((g) => {
+            const isSelected = g.id === project.id;
+            return (
+              <button
+                key={g.id}
+                type="button"
+                onClick={() => selectGroup(g.id)}
+                className={`rounded-xl border p-3 text-left transition cursor-pointer ${
+                  isSelected
+                    ? "border-teal-600 bg-teal-600 text-white shadow-sm"
+                    : "border-slate-200 bg-white text-slate-900 hover:border-teal-400"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider opacity-90">
+                  <Users className="h-3.5 w-3.5 shrink-0" />
+                  <BilingualInline text={g.groupLabel} />
+                </div>
+                <BilingualBlock
+                  text={g.title}
+                  className="mt-1"
+                  frClassName="text-[13px] font-bold leading-tight truncate"
+                  arClassName={`text-[12px] font-bold leading-tight truncate ${
+                    isSelected ? "text-teal-50" : "text-teal-900"
+                  }`}
+                />
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+          <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-2.5">
+            <BilingualBlock
+              text={project.title}
+              frClassName="font-display text-[20px] font-bold text-slate-900"
+              arClassName="text-[16px] font-bold text-teal-900"
+            />
+            <span className="inline-block rounded-full bg-amber-50 px-3 py-1 text-[11px] font-bold text-amber-900 border border-amber-200 shrink-0">
+              <BilingualInline
+                text={{
+                  fr: "Prototype 25 min · Testable",
+                  ar: "نموذج 25 دقيقة · قابل للتجريب",
+                }}
+              />
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 rounded-xl border border-teal-200 bg-ivory-50 px-3.5 py-2">
+            <label className="text-[11px] font-semibold text-slate-800">
+              <span>Niveau · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">المستوى</span></span>
+              <input
+                type="text"
+                value={customGrade}
+                onChange={(e) => setCustomGrade(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[12px]"
+              />
+            </label>
+            <label className="text-[11px] font-semibold text-slate-800">
+              <span>Discipline · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">المادة</span></span>
+              <input
+                type="text"
+                value={customSubject}
+                onChange={(e) => setCustomSubject(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[12px]"
+              />
+            </label>
+            <label className="text-[11px] font-semibold text-slate-800">
+              <span>Compétence · <span dir="rtl" lang="ar" className="font-arabic text-teal-800">الكفاية</span></span>
+              <input
+                type="text"
+                value={customCompetency}
+                onChange={(e) => setCustomCompetency(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[12px]"
+              />
+            </label>
+          </div>
+
+          <div className="grid grid-cols-12 gap-4">
+            <div className="col-span-7 grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-slate-800 bg-[#0B1426] p-3.5 text-slate-100 h-[335px] overflow-y-auto">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-bold uppercase text-cyan-300">
+                    Prompt FR
+                  </span>
+                  <CopyPromptButton text={frPrompt} label="Copier FR" labelAr="نسخ FR" />
+                </div>
+                <pre dir="ltr" className="font-mono-code whitespace-pre-wrap text-[12px] leading-relaxed">
+                  {frPrompt}
+                </pre>
+              </div>
+
+              <div
+                dir="rtl"
+                lang="ar"
+                className="font-arabic rounded-xl border border-teal-300 bg-teal-50/60 p-3.5 text-slate-900 h-[335px] overflow-y-auto"
+              >
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="text-[12px] font-bold text-teal-900">
+                    توجيه بالعربية
+                  </span>
+                  <div dir="ltr">
+                    <CopyPromptButton text={arPrompt} label="Copier AR" labelAr="نسخ AR" />
+                  </div>
+                </div>
+                <pre className="font-arabic whitespace-pre-wrap text-[13px] leading-relaxed">
+                  {arPrompt}
+                </pre>
+              </div>
+            </div>
+
+            <div className="col-span-5 grid grid-cols-2 gap-3 h-[335px] overflow-y-auto">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1.5">
+                <h5 className="flex items-center gap-1.5 text-[12px] font-bold text-slate-900">
+                  <ClipboardList className="h-3.5 w-3.5 text-teal-700 shrink-0" />
+                  <BilingualInline text={{ fr: "Spécification", ar: "المواصفات" }} />
+                </h5>
+                <ul className="space-y-1.5 text-[11px] text-slate-700">
+                  {project.techSpec.map((t) => (
+                    <li key={t.fr}>
+                      <BilingualBlock text={t} frClassName="text-[11px]" arClassName="text-[11px]" />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+                <h5 className="flex items-center gap-1.5 text-[12px] font-bold text-slate-900">
+                  <CheckSquare className="h-3.5 w-3.5 text-cyan-700 shrink-0" />
+                  <BilingualInline text={{ fr: "Checklists", ar: "لوائح التحقق" }} />
+                </h5>
+                <div className="space-y-1.5">
+                  {project.testingChecklist.map((item) => {
+                    const k = `${project.id}:test:${item.fr}`;
+                    return (
+                      <label key={k} className="flex items-start gap-1.5 text-[11px] text-slate-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(checkedItems[k])}
+                          onChange={(e) =>
+                            setCheckedItems((prev) => ({ ...prev, [k]: e.target.checked }))
+                          }
+                          className="mt-0.5 accent-teal-600 shrink-0"
+                        />
+                        <BilingualBlock text={item} frClassName="text-[11px]" arClassName="text-[11px]" />
+                      </label>
+                    );
+                  })}
+                  {project.demoChecklist.map((item) => {
+                    const k = `${project.id}:demo:${item.fr}`;
+                    return (
+                      <label key={k} className="flex items-start gap-1.5 text-[11px] text-slate-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(checkedItems[k])}
+                          onChange={(e) =>
+                            setCheckedItems((prev) => ({ ...prev, [k]: e.target.checked }))
+                          }
+                          className="mt-0.5 accent-amber-600 shrink-0"
+                        />
+                        <BilingualBlock text={item} frClassName="text-[11px]" arClassName="text-[11px]" />
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

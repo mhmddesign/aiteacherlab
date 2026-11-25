@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Code2, Layers, Paintbrush, Play } from "lucide-react";
 import { BilingualBlock, BilingualInline } from "@/components/ui/Bilingual";
 
-export function WebTrioExplainer() {
+export function WebTrioExplainer({ canvas = false }: { canvas?: boolean }) {
   const [hasCss, setHasCss] = useState(true);
   const [hasJs, setHasJs] = useState(true);
   const [score, setScore] = useState(0);
@@ -27,8 +27,12 @@ export function WebTrioExplainer() {
   };
 
   return (
-    <div className="grid gap-5 lg:grid-cols-12">
-      <div className="lg:col-span-5 space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+    <div className={canvas ? "grid grid-cols-12 gap-8 items-center" : "grid gap-5 lg:grid-cols-12"}>
+      <div
+        className={`${
+          canvas ? "col-span-5 space-y-3.5" : "lg:col-span-5 space-y-3"
+        } rounded-2xl border border-slate-200 bg-white p-5 shadow-xs`}
+      >
         <BilingualBlock
           text={{
             fr: "Expérimentez en direct le rôle de chaque brique",
@@ -111,7 +115,7 @@ export function WebTrioExplainer() {
         </label>
       </div>
 
-      <div className="lg:col-span-7">
+      <div className={canvas ? "col-span-7" : "lg:col-span-7"}>
         <div
           className={
             hasCss
@@ -150,7 +154,15 @@ export function WebTrioExplainer() {
             arClassName={hasCss ? "text-base font-bold text-teal-900" : "text-sm"}
           />
 
-          <div className={hasCss ? "grid gap-2.5 sm:grid-cols-3" : "flex flex-col gap-1 items-start"}>
+          <div
+            className={
+              hasCss
+                ? canvas
+                  ? "grid grid-cols-3 gap-3"
+                  : "grid gap-2.5 sm:grid-cols-3"
+                : "flex flex-col gap-1 items-start"
+            }
+          >
             {[
               { label: "300 + 40 + 5", ok: true },
               { label: "300 + 50 + 4", ok: false },

@@ -55,6 +55,25 @@
   font-family: var(--font-mono);
 }
 
+.portrait-phone-hint {
+  display: none;
+}
+
+@media (max-width: 639px) and (orientation: portrait) {
+  .portrait-phone-hint {
+    display: flex;
+  }
+}
+
+[data-fullscreen-wrapper="true"]:fullscreen {
+  width: 100vw;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  background-color: #060b16;
+  overflow: hidden;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
