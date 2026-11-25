@@ -422,24 +422,29 @@ export function ShowcaseVotingWidget({
 
       {(showResults || status === "revealed" || status === "closed" || !canSubmit) &&
         aggregate?.showcaseTallies && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div className={`rounded-2xl border-2 border-slate-200 bg-white shadow-xs ${canvas ? "p-7" : "p-5"}`}>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <BilingualBlock
                 text={{
-                  fr: "Résultats agrégés du Showcase (votes anonymisés)",
-                  ar: "النتائج التجميعية لعروض المجموعات (تصويت مجهول)",
+                  fr: "Résultats agrégés du Showcase",
+                  ar: "النتائج التجميعية لعروض المجموعات",
                 }}
-                frClassName="text-sm font-bold text-slate-900"
-                arClassName="text-xs font-bold text-teal-800"
+                frClassName={canvas ? "text-[30px] font-bold text-slate-900" : "text-sm font-bold text-slate-900"}
+                arClassName={canvas ? "text-[28px] font-bold text-teal-800" : "text-xs font-bold text-teal-800"}
               />
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+              <span
+                className={`rounded-full bg-slate-100 font-semibold text-slate-700 ${
+                  canvas ? "px-5 py-2 text-[22px]" : "px-3 py-1 text-xs"
+                }`}
+              >
                 {aggregate.totalRespondents} votant{aggregate.totalRespondents > 1 ? "s" : ""} ·{" "}
                 <span className="font-arabic">{aggregate.totalRespondents} مصوت(ة)</span>
               </span>
             </div>
             <ShowcaseGroupedChart
               tallies={aggregate.showcaseTallies}
-              height={canvas ? 440 : 330}
+              height={canvas ? 510 : 330}
+              large={canvas}
             />
           </div>
         )}

@@ -26,6 +26,156 @@ export function WebTrioExplainer({ canvas = false }: { canvas?: boolean }) {
     }
   };
 
+  if (canvas) {
+    return (
+      <div className="grid grid-cols-12 gap-10 items-center">
+        <div className="col-span-5 space-y-4">
+          <div className="rounded-2xl border-2 border-slate-200 bg-white p-5 space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-3">
+                <Code2 className="h-6 w-6 text-teal-700 shrink-0" />
+                <span className="text-[26px] font-bold text-slate-900">1. HTML · البنية</span>
+              </div>
+              <span className="rounded-full bg-teal-100 px-3.5 py-1 text-[18px] font-bold text-teal-900">
+                Actif
+              </span>
+            </div>
+            <p data-slide-body="true" className="text-[22px] text-slate-600">
+              Structure et contenu · <span dir="rtl" lang="ar" className="font-arabic text-teal-900">السؤال والأزرار</span>
+            </p>
+          </div>
+
+          <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border-2 border-slate-200 bg-white p-5 hover:border-cyan-500">
+            <div className="space-y-1">
+              <div className="flex items-center gap-3">
+                <Paintbrush className="h-6 w-6 text-cyan-600 shrink-0" />
+                <span className="text-[26px] font-bold text-slate-900">2. CSS · التنسيق</span>
+              </div>
+              <p className="text-[22px] text-slate-600">
+                Couleurs, RTL & clarté · <span dir="rtl" lang="ar" className="font-arabic text-teal-900">الألوان والوضوح</span>
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={hasCss}
+              onChange={(e) => setHasCss(e.target.checked)}
+              className="h-7 w-7 accent-teal-600 shrink-0"
+            />
+          </label>
+
+          <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border-2 border-slate-200 bg-white p-5 hover:border-amber-500">
+            <div className="space-y-1">
+              <div className="flex items-center gap-3">
+                <Play className="h-6 w-6 text-amber-600 shrink-0" />
+                <span className="text-[26px] font-bold text-slate-900">3. JavaScript · التفاعل</span>
+              </div>
+              <p className="text-[22px] text-slate-600">
+                Score & feedback · <span dir="rtl" lang="ar" className="font-arabic text-teal-900">التصحيح والنتيجة</span>
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={hasJs}
+              onChange={(e) => {
+                setHasJs(e.target.checked);
+                if (!e.target.checked) setFeedback(null);
+              }}
+              className="h-7 w-7 accent-amber-600 shrink-0"
+            />
+          </label>
+        </div>
+
+        <div className="col-span-7">
+          <div
+            className={
+              hasCss
+                ? "rounded-3xl border-2 border-slate-200 bg-white p-9 shadow-md transition-all space-y-6"
+                : "border-2 border-black bg-white p-6 font-serif text-black space-y-4"
+            }
+          >
+            <div className={hasCss ? "flex items-center justify-between gap-3" : "mb-2"}>
+              <span
+                className={
+                  hasCss
+                    ? "inline-flex items-center gap-2 rounded-full bg-teal-50 px-4 py-1.5 text-[22px] font-bold text-teal-800"
+                    : "text-[22px] underline"
+                }
+              >
+                <Layers className={hasCss ? "h-5 w-5" : "hidden"} />
+                <BilingualInline
+                  text={{
+                    fr: "3AEP · Mathématiques",
+                    ar: "الثالث ابتدائي · الرياضيات",
+                  }}
+                />
+              </span>
+              <span className={hasCss ? "text-[24px] font-bold text-slate-700" : "ml-4 text-[22px]"}>
+                Score / النتيجة : {score}
+              </span>
+            </div>
+
+            <BilingualBlock
+              text={{
+                fr: "Quelle décomposition correspond au nombre 345 ?",
+                ar: "ما التفكيك الصحيح للعدد 345؟",
+              }}
+              frClassName={hasCss ? "font-display text-[36px] font-bold leading-snug text-slate-900" : "text-[32px]"}
+              arClassName={hasCss ? "text-[36px] font-bold leading-snug text-teal-900" : "text-[30px]"}
+            />
+
+            <div className={hasCss ? "grid grid-cols-3 gap-4" : "flex flex-col gap-2 items-start"}>
+              {[
+                { label: "300 + 40 + 5", ok: true },
+                { label: "300 + 50 + 4", ok: false },
+                { label: "30 + 40 + 5", ok: false },
+              ].map((opt) => (
+                <button
+                  key={opt.label}
+                  type="button"
+                  onClick={() => handlePick(opt.ok)}
+                  className={
+                    hasCss
+                      ? "rounded-2xl border-2 border-slate-300 bg-[#FAF8F4] px-5 py-5 text-[30px] font-bold text-slate-900 hover:border-teal-500 hover:bg-teal-50 cursor-pointer"
+                      : "border border-gray-500 bg-gray-200 px-4 py-2 text-[26px]"
+                  }
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {!hasJs && (
+              <BilingualBlock
+                text={{
+                  fr: "JavaScript désactivé : les boutons ne réagissent plus.",
+                  ar: "تم تعطيل JavaScript: الأزرار لا تستجيب الآن.",
+                }}
+                frClassName="text-[24px] italic text-amber-700"
+                arClassName="text-[26px] text-amber-800"
+              />
+            )}
+
+            {hasJs && feedback && (
+              <div
+                className={
+                  hasCss
+                    ? "rounded-2xl border-2 border-teal-200 bg-teal-50 px-6 py-4 font-semibold text-teal-900"
+                    : "text-[24px] font-bold"
+                }
+              >
+                <BilingualBlock
+                  text={feedback}
+                  frClassName="text-[26px]"
+                  arClassName="text-[28px]"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={canvas ? "grid grid-cols-12 gap-8 items-center" : "grid gap-5 lg:grid-cols-12"}>
       <div

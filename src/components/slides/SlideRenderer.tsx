@@ -6,6 +6,7 @@ import { ArrowRight, Award, Monitor } from "lucide-react";
 import type {
   ActivityAggregate,
   ActivityStatus,
+  BilingualText,
   ParticipantResponseItem,
   SlideDefinition,
 } from "@/content/types";
@@ -42,6 +43,89 @@ interface SlideRendererProps {
   onSubmitted?: (savedResponse?: ParticipantResponseItem) => void;
 }
 
+const CANVAS_HEADLINES: Record<string, BilingualText> = {
+  "s01-welcome": {
+    fr: "De l'IA à la création pédagogique",
+    ar: "من الذكاء الاصطناعي إلى الإبداع البيداغوجي",
+  },
+  "s01-vision": {
+    fr: "Devenir créateurs pédagogiques",
+    ar: "أن نصبح صانعي حلول بيداغوجية",
+  },
+  "s02-needs-poll": {
+    fr: "Identifier nos priorités sur le terrain",
+    ar: "تحديد أولوياتنا في الميدان",
+  },
+  "s03-concepts": {
+    fr: "5 notions clés expliquées simplement",
+    ar: "5 مفاهيم أساسية مشروحة ببساطة",
+  },
+  "s03-quiz": {
+    fr: "Quiz express : 5 repères sur les LLM",
+    ar: "رائز سريع: 5 معالم حول الـ LLM",
+  },
+  "s04-use-cases": {
+    fr: "Exemples réels pour le primaire",
+    ar: "أمثلة واقعية للتعليم الابتدائي",
+  },
+  "s05-pillars": {
+    fr: "6 garde-fous pour l'IA en classe",
+    ar: "6 ضوابط للذكاء الاصطناعي في القسم",
+  },
+  "s05-true-false": {
+    fr: "Vrai ou Faux : Réflexes en classe",
+    ar: "صحيح أم خطأ: ممارسات مسؤولة",
+  },
+  "s06-anatomy": {
+    fr: "Prompt faible vs Prompt solide",
+    ar: "توجيه ضعيف مقابل توجيه محكم",
+  },
+  "s06-builder": {
+    fr: "Atelier : Votre Prompt Builder",
+    ar: "ورشة: مُنشئ التوجيهات",
+  },
+  "s07-workflow": {
+    fr: "Le Méta-Prompting en 6 étapes",
+    ar: "الميتا-برومبت في 6 خطوات",
+  },
+  "s07-exercise": {
+    fr: "Exercice : Transformez une idée brute",
+    ar: "تمرين: حوّلوا فكرة أولية",
+  },
+  "s08-web-trio": {
+    fr: "HTML, CSS et JavaScript : le trio du navigateur",
+    ar: "HTML وCSS وJavaScript: ثلاثي المتصفح",
+  },
+  "s08-ecosystem": {
+    fr: "De l'idée à la classe : 4 étapes",
+    ar: "من الفكرة إلى القسم: 4 مراحل",
+  },
+  "s09-live-demo": {
+    fr: "Démonstration : Prompt → Prototype",
+    ar: "عرض حي: من التوجيه إلى نموذج شغّال",
+  },
+  "s10-gallery": {
+    fr: "Galerie d'applications du primaire",
+    ar: "معرض تطبيقات التعليم الابتدائي",
+  },
+  "s10-projects": {
+    fr: "Atelier en groupes · 4 × 5 collègues",
+    ar: "ورشة المجموعات · 25 دقيقة",
+  },
+  "s10-vote": {
+    fr: "Quel projet tester dès lundi ?",
+    ar: "أي مشروع ستجربونه يوم الاثنين؟",
+  },
+  "s11-showcase-vote": {
+    fr: "Showcase & Galerie Provinciale",
+    ar: "عرض المجموعات والمعرض الإقليمي",
+  },
+  "s12-exit-ticket": {
+    fr: "Votre premier pas cette semaine",
+    ar: "خطوتكم الأولى هذا الأسبوع",
+  },
+};
+
 export function SlideRenderer({
   slide,
   mode,
@@ -63,18 +147,76 @@ export function SlideRenderer({
   const prefersReducedMotion = useReducedMotion();
 
   if (isCanvas) {
+    // Full-bleed keynote hero closing slide
+    if (slide.kind === "closing") {
+      return (
+        <motion.article
+          key={slide.id}
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.16, ease: "easeOut" }}
+          className="h-full w-full flex flex-col justify-between overflow-hidden bg-[#0B1220] text-white px-[96px] py-[68px]"
+        >
+          <div className="flex items-center justify-between text-[20px] font-bold uppercase tracking-[0.2em] text-teal-400">
+            <span>Province de Mediouna · Centre de Digitalisation</span>
+            <span dir="rtl" lang="ar" className="font-arabic tracking-normal text-[24px]">
+              إقليم مديونة · مركز الرقمنة
+            </span>
+          </div>
+
+          <div className="space-y-10 text-center">
+            <h1
+              data-slide-heading-fr="true"
+              dir="ltr"
+              lang="fr"
+              className="mx-auto max-w-[1620px] font-display text-[76px] font-bold leading-[1.14] text-[#FAF8F4]"
+            >
+              « Ne soyez pas seulement utilisateurs du numérique. Devenez créateurs de solutions pédagogiques. »
+            </h1>
+            <h2
+              data-slide-heading-ar="true"
+              dir="rtl"
+              lang="ar"
+              className="font-arabic mx-auto max-w-[1620px] text-[64px] font-bold leading-[1.35] text-teal-300"
+            >
+              « لا تكونوا مجرد مستعملين للتكنولوجيا الرقمية، بل كونوا صانعي حلول بيداغوجية. »
+            </h2>
+          </div>
+
+          <div
+            data-slide-body="true"
+            className="border-t border-slate-800 pt-7 grid grid-cols-2 gap-10 items-center"
+          >
+            <p dir="ltr" lang="fr" className="text-[28px] font-medium text-slate-300 leading-snug">
+              Identifier → Spécifier → Prototyper → Tester → Améliorer → Partager
+            </p>
+            <p
+              dir="rtl"
+              lang="ar"
+              className="font-arabic text-[32px] font-medium text-teal-200 leading-snug"
+            >
+              تحديد ← توصيف ← نموذج أولي ← تجريب ← تحسين ← تقاسم
+            </p>
+          </div>
+        </motion.article>
+      );
+    }
+
+    const headline = CANVAS_HEADLINES[slide.id] ?? slide.title;
+    const isLongFrTitle = headline.fr.length > 42;
+
     return (
       <motion.article
         key={slide.id}
         initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.16, ease: "easeOut" }}
-        className="h-full w-full flex flex-col justify-between gap-3.5 overflow-hidden bg-[#FAF8F4] text-[#0F172A] px-[64px] pt-[36px] pb-[28px]"
+        className="h-full w-full flex flex-col justify-between gap-5 overflow-hidden bg-[#FAF8F4] text-[#0F172A] px-[76px] pt-[38px] pb-[32px]"
       >
-        {/* Fixed 16:9 Canvas Header */}
-        <div className="shrink-0 space-y-2 border-b border-slate-200/90 pb-3.5">
-          <div className="flex items-center justify-between gap-4 text-[14px]">
-            <div className="flex items-center gap-2 font-semibold uppercase tracking-wider text-teal-800">
+        {/* Projector-First Keynote Header */}
+        <div className="shrink-0 space-y-2 border-b-2 border-slate-200/90 pb-4">
+          <div className="flex items-center justify-between gap-6 text-[20px]">
+            <div className="flex items-center gap-3 font-bold uppercase tracking-wider text-teal-800">
               <BilingualInline text={slide.sectionTitle} />
               <span aria-hidden="true" className="text-slate-300">
                 /
@@ -85,12 +227,12 @@ export function SlideRenderer({
             </div>
 
             {slide.techTerms.length > 0 && (
-              <div className="flex items-center gap-3">
-                {slide.techTerms.map((t) => (
+              <div className="flex items-center gap-4">
+                {slide.techTerms.slice(0, 2).map((t) => (
                   <span
                     key={t.term}
                     title={`${t.explanation.fr} | ${t.explanation.ar}`}
-                    className="border-b border-dotted border-teal-600/60 pb-0.5 text-[13px] font-semibold text-slate-600"
+                    className="rounded-full bg-teal-50 px-4 py-1 text-[18px] font-bold text-teal-900 border border-teal-200/80"
                   >
                     {t.term}
                   </span>
@@ -99,94 +241,80 @@ export function SlideRenderer({
             )}
           </div>
 
-          <BilingualBlock
-            text={slide.title}
-            frClassName="font-display text-[38px] font-bold leading-[1.12] tracking-tight text-[#0F172A]"
-            arClassName="text-[28px] font-bold leading-[1.28] text-teal-800"
-          />
-
-          <div className="grid grid-cols-2 gap-8 items-start">
-            <p dir="ltr" lang="fr" className="text-[16px] leading-snug text-slate-600">
-              {slide.subtitle.fr}
-            </p>
-            <p dir="rtl" lang="ar" className="font-arabic text-[17px] leading-snug text-slate-700">
-              {slide.subtitle.ar}
-            </p>
+          <div className="space-y-1">
+            <h1
+              data-slide-heading-fr="true"
+              dir="ltr"
+              lang="fr"
+              className={`font-display font-bold tracking-tight text-[#0F172A] leading-[1.06] ${
+                isLongFrTitle ? "text-[66px]" : "text-[76px]"
+              }`}
+            >
+              {headline.fr}
+            </h1>
+            <h2
+              data-slide-heading-ar="true"
+              dir="rtl"
+              lang="ar"
+              className={`font-arabic font-bold text-teal-800 leading-[1.22] ${
+                isLongFrTitle ? "text-[60px]" : "text-[66px]"
+              }`}
+            >
+              {headline.ar}
+            </h2>
           </div>
         </div>
 
-        {/* Centered 16:9 Canvas Stage Body */}
-        <div className="flex-1 min-h-0 flex flex-col justify-center overflow-hidden">
+        {/* Spacious Keynote Content Stage (~730px height) */}
+        <div
+          data-slide-stage="true"
+          className="flex-1 min-h-0 flex flex-col justify-center overflow-hidden"
+        >
           {slide.kind === "welcome" && (
-            <div className="grid grid-cols-12 gap-10 items-center">
-              <div className="col-span-7 space-y-4">
-                <div className="space-y-1.5">
-                  <p className="text-[13px] font-bold uppercase tracking-widest text-teal-800">
+            <div className="grid grid-cols-12 gap-12 items-center">
+              <div className="col-span-7 space-y-8">
+                <div data-slide-body="true" className="space-y-3">
+                  <p className="text-[22px] font-bold uppercase tracking-widest text-teal-800">
                     <BilingualInline
                       text={{
-                        fr: "Atelier Provincial · Province de Mediouna",
-                        ar: "الورشة الإقليمية · إقليم مديونة",
+                        fr: "Province de Mediouna · Centre de Digitalisation",
+                        ar: "إقليم مديونة · مركز الرقمنة",
                       }}
                     />
                   </p>
-                  <BilingualBlock
-                    text={{
-                      fr: "Rencontre d'échange entre collègues du primaire",
-                      ar: "لقاء تقاسم الخبرات بين أستاذات وأساتذة الابتدائي",
-                    }}
-                    frClassName="font-display text-[28px] font-bold text-[#0F172A] leading-tight"
-                    arClassName="text-[22px] font-bold text-teal-800 leading-snug"
-                  />
-                  <BilingualBlock
-                    text={{
-                      fr: "Organisée en collaboration avec le Centre de Digitalisation : pratiques d'IA générative, Prompt Engineering et création de mini-applications pour vos classes (1AEP–6AEP).",
-                      ar: "بتنسيق مع مركز الرقمنة: ممارسات عملية في الذكاء الاصطناعي التوليدي، وهندسة التوجيهات، وبناء تطبيقات تعليمية مصغرة لأقسامنا (1AEP–6AEP).",
-                    }}
-                    frClassName="text-[16px] text-slate-600 leading-relaxed"
-                    arClassName="text-[17px] text-slate-700 leading-relaxed"
-                  />
+                  <p dir="ltr" lang="fr" className="text-[34px] font-medium text-slate-700 leading-snug">
+                    Rencontre d&apos;échange entre collègues du primaire (1AEP–6AEP) : IA générative, Prompt Engineering &amp; création d&apos;outils de classe.
+                  </p>
+                  <p
+                    dir="rtl"
+                    lang="ar"
+                    className="font-arabic text-[36px] font-medium text-slate-800 leading-snug"
+                  >
+                    لقاء تشاركي بين أستاذات وأساتذة الابتدائي (1AEP–6AEP): الذكاء الاصطناعي التوليدي، هندسة التوجيهات، وبناء أدوات للقسم.
+                  </p>
                 </div>
 
-                {slide.keyPoints.length > 0 && (
-                  <ul className="grid grid-cols-3 gap-4 border-t border-slate-200 pt-3.5">
-                    {slide.keyPoints.map((pt, i) => (
-                      <li
-                        key={pt.fr}
-                        className="flex items-start gap-2.5 border-l-2 border-teal-600/60 pl-3"
-                      >
-                        <span className="font-mono-code text-[13px] font-bold text-teal-700 pt-0.5 shrink-0">
-                          {String(i + 1).padStart(2, "0")}
-                        </span>
-                        <BilingualBlock
-                          text={pt}
-                          className="flex-1"
-                          frClassName="text-[13px] font-semibold text-slate-900 leading-snug"
-                          arClassName="text-[13px] text-teal-900 leading-snug"
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-                <div className="flex items-center gap-12 border-t border-slate-200 pt-4">
+                <div className="flex items-center gap-16 border-t-2 border-slate-200 pt-7">
                   <div>
-                    <p className="font-display text-[48px] leading-none font-bold text-teal-700 tabular-nums">
+                    <p className="font-display text-[124px] leading-none font-bold text-teal-700 tabular-nums">
                       {connectedCount}
                     </p>
                     <BilingualBlock
                       text={{ fr: "Collègues connectés", ar: "الزملاء المتصلون" }}
-                      frClassName="mt-1 text-[13px] font-semibold text-slate-600"
-                      arClassName="text-[13px] font-semibold text-teal-900"
+                      className="mt-2"
+                      frClassName="text-[28px] font-bold text-slate-700"
+                      arClassName="text-[30px] font-bold text-teal-900"
                     />
                   </div>
-                  <div className="border-l border-slate-200 pl-12">
-                    <p className="font-display text-[48px] leading-none font-bold text-slate-900 tabular-nums">
+                  <div className="border-l-2 border-slate-200 pl-16">
+                    <p className="font-display text-[124px] leading-none font-bold text-slate-900 tabular-nums">
                       {totalParticipants}
                     </p>
                     <BilingualBlock
                       text={{ fr: "Inscrits session", ar: "المسجلون في الجلسة" }}
-                      frClassName="mt-1 text-[13px] font-semibold text-slate-600"
-                      arClassName="text-[13px] font-semibold text-slate-700"
+                      className="mt-2"
+                      frClassName="text-[28px] font-bold text-slate-700"
+                      arClassName="text-[30px] font-bold text-slate-800"
                     />
                   </div>
                 </div>
@@ -194,28 +322,28 @@ export function SlideRenderer({
 
               <div className="col-span-5">
                 {showQrOverlay ? (
-                  <QrJoinPanel size={200} showPinHint={joinPinHint} />
+                  <QrJoinPanel size={280} showPinHint={joinPinHint} />
                 ) : (
-                  <div className="rounded-3xl bg-[#0B1220] p-8 text-white space-y-5 shadow-lg">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-teal-500/20 px-3.5 py-1 text-[12px] font-bold text-teal-300">
-                      <Monitor className="h-4 w-4" />
-                      <span>12 Sections · 21 Diapositives · 1AEP–6AEP</span>
+                  <div className="rounded-3xl bg-[#0B1220] p-10 text-white space-y-6 shadow-xl">
+                    <div className="inline-flex items-center gap-3 rounded-full bg-teal-500/20 px-5 py-2 text-[22px] font-bold text-teal-300">
+                      <Monitor className="h-6 w-6" />
+                      <span>12 Sections · 21 Diapos · 1AEP–6AEP</span>
                     </div>
                     <BilingualBlock
                       text={{
                         fr: "AI Teacher Lab · Mediouna",
-                        ar: "مختبر المعلم للذكاء الاصطناعي · إقليم مديونة",
+                        ar: "مختبر المعلم · إقليم مديونة",
                       }}
-                      frClassName="font-display text-[30px] font-bold text-white"
-                      arClassName="text-[24px] font-bold text-teal-300"
+                      frClassName="font-display text-[48px] font-bold text-white leading-tight"
+                      arClassName="text-[42px] font-bold text-teal-300 leading-snug"
                     />
                     <BilingualBlock
                       text={{
-                        fr: "Centre de Digitalisation · Session interactive synchrone.",
-                        ar: "مركز الرقمنة · لقاء تفاعلي مباشر مع الأستاذات والأساتذة.",
+                        fr: "Session interactive synchrone",
+                        ar: "ورشة تفاعلية مباشرة",
                       }}
-                      frClassName="text-[15px] text-slate-300"
-                      arClassName="text-[16px] text-slate-200"
+                      frClassName="text-[28px] text-slate-300"
+                      arClassName="text-[30px] text-slate-200"
                     />
                   </div>
                 )}
@@ -224,32 +352,32 @@ export function SlideRenderer({
           )}
 
           {slide.kind === "vision" && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-10">
-                <div className="border-t-2 border-slate-300 pt-5 space-y-3">
-                  <span className="text-[13px] font-bold uppercase tracking-wider text-slate-500">
+            <div className="space-y-10">
+              <div className="grid grid-cols-2 gap-14">
+                <div className="border-t-4 border-slate-300 pt-7 space-y-4">
+                  <span className="text-[22px] font-bold uppercase tracking-widest text-slate-500">
                     <BilingualInline text={{ fr: "Hier · Usage passif", ar: "بالأمس · استعمال سلبي" }} />
                   </span>
                   <BilingualBlock
                     text={{
                       fr: "Consommateur d'outils génériques",
-                      ar: "مجرد مستهلك لأدوات جاهزة وعامة",
+                      ar: "مستهلك لأدوات جاهزة وعامة",
                     }}
-                    frClassName="font-display text-[28px] font-bold text-slate-900"
-                    arClassName="text-[22px] font-bold text-slate-700"
+                    frClassName="font-display text-[48px] font-bold text-slate-900 leading-tight"
+                    arClassName="text-[44px] font-bold text-slate-700 leading-snug"
                   />
                   <BilingualBlock
                     text={{
-                      fr: "Chercher des fiches toutes faites pensées pour d'autres pays, souvent déconnectées de vos effectifs, de l'arabe RTL ou des contraintes matérielles de l'école.",
-                      ar: "البحث عن جذاذات جاهزة مصممة لسياقات أخرى، بعيدة غالباً عن واقع أقسامنا واللغة العربية وإكراهات التجهيز.",
+                      fr: "Fiches conçues ailleurs, éloignées de nos effectifs et de nos moyens.",
+                      ar: "جذاذات جاهزة بعيدة عن واقع أقسامنا واللغة العربية وتجهيزات المدرسة.",
                     }}
-                    frClassName="text-[17px] text-slate-600 leading-relaxed"
-                    arClassName="text-[18px] text-slate-700 leading-relaxed"
+                    frClassName="text-[32px] text-slate-600 leading-snug"
+                    arClassName="text-[34px] text-slate-700 leading-snug"
                   />
                 </div>
 
-                <div className="border-t-2 border-teal-600 pt-5 space-y-3">
-                  <span className="text-[13px] font-bold uppercase tracking-wider text-teal-700">
+                <div data-slide-body="true" className="border-t-4 border-teal-600 pt-7 space-y-4">
+                  <span className="text-[22px] font-bold uppercase tracking-widest text-teal-700">
                     <BilingualInline
                       text={{ fr: "Aujourd'hui · Pouvoir d'agir", ar: "اليوم · المبادرة والإبداع" }}
                     />
@@ -257,178 +385,168 @@ export function SlideRenderer({
                   <BilingualBlock
                     text={{
                       fr: "Créateur de solutions pédagogiques",
-                      ar: "مبدع(ة) لحلول بيداغوجية ملائمة",
+                      ar: "صانع حلول بيداغوجية ملائمة",
                     }}
-                    frClassName="font-display text-[28px] font-bold text-[#0F172A]"
-                    arClassName="text-[22px] font-bold text-teal-800"
+                    frClassName="font-display text-[48px] font-bold text-[#0F172A] leading-tight"
+                    arClassName="text-[44px] font-bold text-teal-800 leading-snug"
                   />
                   <BilingualBlock
                     text={{
-                      fr: "Partir d'un besoin réel de votre classe à Mediouna, rédiger un cahier des charges clair, générer un outil léger (projetable, hors ligne ou imprimable) et le partager entre collègues.",
-                      ar: "الانطلاق من حاجة حقيقية في قسمكم بمديونة، وصياغة توصيف واضح لإنتاج أداة خفيفة (للعرض أو الطباعة أو بدون إنترنت) وتقاسمها مع الزملاء.",
+                      fr: "Outils légers, projetables, hors ligne ou imprimables — partagés à Mediouna.",
+                      ar: "أدوات خفيفة للعرض أو الطباعة أو بدون إنترنت، نتقاسمها في مديونة.",
                     }}
-                    frClassName="text-[17px] text-slate-700 leading-relaxed"
-                    arClassName="text-[18px] text-slate-800 leading-relaxed"
+                    frClassName="text-[32px] text-slate-800 leading-snug font-medium"
+                    arClassName="text-[34px] text-slate-900 leading-snug font-medium"
                   />
                 </div>
               </div>
 
-              {slide.keyPoints.length > 0 && (
-                <ul className="grid grid-cols-3 gap-6 border-t border-slate-200 pt-5">
-                  {slide.keyPoints.map((pt, i) => (
-                    <li
-                      key={pt.fr}
-                      className="flex items-start gap-3 border-l-2 border-teal-600/50 pl-3.5"
-                    >
-                      <span className="font-mono-code text-[14px] font-bold text-teal-700 pt-0.5 shrink-0">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <BilingualBlock
-                        text={pt}
-                        className="flex-1"
-                        frClassName="text-[15px] font-semibold text-slate-900 leading-snug"
-                        arClassName="text-[15px] text-teal-900 leading-snug"
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <div className="border-t-2 border-slate-200 pt-6 grid grid-cols-2 gap-10 items-center">
+                <p dir="ltr" lang="fr" className="text-[28px] font-semibold text-teal-900">
+                  L&apos;IA assiste la préparation — l&apos;enseignant reste le chef d&apos;orchestre.
+                </p>
+                <p dir="rtl" lang="ar" className="font-arabic text-[32px] font-semibold text-teal-900">
+                  الذكاء الاصطناعي مساعد في التحضير — والأستاذ(ة) يبقى محور القسم.
+                </p>
+              </div>
             </div>
           )}
 
           {slide.kind === "concepts" && (
-            <div className="divide-y divide-slate-200 border-y border-slate-200">
+            <div data-slide-body="true" className="divide-y-2 divide-slate-200 border-y-2 border-slate-200">
               {[
                 {
                   code: "01",
                   title: { fr: "AI", ar: "الذكاء الاصطناعي" },
                   desc: {
-                    fr: "Systèmes capables d'exécuter des tâches associées à l'intelligence humaine.",
+                    fr: "Systèmes capables d'exécuter des tâches complexes.",
                     ar: "أنظمة تنجز مهام مرتبطة بالذكاء البشري.",
                   },
                 },
                 {
                   code: "02",
-                  title: { fr: "Generative AI", ar: "الذكاء الاصطناعي التوليدي" },
+                  title: { fr: "Generative AI", ar: "التوليدي" },
                   desc: {
-                    fr: "IA qui crée du nouveau contenu : textes, exercices, résumés ou code.",
-                    ar: "ينتج محتوى جديداً: نصوصاً، تمارين، ملخصات أو برمجة.",
+                    fr: "Produit du nouveau contenu : texte, exercices, code.",
+                    ar: "ينتج محتوى جديداً: نصوصاً، تمارين، أو برمجة.",
                   },
                 },
                 {
                   code: "03",
-                  title: { fr: "LLM", ar: "النموذج اللغوي الكبير" },
+                  title: { fr: "LLM", ar: "النموذج اللغوي" },
                   desc: {
-                    fr: "Modèle statistique qui prédit les mots les plus probables selon votre contexte.",
-                    ar: "نموذج إحصائي يتنبأ بالكلمات الأكثر احتمالاً حسب السياق.",
+                    fr: "Prédit les mots les plus probables selon le contexte.",
+                    ar: "يتنبأ بالكلمات الأكثر احتمالاً حسب السياق.",
                   },
                 },
                 {
                   code: "04",
-                  title: { fr: "Prompt", ar: "التوجيه (Prompt)" },
+                  title: { fr: "Prompt", ar: "التوجيه" },
                   desc: {
-                    fr: "Votre consigne structurée (niveau, objectif, format, contraintes).",
-                    ar: "تعليمتكم المنظمة (المستوى، الهدف، الصيغة، الشروط).",
+                    fr: "Instruction précise donnée par l'enseignant.",
+                    ar: "التعليمات الدقيقة التي نوجهها للأداة.",
                   },
                 },
                 {
                   code: "05",
-                  title: { fr: "Hallucination", ar: "الهلوسة المعرفية" },
+                  title: { fr: "Hallucination", ar: "الهلوسة" },
                   desc: {
-                    fr: "Erreur affirmée avec assurance : l'enseignant relit et valide toujours.",
-                    ar: "خطأ يُقدَّم بثقة كبيرة: لذا يراجع الأستاذ(ة) ويعتمد دائماً.",
+                    fr: "Erreur affirmée avec assurance : toujours relire.",
+                    ar: "خطأ بثقة زائدة: المراجعة البشرية إلزامية.",
                   },
                 },
               ].map((c) => (
                 <div key={c.code} className="grid grid-cols-12 gap-6 py-4 items-center">
-                  <div className="col-span-4 flex items-baseline gap-3">
-                    <span className="font-mono-code text-[15px] font-bold text-teal-700 shrink-0">
+                  <div className="col-span-4 flex items-center gap-5">
+                    <span className="font-mono-code text-[34px] font-bold text-teal-700 shrink-0">
                       {c.code}
                     </span>
                     <BilingualBlock
                       text={c.title}
-                      frClassName="font-display text-[22px] font-bold text-slate-900"
-                      arClassName="text-[19px] font-bold text-teal-800"
+                      frClassName="font-display text-[32px] font-bold text-slate-900 leading-none"
+                      arClassName="text-[28px] font-bold text-teal-800 leading-snug"
                     />
                   </div>
-                  <div className="col-span-8 grid grid-cols-2 gap-6 items-start">
-                    <p dir="ltr" lang="fr" className="text-[16px] leading-snug text-slate-700">
-                      {c.desc.fr}
-                    </p>
-                    <p dir="rtl" lang="ar" className="font-arabic text-[17px] leading-snug text-slate-800">
-                      {c.desc.ar}
-                    </p>
-                  </div>
+                  <p dir="ltr" lang="fr" className="col-span-4 text-[28px] leading-snug text-slate-800 font-medium">
+                    {c.desc.fr}
+                  </p>
+                  <p
+                    dir="rtl"
+                    lang="ar"
+                    className="col-span-4 font-arabic text-[30px] leading-snug text-slate-900 font-medium"
+                  >
+                    {c.desc.ar}
+                  </p>
                 </div>
               ))}
             </div>
           )}
 
           {slide.kind === "pillars" && (
-            <div className="grid grid-cols-3 gap-x-10 gap-y-7">
+            <div data-slide-body="true" className="grid grid-cols-3 gap-x-12 gap-y-10">
               {[
                 {
                   num: "01",
                   title: { fr: "Hallucinations", ar: "الهلوسات" },
                   desc: {
-                    fr: "Vérifier dates, faits scientifiques, calculs et voyellation arabe.",
-                    ar: "التحقق من التواريخ والوقائع العلمية والحسابات والشكل التام.",
+                    fr: "Vérifier faits, calculs et voyellation.",
+                    ar: "التحقق من الوقائع والحساب والشكل.",
                   },
                 },
                 {
                   num: "02",
-                  title: { fr: "Vérification", ar: "المراجعة والتحقق" },
+                  title: { fr: "Validation", ar: "الاعتماد البيداغوجي" },
                   desc: {
-                    fr: "Relire tout brouillon avant impression ou projection devant la classe.",
-                    ar: "قراءة كل مسودة وتعديلها قبل الطباعة أو العرض أمام التلاميذ.",
+                    fr: "Relire avant impression ou projection.",
+                    ar: "قراءة كل مسودة قبل العرض أو الطباعة.",
                   },
                 },
                 {
                   num: "03",
-                  title: { fr: "Adaptation à l'âge", ar: "الملاءمة للسن" },
+                  title: { fr: "Niveau & âge", ar: "الملاءمة للسن" },
                   desc: {
-                    fr: "Ajuster le vocabulaire aux réalités des élèves de 1AEP à 6AEP.",
-                    ar: "ضبط المعجم حسب مستوى تلاميذ الأول إلى السادس ابتدائي.",
+                    fr: "Adapter au réel de 1AEP à 6AEP.",
+                    ar: "ضبط المعجم لمستوى 1AEP–6AEP.",
                   },
                 },
                 {
                   num: "04",
                   title: { fr: "Biais culturels", ar: "التحيز الثقافي" },
                   desc: {
-                    fr: "Remplacer les exemples éloignés par un vécu local respectueux.",
-                    ar: "تعويض الأمثلة البعيدة بوضعيات من المحيط المغربي المحترم.",
+                    fr: "Ancrer dans le vécu marocain.",
+                    ar: "تكييف الأمثلة مع المحيط المغربي.",
                   },
                 },
                 {
                   num: "05",
-                  title: { fr: "Confidentialité", ar: "حماية الخصوصية" },
+                  title: { fr: "Confidentialité", ar: "الخصوصية" },
                   desc: {
-                    fr: "Zéro nom d'élève, zéro code Massar, zéro donnée personnelle saisie.",
-                    ar: "صفر اسم تلميذ، صفر رمز مسار، وصفر معطى شخصي.",
+                    fr: "Zéro nom d'élève, zéro code Massar.",
+                    ar: "صفر اسم تلميذ وصفر رمز مسار.",
                   },
                 },
                 {
                   num: "06",
-                  title: { fr: "Responsabilité", ar: "المسؤولية التربوية" },
+                  title: { fr: "Responsabilité", ar: "المسؤولية" },
                   desc: {
-                    fr: "L'IA assiste ; le jugement pédagogique reste 100 % humain.",
-                    ar: "الذكاء الاصطناعي مساعد فقط؛ والحكم البيداغوجي يظل إنسانياً 100%.",
+                    fr: "Jugement pédagogique 100 % humain.",
+                    ar: "القرار البيداغوجي إنساني 100%.",
                   },
                 },
               ].map((p) => (
-                <div key={p.num} className="border-t-2 border-slate-200 pt-4 space-y-2">
-                  <div className="flex items-baseline gap-3">
-                    <span className="font-mono-code text-[15px] font-bold text-teal-700">{p.num}</span>
+                <div key={p.num} className="border-t-4 border-teal-600/70 pt-5 space-y-2.5">
+                  <div className="flex items-baseline gap-4">
+                    <span className="font-mono-code text-[34px] font-bold text-teal-700">{p.num}</span>
                     <BilingualBlock
                       text={p.title}
-                      frClassName="text-[22px] font-bold text-slate-900"
-                      arClassName="text-[19px] font-bold text-teal-800"
+                      frClassName="font-display text-[34px] font-bold text-slate-900 leading-tight"
+                      arClassName="text-[30px] font-bold text-teal-800 leading-snug"
                     />
                   </div>
                   <BilingualBlock
                     text={p.desc}
-                    frClassName="text-[16px] text-slate-600 leading-relaxed"
-                    arClassName="text-[17px] text-slate-700 leading-relaxed"
+                    frClassName="text-[28px] text-slate-700 leading-snug"
+                    arClassName="text-[30px] text-slate-800 leading-snug"
                   />
                 </div>
               ))}
@@ -436,40 +554,41 @@ export function SlideRenderer({
           )}
 
           {slide.kind === "prompt-anatomy" && (
-            <div className="grid grid-cols-12 gap-7 items-stretch">
-              <div className="col-span-5 border-t-2 border-amber-500 bg-amber-50/60 p-5 space-y-3.5 flex flex-col justify-between rounded-b-xl">
-                <div className="space-y-3">
-                  <BilingualBlock
-                    text={WEAK_VS_STRONG_PROMPT.weak.label}
-                    frClassName="text-[14px] font-bold uppercase tracking-wider text-amber-800"
-                    arClassName="text-[14px] font-bold text-amber-900"
-                  />
-                  <div className="border-l-2 border-amber-400 bg-white/95 px-4 py-3 space-y-2 rounded-r-lg">
-                    <p dir="ltr" className="font-mono-code text-[14px] text-slate-800">
+            <div className="grid grid-cols-12 gap-10 items-stretch">
+              <div className="col-span-5 border-t-4 border-amber-500 bg-amber-50/75 p-8 rounded-b-2xl flex flex-col justify-between space-y-6">
+                <div className="space-y-4">
+                  <span className="block text-[24px] font-bold uppercase tracking-wider text-amber-800">
+                    Prompt faible · <span className="font-arabic">توجيه ضعيف</span>
+                  </span>
+                  <div className="border-l-4 border-amber-500 bg-white px-6 py-5 rounded-r-xl space-y-3">
+                    <p dir="ltr" className="font-mono-code text-[30px] font-bold text-slate-900 leading-snug">
                       « {WEAK_VS_STRONG_PROMPT.weak.promptFr} »
                     </p>
-                    <p dir="rtl" lang="ar" className="font-arabic text-[15px] font-semibold text-amber-950">
+                    <p dir="rtl" lang="ar" className="font-arabic text-[32px] font-bold text-amber-950 leading-snug">
                       « {WEAK_VS_STRONG_PROMPT.weak.promptAr} »
                     </p>
                   </div>
                 </div>
-                <ul className="space-y-2 text-[14px] text-amber-950">
-                  {WEAK_VS_STRONG_PROMPT.weak.issues.map((i) => (
-                    <li key={i.fr}>
-                      <BilingualBlock text={i} frClassName="text-[14px]" arClassName="text-[14px]" />
-                    </li>
-                  ))}
-                </ul>
+
+                <div className="space-y-2">
+                  <p dir="ltr" lang="fr" className="text-[28px] font-semibold text-amber-950">
+                    Sans niveau · Sans objectif · Sans format
+                  </p>
+                  <p dir="rtl" lang="ar" className="font-arabic text-[30px] font-semibold text-amber-950">
+                    بدون مستوى · بدون هدف · بدون صيغة
+                  </p>
+                </div>
               </div>
 
-              <div className="col-span-7 border-t-2 border-teal-600 bg-white p-5 space-y-3 rounded-b-xl shadow-xs">
-                <div className="flex items-center justify-between gap-2">
-                  <BilingualBlock
-                    text={WEAK_VS_STRONG_PROMPT.strong.label}
-                    frClassName="text-[14px] font-bold uppercase tracking-wider text-teal-800"
-                    arClassName="text-[14px] font-bold text-teal-900"
-                  />
-                  <div className="flex gap-2">
+              <div
+                data-slide-body="true"
+                className="col-span-7 border-t-4 border-teal-500 bg-[#0B1220] text-white p-8 rounded-b-2xl flex flex-col justify-between space-y-6"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-[24px] font-bold uppercase tracking-wider text-teal-300">
+                    8 briques d&apos;un Prompt solide · <span className="font-arabic">8 لبنات</span>
+                  </span>
+                  <div className="flex gap-2.5">
                     <CopyPromptButton
                       text={WEAK_VS_STRONG_PROMPT.strong.promptFr}
                       label="Copier FR"
@@ -483,261 +602,205 @@ export function SlideRenderer({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <pre
-                    dir="ltr"
-                    className="whitespace-pre-wrap rounded-xl bg-[#0B1220] p-3.5 font-mono-code text-[12px] leading-relaxed text-slate-100 max-h-[340px] overflow-y-auto"
-                  >
-                    {WEAK_VS_STRONG_PROMPT.strong.promptFr}
-                  </pre>
-                  <pre
-                    dir="rtl"
-                    lang="ar"
-                    className="whitespace-pre-wrap rounded-xl bg-teal-50/70 p-3.5 font-arabic text-[13px] leading-relaxed text-slate-900 border border-teal-200 max-h-[340px] overflow-y-auto"
-                  >
-                    {WEAK_VS_STRONG_PROMPT.strong.promptAr}
-                  </pre>
-                </div>
-
-                <ul className="grid grid-cols-2 gap-x-5 gap-y-1 text-[13px] text-teal-900 border-t border-slate-100 pt-2.5">
-                  {WEAK_VS_STRONG_PROMPT.strong.strengths.map((s) => (
-                    <li key={s.fr}>
-                      <BilingualBlock text={s} frClassName="text-[12px]" arClassName="text-[12px]" />
-                    </li>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                  {[
+                    { n: "01", fr: "Rôle de l'IA", ar: "الدور" },
+                    { n: "02", fr: "Niveau (1AEP–6AEP)", ar: "المستوى" },
+                    { n: "03", fr: "Objectif précis", ar: "الهدف التعلمي" },
+                    { n: "04", fr: "Compétence ciblée", ar: "الكفاية" },
+                    { n: "05", fr: "Public & effectif", ar: "سياق القسم" },
+                    { n: "06", fr: "Contraintes réelles", ar: "الشروط المادية" },
+                    { n: "07", fr: "Format de sortie", ar: "صيغة المخرجات" },
+                    { n: "08", fr: "Critères & validation", ar: "المراجعة والاعتماد" },
+                  ].map((b) => (
+                    <div key={b.n} className="flex items-center gap-4 border-b border-slate-800 pb-2.5">
+                      <span className="font-mono-code text-[26px] font-bold text-teal-400">
+                        {b.n}
+                      </span>
+                      <BilingualBlock
+                        text={b}
+                        frClassName="text-[26px] font-bold text-white leading-tight"
+                        arClassName="text-[26px] font-semibold text-teal-200 leading-tight"
+                      />
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             </div>
           )}
 
           {slide.kind === "meta-prompt-flow" && (
-            <div className="space-y-5">
-              <div className="flex items-center justify-between gap-2 border-y border-slate-200 py-3">
+            <div className="space-y-9">
+              {/* 6-Step Visual Flow */}
+              <div className="grid grid-cols-6 gap-4 items-stretch">
                 {[
                   { n: "1", fr: "Idée brute", ar: "فكرة أولية" },
-                  { n: "2", fr: "Manques", ar: "تحديد النواقص" },
-                  { n: "3", fr: "5 questions IA", ar: "أسئلة توضيحية" },
-                  { n: "4", fr: "Prompt optimisé", ar: "توجيه محسّن" },
+                  { n: "2", fr: "Manques", ar: "النواقص" },
+                  { n: "3", fr: "5 questions", ar: "5 أسئلة" },
+                  { n: "4", fr: "Prompt fort", ar: "توجيه قوي" },
                   { n: "5", fr: "Exécution", ar: "التنفيذ" },
-                  { n: "6", fr: "Validation humaine", ar: "الاعتماد" },
+                  { n: "6", fr: "Validation", ar: "الاعتماد" },
                 ].map((step, i) => (
-                  <React.Fragment key={step.n}>
-                    <div className="flex items-center gap-2.5 rounded-xl bg-white px-3.5 py-2 border border-slate-200">
-                      <span className="font-mono-code text-[13px] font-bold text-teal-700">
+                  <div
+                    key={step.n}
+                    className="relative rounded-2xl border-2 border-slate-200 bg-white p-5 flex flex-col justify-between"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono-code text-[42px] leading-none font-bold text-teal-700">
                         {step.n}
                       </span>
-                      <BilingualBlock
-                        text={step}
-                        frClassName="text-[14px] font-bold text-slate-900"
-                        arClassName="text-[13px] font-semibold text-teal-800"
-                      />
+                      {i < 5 && <ArrowRight className="h-6 w-6 text-slate-400" />}
                     </div>
-                    {i < 5 && <ArrowRight className="h-4 w-4 text-slate-400 shrink-0" />}
-                  </React.Fragment>
+                    <BilingualBlock
+                      text={step}
+                      className="mt-4"
+                      frClassName="text-[26px] font-bold text-slate-900 leading-tight"
+                      arClassName="text-[26px] font-bold text-teal-800 leading-snug"
+                    />
+                  </div>
                 ))}
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
+              {/* Core Ready-to-Use Bilingual Formula */}
+              <div data-slide-body="true" className="grid grid-cols-2 gap-8">
+                <div className="rounded-2xl bg-[#0B1220] p-7 text-white space-y-4">
                   <div className="flex items-center justify-between gap-2">
-                    <BilingualBlock
-                      text={META_PROMPT_EXAMPLES.fr.title}
-                      frClassName="text-[14px] font-bold text-slate-900"
-                      arClassName="text-[14px] font-bold text-teal-800"
-                    />
+                    <span className="text-[20px] font-bold uppercase tracking-wider text-teal-300">
+                      Formule Méta-Prompt (FR)
+                    </span>
                     <CopyPromptButton
                       text={META_PROMPT_EXAMPLES.fr.metaPrompt}
                       label="Copier FR"
                       labelAr="نسخ FR"
                     />
                   </div>
-                  <pre
-                    dir="ltr"
-                    className="whitespace-pre-wrap rounded-xl bg-[#0B1220] p-4 font-mono-code text-[13px] leading-relaxed text-slate-100 max-h-[370px] overflow-y-auto"
-                  >
-                    {META_PROMPT_EXAMPLES.fr.metaPrompt}
-                  </pre>
+                  <p dir="ltr" lang="fr" className="text-[30px] leading-snug font-medium text-slate-100">
+                    « Avant de générer : identifie les informations manquantes, pose-moi 5 questions courtes sur ma classe, puis attends mes réponses. »
+                  </p>
                 </div>
 
-                <div className="space-y-2">
+                <div className="rounded-2xl border-2 border-teal-200 bg-white p-7 space-y-4">
                   <div className="flex items-center justify-between gap-2">
-                    <BilingualBlock
-                      text={META_PROMPT_EXAMPLES.ar.title}
-                      frClassName="text-[14px] font-bold text-slate-900"
-                      arClassName="text-[14px] font-bold text-teal-900"
-                    />
+                    <span dir="rtl" lang="ar" className="font-arabic text-[24px] font-bold text-teal-800">
+                      صيغة الميتا-برومبت (AR)
+                    </span>
                     <CopyPromptButton
                       text={META_PROMPT_EXAMPLES.ar.metaPrompt}
                       label="Copier AR"
                       labelAr="نسخ AR"
                     />
                   </div>
-                  <pre
-                    dir="rtl"
-                    lang="ar"
-                    className="whitespace-pre-wrap rounded-xl bg-white p-4 font-arabic text-[14px] leading-relaxed text-slate-900 border border-teal-200 max-h-[370px] overflow-y-auto"
-                  >
-                    {META_PROMPT_EXAMPLES.ar.metaPrompt}
-                  </pre>
+                  <p dir="rtl" lang="ar" className="font-arabic text-[34px] leading-snug font-semibold text-slate-900">
+                    « قبل التوليد: حدد المعلومات الناقصة، اطرح عليّ 5 أسئلة قصيرة حول قسمي، ثم انتظر إجاباتي. »
+                  </p>
                 </div>
               </div>
             </div>
           )}
 
           {slide.kind === "ecosystem" && (
-            <div className="space-y-7">
-              <div className="grid grid-cols-4 gap-7 border-t border-slate-200 pt-5">
+            <div className="space-y-12">
+              {/* 4 Large Process Steps */}
+              <div data-slide-body="true" className="grid grid-cols-4 gap-10">
                 {[
                   {
                     num: "01",
-                    title: { fr: "Générer du contenu", ar: "إنتاج محتوى تربوي" },
+                    title: { fr: "Contenu", ar: "إنتاج محتوى" },
                     desc: {
-                      fr: "Produire un texte, des questions ou 3 niveaux d'exercices (brouillon).",
-                      ar: "توليد نص أو أسئلة أو 3 مستويات تمارين (مسودة).",
+                      fr: "Textes, QCM & 3 niveaux.",
+                      ar: "نصوص وتمارين متدرجة.",
                     },
                   },
                   {
                     num: "02",
-                    title: { fr: "Créer une application", ar: "إنشاء تطبيق تفاعلي" },
+                    title: { fr: "Application", ar: "بناء تطبيق" },
                     desc: {
-                      fr: "Transformer ce besoin en interface interactive (HTML/CSS/JS).",
-                      ar: "تحويل الحاجة إلى واجهة تفاعلية بـ HTML/CSS/JS.",
+                      fr: "Interface HTML/CSS/JS.",
+                      ar: "واجهة تفاعلية خفيفة.",
                     },
                   },
                   {
                     num: "03",
-                    title: { fr: "Utiliser en vraie classe", ar: "الاستعمال الفعلي في القسم" },
+                    title: { fr: "En classe", ar: "في القسم" },
                     desc: {
-                      fr: "Projeter, partager sur tablette ou imprimer en A4 avec vos élèves.",
-                      ar: "العرض بالمسلاط أو اللوحة المشتركة أو الطباعة A4.",
+                      fr: "Projecteur, hors ligne ou A4.",
+                      ar: "مسلاط، بدون إنترنت أو A4.",
                     },
                   },
                   {
                     num: "04",
-                    title: { fr: "Évaluer l'impact réel", ar: "تقويم الأثر التعلمي" },
+                    title: { fr: "Impact réel", ar: "الأثر التعلمي" },
                     desc: {
-                      fr: "Observer si l'outil aide véritablement les élèves à progresser.",
-                      ar: "التحقق مما إذا كانت الأداة تساعد التلاميذ فعلاً على التقدم.",
+                      fr: "Mesurer les progrès élèves.",
+                      ar: "التحقق من تعلم التلاميذ.",
                     },
                   },
                 ].map((s) => (
-                  <div key={s.num} className="space-y-2">
-                    <span className="font-mono-code text-[15px] font-bold text-teal-700">{s.num}</span>
+                  <div key={s.num} className="border-t-4 border-teal-600 pt-5 space-y-3">
+                    <span className="font-mono-code text-[58px] leading-none font-bold text-teal-700 block">
+                      {s.num}
+                    </span>
                     <BilingualBlock
                       text={s.title}
-                      frClassName="text-[20px] font-bold text-slate-900"
-                      arClassName="text-[17px] font-bold text-teal-800"
+                      frClassName="font-display text-[36px] font-bold text-slate-900 leading-tight"
+                      arClassName="text-[34px] font-bold text-teal-800 leading-snug"
                     />
                     <BilingualBlock
                       text={s.desc}
-                      frClassName="text-[15px] text-slate-600 leading-relaxed"
-                      arClassName="text-[16px] text-slate-700 leading-relaxed"
+                      frClassName="text-[28px] text-slate-600 leading-snug"
+                      arClassName="text-[30px] text-slate-700 leading-snug"
                     />
                   </div>
                 ))}
               </div>
 
-              <div className="grid grid-cols-5 gap-6 border-t border-slate-200 pt-5">
+              {/* Clean 5-Tool Landscape Ribbon */}
+              <div className="grid grid-cols-5 gap-6 border-t-2 border-slate-200 pt-8">
                 {[
-                  {
-                    name: "ChatGPT",
-                    desc: {
-                      fr: "Rédiger brouillons, idées et premiers codes.",
-                      ar: "صياغة المسودات والأفكار والشيفرات الأولية.",
-                    },
-                  },
-                  {
-                    name: "Google Antigravity",
-                    desc: {
-                      fr: "Structurer et tester des applications fiables.",
-                      ar: "بناء واختبار تطبيقات منظمة وموثوقة.",
-                    },
-                  },
-                  {
-                    name: "Browser Web App",
-                    desc: {
-                      fr: "Ouvert dans le navigateur sans installation.",
-                      ar: "يُفتح مباشرة في المتصفح دون تثبيت.",
-                    },
-                  },
-                  {
-                    name: "Prototype",
-                    desc: {
-                      fr: "Testable en 25 min pour valider l'idée.",
-                      ar: "نسخة أولية قابلة للتجريب خلال 25 دقيقة.",
-                    },
-                  },
-                  {
-                    name: "Deployed App",
-                    desc: {
-                      fr: "Partageable avec tout Mediouna par lien/QR.",
-                      ar: "منشور للمشاركة بالرابط أو رمز QR.",
-                    },
-                  },
+                  { name: "ChatGPT", fr: "Idées & brouillons", ar: "أفكار ومسودات" },
+                  { name: "Antigravity", fr: "Apps fiables", ar: "بناء التطبيقات" },
+                  { name: "Web App", fr: "Sans installation", ar: "في المتصفح" },
+                  { name: "Prototype", fr: "Testable en 25 min", ar: "تجريب سريع" },
+                  { name: "Déployée", fr: "Lien / QR Mediouna", ar: "مشاركة بالرابط" },
                 ].map((e) => (
-                  <div key={e.name} className="space-y-1.5 rounded-xl bg-white border border-slate-200 p-4">
-                    <p className="text-[16px] font-bold text-slate-900">{e.name}</p>
-                    <BilingualBlock
-                      text={e.desc}
-                      frClassName="text-[14px] text-slate-600 leading-snug"
-                      arClassName="text-[15px] text-slate-700 leading-snug"
-                    />
+                  <div key={e.name} className="space-y-1.5">
+                    <p className="text-[28px] font-bold text-[#0F172A]">{e.name}</p>
+                    <p dir="ltr" lang="fr" className="text-[22px] text-slate-600">
+                      {e.fr}
+                    </p>
+                    <p dir="rtl" lang="ar" className="font-arabic text-[24px] text-teal-800 font-medium">
+                      {e.ar}
+                    </p>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {slide.kind === "closing" && (
-            <div className="h-full flex flex-col justify-center items-center rounded-3xl bg-[#0B1220] px-16 py-10 text-center text-white space-y-6">
-              <p className="text-[14px] font-bold uppercase tracking-[0.22em] text-teal-400">
-                Province de Mediouna · Centre de Digitalisation · إقليم مديونة · مركز الرقمنة
-              </p>
-              <blockquote
-                dir="ltr"
-                lang="fr"
-                className="mx-auto max-w-5xl font-display text-[42px] font-bold leading-[1.2] text-[#FAF8F4]"
-              >
-                « Ne soyez pas seulement utilisateurs du numérique. Devenez créateurs de solutions pédagogiques. »
-              </blockquote>
-              <blockquote
-                dir="rtl"
-                lang="ar"
-                className="font-arabic mx-auto max-w-5xl text-[34px] font-bold leading-[1.45] text-teal-300"
-              >
-                « لا تكونوا مجرد مستعملين للتكنولوجيا الرقمية، بل كونوا صانعي حلول بيداغوجية. »
-              </blockquote>
-              <BilingualBlock
-                text={{
-                  fr: "Identifier un problème → Écrire une spécification claire → Prototyper avec l'IA → Tester en classe → Améliorer → Partager dans la Galerie Collaborative de Mediouna.",
-                  ar: "تحديد الإشكال ← صياغة توصيف واضح ← بناء نموذج أولي ← التجريب في القسم ← التحسين ← التقاسم في المعرض التعاوني لمديونة.",
-                }}
-                className="mx-auto max-w-4xl border-t border-slate-800 pt-5"
-                frClassName="text-[16px] text-slate-300"
-                arClassName="text-[17px] text-teal-200"
-              />
             </div>
           )}
 
           {slide.kind === "poll" && slide.activityKey && (
-            <div className="grid grid-cols-12 gap-8 items-center">
-              <div className="col-span-4 space-y-4">
-                {slide.keyPoints.map((pt, i) => (
-                  <div
-                    key={pt.fr}
-                    className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4"
-                  >
-                    <span className="font-mono-code text-[15px] font-bold text-teal-700 shrink-0">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <BilingualBlock
-                      text={pt}
-                      className="flex-1"
-                      frClassName="text-[15px] font-semibold text-slate-900"
-                      arClassName="text-[15px] text-teal-900"
-                    />
-                  </div>
-                ))}
+            <div className="grid grid-cols-12 gap-10 items-center">
+              <div data-slide-body="true" className="col-span-4 space-y-6">
+                <div>
+                  <p className="font-display text-[124px] leading-none font-bold text-teal-700 tabular-nums">
+                    {aggregate?.totalRespondents ?? 0}
+                  </p>
+                  <BilingualBlock
+                    text={{ fr: "Votes reçus", ar: "الأصوات المسجلة" }}
+                    className="mt-2"
+                    frClassName="text-[28px] font-bold text-slate-700"
+                    arClassName="text-[30px] font-bold text-teal-900"
+                  />
+                </div>
+                <BilingualBlock
+                  text={
+                    slide.keyPoints[0] ?? {
+                      fr: "Votez sur votre téléphone en direct.",
+                      ar: "صوّتوا مباشرة عبر هواتفكم.",
+                    }
+                  }
+                  frClassName="text-[30px] font-semibold text-slate-800 leading-snug"
+                  arClassName="text-[32px] font-semibold text-teal-900 leading-snug"
+                />
               </div>
               <div className="col-span-8">
                 <LivePollWidget
@@ -806,23 +869,20 @@ export function SlideRenderer({
           {slide.kind === "group-projects" && <GroupProjectsBoard canvas />}
 
           {slide.kind === "showcase-vote" && (
-            <div className="grid grid-cols-12 gap-8 items-center">
-              <div className="col-span-4 space-y-3">
-                {slide.keyPoints.map((pt, i) => (
-                  <div
-                    key={pt.fr}
-                    className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-3.5"
-                  >
-                    <Award className="mt-0.5 h-5 w-5 text-teal-700 shrink-0" />
+            <div className="grid grid-cols-12 gap-10 items-center">
+              <div data-slide-body="true" className="col-span-4 space-y-6">
+                {[
+                  { fr: "Plus utile en classe", ar: "الأكثر فائدة في القسم" },
+                  { fr: "Meilleure pédagogie", ar: "أفضل فكرة بيداغوجية" },
+                  { fr: "Plus créative", ar: "الحل الأكثر إبداعاً" },
+                ].map((cat) => (
+                  <div key={cat.fr} className="flex items-start gap-4 border-l-4 border-teal-600 pl-5">
+                    <Award className="mt-1 h-8 w-8 text-teal-700 shrink-0" />
                     <BilingualBlock
-                      text={pt}
-                      className="flex-1"
-                      frClassName="text-[14px] font-semibold text-slate-900"
-                      arClassName="text-[14px] text-teal-900"
+                      text={cat}
+                      frClassName="text-[30px] font-bold text-slate-900 leading-tight"
+                      arClassName="text-[30px] font-bold text-teal-800 leading-snug"
                     />
-                    <span className="font-mono-code text-[12px] font-bold text-slate-400">
-                      0{i + 1}
-                    </span>
                   </div>
                 ))}
               </div>
@@ -854,16 +914,6 @@ export function SlideRenderer({
               onSubmitted={onSubmitted}
             />
           )}
-        </div>
-
-        {/* Fixed 16:9 Canvas Darija Footer */}
-        <div className="shrink-0">
-          <DarijaCallout
-            title={slide.darijaNote.title}
-            fr={slide.darijaNote.fr}
-            arabic={slide.darijaNote.arabic}
-            canvas
-          />
         </div>
       </motion.article>
     );

@@ -202,80 +202,74 @@ export function PromptBuilderWidget({
 
   if (canvas && !canSubmit) {
     return (
-      <div className="grid grid-cols-12 gap-6 items-stretch h-full">
-        <div className="col-span-7 rounded-2xl border border-slate-800 bg-[#0B1426] p-5 text-slate-100 flex flex-col justify-between space-y-3">
-          <div className="grid grid-cols-2 gap-5">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[12px] font-bold uppercase tracking-wider text-cyan-300">
-                  Prompt assemblé (FR)
-                </span>
-                <CopyPromptButton text={assembledPromptFr} label="Copier FR" labelAr="نسخ FR" />
-              </div>
-              <pre
-                dir="ltr"
-                className="font-mono-code whitespace-pre-wrap text-[13px] leading-relaxed text-slate-100 max-h-[430px] overflow-y-auto"
-              >
-                {assembledPromptFr}
-              </pre>
+      <div className="grid grid-cols-12 gap-8 items-stretch h-[650px]">
+        <div className="col-span-7 rounded-2xl bg-[#0B1220] p-8 text-slate-100 flex flex-col justify-between overflow-y-auto space-y-5">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-800 pb-4">
+            <span className="text-[22px] font-bold uppercase tracking-wider text-cyan-300">
+              Prompt structuré · التوجيه المركّب
+            </span>
+            <div className="flex gap-2.5">
+              <CopyPromptButton text={assembledPromptFr} label="Copier FR" labelAr="نسخ FR" />
+              <CopyPromptButton text={assembledPromptAr} label="Copier AR" labelAr="نسخ AR" />
             </div>
+          </div>
 
-            <div className="space-y-2 border-l border-slate-700/80 pl-5">
-              <div className="flex items-center justify-between gap-2">
-                <span dir="rtl" lang="ar" className="font-arabic text-[13px] font-bold text-teal-300">
-                  التوجيه المركّب بالعربية (AR)
-                </span>
-                <CopyPromptButton text={assembledPromptAr} label="Copier AR" labelAr="نسخ AR" />
-              </div>
-              <pre
-                dir="rtl"
-                lang="ar"
-                className="font-arabic whitespace-pre-wrap text-[14px] leading-relaxed text-slate-100 max-h-[430px] overflow-y-auto"
-              >
-                {assembledPromptAr}
-              </pre>
-            </div>
+          <div data-slide-body="true" className="grid grid-cols-2 gap-6">
+            <pre
+              dir="ltr"
+              lang="fr"
+              className="font-mono-code whitespace-pre-wrap text-[22px] leading-relaxed text-slate-100"
+            >
+              {`Niveau : ${grade} · ${subject.split("/")[0].trim()}\nObjectif : ${objective}\nFormat : 3 niveaux gradués + corrigé\nRègle : Zéro donnée élève · Brouillon à valider`}
+            </pre>
+            <pre
+              dir="rtl"
+              lang="ar"
+              className="font-arabic whitespace-pre-wrap text-[25px] leading-relaxed text-teal-200 border-l border-slate-800 pl-6"
+            >
+              {`المستوى: ${grade}\nالهدف: بناء نشاط ملائم لقسمكم\nالصيغة: 3 مستويات متدرجة + تصحيح\nالقاعدة: دون بيانات تلاميذ · مسودة للاعتماد`}
+            </pre>
           </div>
         </div>
 
-        <div className="col-span-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col">
-          <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="col-span-5 rounded-2xl border-2 border-slate-200 bg-white p-7 flex flex-col justify-between overflow-hidden">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <BilingualBlock
               text={{
-                fr: "Prompts partagés dans la salle (anonymisés)",
-                ar: "التوجيهات المشاركة في القاعة (مجهولة المصدر)",
+                fr: "Partagés dans la salle",
+                ar: "التوجيهات المشاركة مباشرة",
               }}
-              frClassName="text-[13px] font-bold uppercase tracking-wider text-slate-700"
-              arClassName="text-[13px] font-bold text-teal-800"
+              frClassName="text-[26px] font-bold text-slate-900"
+              arClassName="text-[24px] font-bold text-teal-800"
             />
-            <span className="rounded-full bg-teal-50 px-3 py-1 text-[12px] font-bold text-teal-800 shrink-0">
-              {aggregate?.totalRespondents ?? 0} · <span className="font-arabic">مشاركة</span>
+            <span className="font-display text-[64px] leading-none font-bold text-teal-700 tabular-nums">
+              {aggregate?.totalRespondents ?? 0}
             </span>
           </div>
-          <div className="space-y-2.5 max-h-[430px] overflow-y-auto pr-1">
+
+          <div className="flex-1 mt-4 space-y-3 overflow-y-auto pr-1">
             {aggregate?.recentSnippets && aggregate.recentSnippets.length > 0 ? (
               aggregate.recentSnippets.map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-xl border border-slate-200 bg-ivory-50 p-3 text-[13px]"
+                  className="rounded-xl border border-slate-200 bg-[#FAF8F4] p-4 space-y-1"
                 >
-                  <div className="mb-1 flex items-center justify-between gap-2">
-                    <span className="font-bold text-teal-800">{item.label}</span>
-                  </div>
+                  <p className="text-[22px] font-bold text-teal-800">{item.label}</p>
                   {item.secondary && (
-                    <p className="mb-1 font-medium text-slate-700">{item.secondary}</p>
+                    <p className="text-[20px] font-medium text-slate-800 line-clamp-2">
+                      {item.secondary}
+                    </p>
                   )}
-                  <p className="text-slate-600 line-clamp-3">{item.content}</p>
                 </div>
               ))
             ) : (
               <BilingualBlock
                 text={{
-                  fr: "Les prompts partagés par les collègues s'afficheront ici en direct.",
-                  ar: "ستظهر هنا التوجيهات التي يشاركها الزملاء مباشرة.",
+                  fr: "Remplissez le Prompt Builder sur votre téléphone : vos partages apparaissent ici en direct.",
+                  ar: "املأوا منشئ التوجيهات على هواتفكم لتظهر مشاركاتكم هنا مباشرة.",
                 }}
-                frClassName="text-[14px] text-slate-500"
-                arClassName="text-[14px] text-slate-500"
+                frClassName="text-[26px] leading-relaxed text-slate-600"
+                arClassName="text-[28px] leading-relaxed text-slate-700"
               />
             )}
           </div>

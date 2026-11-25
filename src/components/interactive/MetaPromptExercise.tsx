@@ -105,66 +105,75 @@ Avant de générer le contenu ou le prototype :
 
   if (canvas && !canSubmit) {
     return (
-      <div className="grid grid-cols-12 gap-6 items-stretch">
-        <div className="col-span-8 rounded-2xl border border-slate-800 bg-[#0B1426] p-5 text-slate-100">
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[12px] font-bold uppercase tracking-wider text-cyan-300">
-                  Méta-prompt FR · الميتا-برومبت بالفرنسية
-                </span>
-                <CopyPromptButton text={generatedMetaPromptFr} label="Copier FR" labelAr="نسخ FR" />
-              </div>
-              <pre
-                dir="ltr"
-                className="font-mono-code whitespace-pre-wrap text-[14px] leading-relaxed text-slate-100 max-h-[430px] overflow-y-auto"
-              >
-                {generatedMetaPromptFr}
-              </pre>
-            </div>
-
-            <div className="border-l border-slate-700 pl-6 space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <span dir="rtl" lang="ar" className="font-arabic text-[13px] font-bold text-teal-300">
-                  الميتا-برومبت بالعربية
-                </span>
-                <CopyPromptButton text={generatedMetaPromptAr} label="Copier AR" labelAr="نسخ AR" />
-              </div>
-              <pre
-                dir="rtl"
-                lang="ar"
-                className="font-arabic whitespace-pre-wrap text-[15px] leading-relaxed text-slate-100 max-h-[430px] overflow-y-auto"
-              >
-                {generatedMetaPromptAr}
-              </pre>
+      <div className="grid grid-cols-12 gap-8 items-center">
+        <div className="col-span-7 rounded-2xl bg-[#0B1220] p-8 text-slate-100 space-y-6">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-800 pb-4">
+            <span className="text-[22px] font-bold uppercase tracking-wider text-cyan-300">
+              Activité en direct · تمرين مباشر
+            </span>
+            <div className="flex gap-2.5">
+              <CopyPromptButton text={generatedMetaPromptFr} label="Copier FR" labelAr="نسخ FR" />
+              <CopyPromptButton text={generatedMetaPromptAr} label="Copier AR" labelAr="نسخ AR" />
             </div>
           </div>
+
+          <ol data-slide-body="true" className="space-y-5">
+            {[
+              {
+                n: "01",
+                fr: "Saisissez une idée brute de votre classe (1–2 phrases).",
+                ar: "اكتبوا فكرة أولية من قسمكم (جملة أو جملتين).",
+              },
+              {
+                n: "02",
+                fr: "Obtenez immédiatement vos Méta-Prompts FR & AR.",
+                ar: "احصلوا فوراً على الميتا-برومبت بالفرنسية والعربية.",
+              },
+              {
+                n: "03",
+                fr: "Copiez ou partagez votre essai avec la salle.",
+                ar: "انسخوا أو شاركوا تجربتكم مع القاعة.",
+              },
+            ].map((step) => (
+              <li key={step.n} className="flex items-start gap-5">
+                <span className="font-mono-code text-[34px] font-bold text-teal-400 leading-none pt-1">
+                  {step.n}
+                </span>
+                <BilingualBlock
+                  text={step}
+                  className="flex-1"
+                  frClassName="text-[28px] font-semibold leading-snug text-white"
+                  arClassName="text-[30px] font-semibold leading-snug text-teal-200"
+                />
+              </li>
+            ))}
+          </ol>
         </div>
 
-        <div className="col-span-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between">
-          <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="col-span-5 rounded-2xl border-2 border-slate-200 bg-white p-7 space-y-5">
+          <div className="flex items-center justify-between gap-3">
             <BilingualBlock
               text={{
-                fr: "Langues choisies par la salle",
+                fr: "Langues choisies",
                 ar: "اللغات المختارة في القاعة",
               }}
-              frClassName="text-[14px] font-bold text-slate-800"
-              arClassName="text-[13px] font-bold text-teal-800"
+              frClassName="text-[28px] font-bold text-slate-900"
+              arClassName="text-[26px] font-bold text-teal-800"
             />
-            <span className="text-[12px] font-semibold text-teal-700 shrink-0">
-              {aggregate?.totalRespondents ?? 0} · <span className="font-arabic">مشاركة</span>
+            <span className="font-display text-[60px] leading-none font-bold text-teal-700 tabular-nums">
+              {aggregate?.totalRespondents ?? 0}
             </span>
           </div>
           {aggregate?.optionTallies ? (
-            <OptionBarChart data={aggregate.optionTallies} height={240} fixedHeight />
+            <OptionBarChart data={aggregate.optionTallies} height={310} large fixedHeight />
           ) : (
             <BilingualBlock
               text={{
                 fr: "En attente des participations de la salle.",
                 ar: "في انتظار مشاركات الزملاء في القاعة.",
               }}
-              frClassName="text-[13px] text-slate-500"
-              arClassName="text-[13px] text-slate-500"
+              frClassName="text-[26px] text-slate-600"
+              arClassName="text-[28px] text-slate-700"
             />
           )}
         </div>

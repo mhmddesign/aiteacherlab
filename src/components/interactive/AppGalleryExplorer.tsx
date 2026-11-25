@@ -32,51 +32,46 @@ export function AppGalleryExplorer({ canvas = false }: { canvas?: boolean }) {
   const renderCanvasCatalogCard = (item: GalleryCategoryItem, compact: boolean) => (
     <div
       key={item.id}
-      className={`flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-xs ${
-        compact ? "p-3" : "p-3.5"
+      className={`flex flex-col justify-between rounded-xl border-2 border-slate-200 bg-white shadow-xs ${
+        compact ? "p-2.5" : "p-2.5 px-3.5"
       }`}
     >
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between gap-1.5">
-          <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-navy-900 text-[11px] font-bold text-white">
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-2">
+          <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#0B1220] text-[15px] font-bold text-white">
             {item.number}
           </span>
-          <div className="flex items-center gap-1 min-w-0">
-            <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-800 shrink-0">
-              {item.gradeRange}
-            </span>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700 truncate">
-              {item.subject.fr}
-            </span>
-          </div>
+          <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-[14px] font-bold text-teal-800 shrink-0">
+            {item.gradeRange}
+          </span>
         </div>
 
         <BilingualBlock
           text={item.title}
-          frClassName="text-[13px] font-bold leading-tight text-slate-900 line-clamp-1"
-          arClassName="text-[13px] font-bold leading-tight text-teal-900 line-clamp-1"
+          frClassName={
+            compact
+              ? "text-[17px] font-bold leading-tight text-slate-900 line-clamp-1"
+              : "text-[21px] font-bold leading-tight text-slate-900 line-clamp-1"
+          }
+          arClassName={
+            compact
+              ? "text-[17px] font-bold leading-tight text-teal-900 line-clamp-1"
+              : "text-[21px] font-bold leading-tight text-teal-900 line-clamp-1"
+          }
         />
-
-        {!compact && (
-          <BilingualBlock
-            text={item.problem}
-            frClassName="text-[11px] leading-snug text-slate-600 line-clamp-1"
-            arClassName="text-[11px] leading-snug text-slate-700 line-clamp-1"
-          />
-        )}
       </div>
 
-      <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-100 pt-2">
-        <div className="flex items-center gap-2 text-[10px] text-slate-500">
+      <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-slate-100 pt-1.5">
+        <div className="flex items-center gap-2 text-[14px] font-semibold text-slate-500">
           {item.offlineReady && (
             <span className="inline-flex items-center gap-1">
-              <WifiOff className="h-3 w-3 text-teal-600" />
-              Hors ligne
+              <WifiOff className="h-3.5 w-3.5 text-teal-600" />
+              Offline
             </span>
           )}
           {item.printFriendly && (
             <span className="inline-flex items-center gap-1">
-              <Printer className="h-3 w-3 text-slate-600" />
+              <Printer className="h-3.5 w-3.5 text-slate-600" />
               A4
             </span>
           )}
@@ -85,17 +80,17 @@ export function AppGalleryExplorer({ canvas = false }: { canvas?: boolean }) {
           <button
             type="button"
             onClick={() => openDemo(item)}
-            className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold text-white cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-[16px] font-bold text-white cursor-pointer ${
               selectedDemo?.id === item.id
-                ? "bg-navy-900 ring-2 ring-teal-400"
+                ? "bg-[#0B1220] ring-2 ring-teal-400"
                 : "bg-teal-600 hover:bg-teal-700"
             }`}
           >
-            <PlayCircle className="h-3 w-3" />
+            <PlayCircle className="h-4 w-4" />
             <BilingualInline text={{ fr: "Tester", ar: "تجريب" }} />
           </button>
         ) : (
-          <span className="text-[10px] font-semibold text-slate-400">
+          <span className="text-[14px] font-semibold text-slate-400">
             <BilingualInline text={{ fr: "Modèle", ar: "نموذج" }} />
           </span>
         )}
@@ -105,16 +100,16 @@ export function AppGalleryExplorer({ canvas = false }: { canvas?: boolean }) {
 
   if (canvas) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setTab("catalog")}
-              className={`rounded-xl px-4 py-1.5 text-[12px] font-bold cursor-pointer ${
+              className={`rounded-xl px-4 py-1.5 text-[20px] font-bold cursor-pointer ${
                 tab === "catalog"
-                  ? "bg-navy-900 text-white"
-                  : "border border-slate-300 bg-white text-slate-700"
+                  ? "bg-[#0B1220] text-white"
+                  : "border-2 border-slate-300 bg-white text-slate-700"
               }`}
             >
               <BilingualInline
@@ -127,10 +122,10 @@ export function AppGalleryExplorer({ canvas = false }: { canvas?: boolean }) {
             <button
               type="button"
               onClick={() => setTab("provincial")}
-              className={`rounded-xl px-4 py-1.5 text-[12px] font-bold cursor-pointer ${
+              className={`rounded-xl px-4 py-1.5 text-[20px] font-bold cursor-pointer ${
                 tab === "provincial"
                   ? "bg-teal-600 text-white"
-                  : "border border-slate-300 bg-white text-slate-700"
+                  : "border-2 border-slate-300 bg-white text-slate-700"
               }`}
             >
               <BilingualInline
@@ -143,40 +138,43 @@ export function AppGalleryExplorer({ canvas = false }: { canvas?: boolean }) {
           </div>
           <BilingualInline
             text={{
-              fr: "Extension possible : Amazigh (Tifinagh)",
-              ar: "امتداد ممكن: الأمازيغية (تيفيناغ)",
+              fr: "Extension : Amazigh (Tifinagh)",
+              ar: "امتداد: الأمازيغية",
             }}
-            className="text-[12px] text-slate-600"
+            className="text-[19px] font-semibold text-slate-600"
           />
         </div>
 
         {tab === "catalog" ? (
           selectedDemo?.demoKey ? (
-            <div className="grid grid-cols-12 gap-4 h-[575px]">
-              <div className="col-span-5 grid grid-cols-2 gap-2.5 overflow-y-auto pr-1 content-start">
+            <div className="grid grid-cols-12 gap-5 h-[590px]">
+              <div
+                data-slide-body="true"
+                className="col-span-5 grid grid-cols-2 gap-2.5 overflow-y-auto pr-1 content-start"
+              >
                 {GALLERY_CATEGORIES.map((item) => renderCanvasCatalogCard(item, true))}
               </div>
               <div
                 ref={demoPanelRef}
-                className="col-span-7 h-full overflow-y-auto rounded-2xl border-2 border-teal-500 bg-white p-4 shadow-md"
+                className="col-span-7 h-full overflow-y-auto rounded-2xl border-2 border-teal-500 bg-white p-6 shadow-md"
               >
-                <div className="mb-3 flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div className="mb-4 flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
                   <div>
-                    <span className="text-[11px] font-bold uppercase text-teal-700">
+                    <span className="text-[16px] font-bold uppercase text-teal-700">
                       Démonstrateur fonctionnel · نموذج تطبيقي شغّال · {selectedDemo.gradeRange}
                     </span>
                     <BilingualBlock
                       text={selectedDemo.title}
-                      frClassName="text-[15px] font-bold text-slate-900"
-                      arClassName="text-[14px] font-bold text-teal-900"
+                      frClassName="text-[24px] font-bold text-slate-900"
+                      arClassName="text-[22px] font-bold text-teal-900"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={() => setSelectedDemo(null)}
-                    className="inline-flex items-center gap-1 rounded-xl border border-slate-300 px-3 py-1.5 text-[12px] font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer shrink-0"
+                    className="inline-flex items-center gap-1.5 rounded-xl border-2 border-slate-300 px-4 py-2 text-[18px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer shrink-0"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-5 w-5" />
                     <BilingualInline text={{ fr: "Fermer la démo", ar: "إغلاق العرض" }} />
                   </button>
                 </div>
@@ -184,44 +182,37 @@ export function AppGalleryExplorer({ canvas = false }: { canvas?: boolean }) {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-4 gap-3.5">
+            <div data-slide-body="true" className="grid grid-cols-4 gap-2.5">
               {GALLERY_CATEGORIES.map((item) => renderCanvasCatalogCard(item, false))}
             </div>
           )
         ) : (
-          <div className="grid grid-cols-3 gap-4 max-h-[575px] overflow-y-auto pr-1">
+          <div className="grid grid-cols-3 gap-5 max-h-[620px] overflow-y-auto pr-1">
             {contributions.length === 0 ? (
-              <div className="col-span-3 rounded-2xl border border-slate-200 bg-white p-8 text-center text-[15px] text-slate-600">
+              <div className="col-span-3 rounded-2xl border-2 border-slate-200 bg-white p-12 text-center">
                 <BilingualBlock
                   text={{
-                    fr: "Aucune contribution enregistrée pour cette session réelle pour l'instant. Les prototypes partagés en Section 11 apparaîtront ici.",
-                    ar: "لا توجد أي مساهمة مسجلة في هذه الجلسة الحقيقية حتى الآن. ستظهر النماذج المشاركة في القسم 11 هنا.",
+                    fr: "Aucune contribution enregistrée pour cette session pour l'instant.",
+                    ar: "لا توجد أي مساهمة مسجلة في هذه الجلسة حتى الآن.",
                   }}
+                  frClassName="text-[28px] font-semibold text-slate-600"
+                  arClassName="text-[30px] font-semibold text-teal-800"
                 />
               </div>
             ) : (
               contributions.map((c) => (
-                <div key={c.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-2">
+                <div key={c.id} className="rounded-2xl border-2 border-slate-200 bg-white p-5 space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="rounded-full bg-navy-900 px-2.5 py-0.5 text-[11px] font-bold text-white">
+                    <span className="rounded-full bg-[#0B1220] px-3 py-1 text-[16px] font-bold text-white">
                       {c.gradeRange} · {c.discipline}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-teal-700">
-                      <ShieldCheck className="h-3.5 w-3.5" />
-                      <BilingualInline text={{ fr: "Zéro donnée élève", ar: "دون معطيات تلاميذ" }} />
+                    <span className="inline-flex items-center gap-1 text-[16px] font-semibold text-teal-700">
+                      <ShieldCheck className="h-4 w-4" />
+                      Zéro donnée élève
                     </span>
                   </div>
-                  <h4 className="text-[14px] font-bold text-slate-900">{c.appTitle}</h4>
-                  <p className="text-[12px] text-slate-600 line-clamp-2">{c.description}</p>
-                  <p className="text-[12px] text-slate-700 line-clamp-2">
-                    <strong>Objectif / الهدف :</strong> {c.learningObjective}
-                  </p>
-                  <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-2 text-[11px] text-slate-500">
-                    <span className="truncate">{c.contributorName}</span>
-                    <span className="inline-flex items-center gap-1 shrink-0">
-                      <Globe className="h-3 w-3" /> {c.language}
-                    </span>
-                  </div>
+                  <h4 className="text-[24px] font-bold text-slate-900">{c.appTitle}</h4>
+                  <p className="text-[20px] text-slate-600 line-clamp-2">{c.description}</p>
                 </div>
               ))
             )}

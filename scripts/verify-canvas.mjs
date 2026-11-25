@@ -39,7 +39,10 @@ function loadLocalEnv() {
 }
 
 const args = process.argv.slice(2);
-const BASE = (args.find((a) => !a.startsWith("--")) || "http://localhost:3000").replace(/\/$/, "");
+const RAW_TARGET = args.find((a) => !a.startsWith("--")) || "http://localhost:3000";
+const targetUrl = new URL(RAW_TARGET);
+const BASE = targetUrl.origin;
+const SHARE_AUTH_URL = targetUrl.search ? RAW_TARGET : null;
 const PUBLIC_ONLY = args.includes("--public-only");
 const localEnv = loadLocalEnv();
 const PIN = process.env.WORKSHOP_PIN || localEnv.WORKSHOP_PIN || "";
@@ -48,10 +51,11 @@ const ARTIFACT_DIR =
   "C:\\Users\\MHMD\\.gemini\\antigravity\\brain\\d143fa10-852f-4c36-95b0-bfab85175a67";
 
 const VIEWPORTS = [
-  { name: "desktop-2560", width: 2560, height: 1440 },
   { name: "projector-1920", width: 1920, height: 1080 },
+  { name: "desktop-1600", width: 1600, height: 900 },
   { name: "desktop-1440", width: 1440, height: 900 },
   { name: "laptop-1366", width: 1366, height: 768 },
+  { name: "tablet-landscape-1024", width: 1024, height: 768 },
   { name: "tablet-portrait-768", width: 768, height: 1024 },
   { name: "phone-portrait-390", width: 390, height: 844 },
   { name: "phone-landscape-844", width: 844, height: 390 },
@@ -81,6 +85,32 @@ async function measureCanvas(page) {
 
     const fr = frame.getBoundingClientRect();
     const cr = canvas.getBoundingClientRect();
+    const scale = parseFloat(frame.dataset.scale || "") || fr.width / 1920;
+
+    const h1 = canvas.querySelector('[data-slide-heading-fr="true"]');
+    const h2 = canvas.querySelector('[data-slide-heading-ar="true"]');
+    const bodyRoot = canvas.querySelector('[data-slide-body="true"]');
+    const stageEl = canvas.querySelector('[data-slide-stage="true"]');
+    const stageOverflowPx = stageEl ? Math.max(0, stageEl.scrollHeight - stageEl.clientHeight) : 0;
+
+    const logicalFrHeadingPx = h1 ? parseFloat(window.getComputedStyle(h1).fontSize) : 0;
+    const logicalArHeadingPx = h2 ? parseFloat(window.getComputedStyle(h2).fontSize) : 0;
+
+    // Measure primary text elements inside bodyRoot (or canvas fallback)
+    let logicalBodyPx = 0;
+    if (bodyRoot) {
+      const candidates = Array.from(bodyRoot.querySelectorAll("p, pre, span, div"));
+      for (const el of candidates) {
+        if (el.children.length === 0 && (el.textContent || "").trim().length >= 8) {
+          const fsPx = parseFloat(window.getComputedStyle(el).fontSize);
+          if (fsPx > logicalBodyPx) logicalBodyPx = fsPx;
+        }
+      }
+      if (!logicalBodyPx) {
+        logicalBodyPx = parseFloat(window.getComputedStyle(bodyRoot).fontSize) || 0;
+      }
+    }
+
     const hintStyle = hint ? window.getComputedStyle(hint) : null;
     const hintVisible = Boolean(hint && hintStyle && hintStyle.display !== "none");
 
@@ -119,6 +149,14 @@ async function measureCanvas(page) {
       canvasRenderedH: cr.height,
       canvasLogicalScrollW: canvas.scrollWidth,
       canvasLogicalScrollH: canvas.scrollHeight,
+      stageOverflowPx,
+      scale,
+      logicalFrHeadingPx,
+      logicalArHeadingPx,
+      logicalBodyPx,
+      renderedFrHeadingPx: +(logicalFrHeadingPx * scale).toFixed(1),
+      renderedArHeadingPx: +(logicalArHeadingPx * scale).toFixed(1),
+      renderedBodyPx: +(logicalBodyPx * scale).toFixed(1),
       hintVisible,
       qrOverlapsSlide,
       frTextCount,
@@ -160,8 +198,28 @@ function assertCanvasMetrics(label, m, opts = {}) {
     m.canvasLogicalScrollW <= 1922 && m.canvasLogicalScrollH <= 1082,
     `${label}: Logical 1920x1080 canvas internal overflow scrollW=${m.canvasLogicalScrollW}, scrollH=${m.canvasLogicalScrollH}`
   );
+  assert.ok(
+    (m.stageOverflowPx || 0) <= 4,
+    `${label}: Inner slide stage clipped vertically by ${m.stageOverflowPx}px`
+  );
   assert.ok(m.frTextCount >= 1 && m.arTextCount >= 1, `${label}: Missing FR or AR content`);
   assert.equal(m.qrOverlapsSlide, false, `${label}: QR panel overlapped 16:9 slide`);
+
+  // Enforce projector-readable logical typography scale (1920x1080)
+  assert.ok(
+    m.logicalFrHeadingPx >= 64,
+    `${label}: FR logical heading too small (${m.logicalFrHeadingPx}px < 64px)`
+  );
+  assert.ok(
+    m.logicalArHeadingPx >= 58,
+    `${label}: AR logical heading too small (${m.logicalArHeadingPx}px < 58px)`
+  );
+  if (opts.minLogicalBodyPx) {
+    assert.ok(
+      m.logicalBodyPx >= opts.minLogicalBodyPx,
+      `${label}: Logical body text too small (${m.logicalBodyPx}px < ${opts.minLogicalBodyPx}px)`
+    );
+  }
 
   if (opts.expectPortraitHint === true) {
     assert.equal(m.hintVisible, true, `${label}: Expected portrait rotate suggestion to be visible`);
@@ -171,7 +229,7 @@ function assertCanvasMetrics(label, m, opts = {}) {
 }
 
 async function run() {
-  console.log(`\n=== Verifying 16:9 Presentation Canvas & Fullscreen (${BASE}, publicOnly=${PUBLIC_ONLY}) ===`);
+  console.log(`\n=== Verifying 16:9 Projector-Readable Canvas & Fullscreen (${BASE}, publicOnly=${PUBLIC_ONLY}) ===`);
   const browser = await launchBrowser();
   const ctxScreen = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
   const screen = await ctxScreen.newPage();
@@ -183,6 +241,7 @@ async function run() {
   const participant = await ctxParticipant.newPage();
 
   const errors = [];
+  const viewportReport = [];
   for (const [name, p] of [
     ["screen", screen],
     ["presenter", presenter],
@@ -192,21 +251,35 @@ async function run() {
   }
 
   try {
-    // 1. Projector /screen across all 7 required viewports
-    await screen.goto(`${BASE}/screen`, { waitUntil: "networkidle" });
+    // 1. Projector /screen across all 8 required viewports
+    if (SHARE_AUTH_URL) {
+      await screen.goto(SHARE_AUTH_URL, { waitUntil: "domcontentloaded", timeout: 30000 });
+    }
+    await screen.goto(`${BASE}/screen`, { waitUntil: "domcontentloaded", timeout: 30000 });
     for (const vp of VIEWPORTS) {
       await screen.setViewportSize({ width: vp.width, height: vp.height });
       const m = await measureCanvas(screen);
       assertCanvasMetrics(`/screen@${vp.name}`, m, {
         expectPortraitHint: vp.name === "phone-portrait-390",
       });
+      viewportReport.push({
+        route: "/screen",
+        viewport: `${vp.width}x${vp.height}`,
+        frame: `${Math.round(m.frameW)}x${Math.round(m.frameH)}`,
+        ratio: +(m.frameW / m.frameH).toFixed(4),
+        scale: +m.scale.toFixed(3),
+        frHeadingPx: m.renderedFrHeadingPx,
+        arHeadingPx: m.renderedArHeadingPx,
+        bodyPx: m.renderedBodyPx,
+        scroll: `${m.docScrollWidth}x${m.docScrollHeight}`,
+      });
       if (vp.name === "phone-portrait-390") {
-        await screen.screenshot({ path: path.join(ARTIFACT_DIR, "canvas_phone_portrait_390.png") });
+        await screen.screenshot({ path: path.join(ARTIFACT_DIR, "keynote_phone_390.png") });
       } else if (vp.name === "phone-landscape-844") {
-        await screen.screenshot({ path: path.join(ARTIFACT_DIR, "canvas_phone_landscape_844.png") });
+        await screen.screenshot({ path: path.join(ARTIFACT_DIR, "keynote_phone_844.png") });
       }
     }
-    console.log("✓ /screen verified across all 7 viewports (exact 16:9, zero overflow)");
+    console.log("✓ /screen verified across all 8 viewports (exact 16:9, zero overflow, projector typography)");
 
     // Fullscreen API verification on /screen at 1920x1080
     await screen.setViewportSize({ width: 1920, height: 1080 });
@@ -217,21 +290,21 @@ async function run() {
     assert.equal(screenFs.headerPresent, false, "/screen header must hide in fullscreen");
     assertCanvasMetrics("/screen@fullscreen-1920x1080", screenFs, { expectPortraitHint: false });
     assert.ok(
-      screenFs.frameW >= screenFs.vw * 0.99 || screenFs.frameH >= screenFs.vh * 0.99,
-      `/screen fullscreen should maximize viewport (frame=${screenFs.frameW}x${screenFs.frameH}, vp=${screenFs.vw}x${screenFs.vh})`
+      screenFs.frameW >= screenFs.vw * 0.99 && screenFs.frameH >= screenFs.vh * 0.99,
+      `/screen 16:9 fullscreen should fill 1920x1080 (got ${screenFs.frameW}x${screenFs.frameH})`
     );
     await screen.keyboard.press("Escape");
     await screen.waitForTimeout(300);
     const screenExitFs = await measureCanvas(screen);
     assert.equal(screenExitFs.fullscreenElementPresent, false, "/screen Escape must exit native fullscreen");
     assert.equal(screenExitFs.headerPresent, true, "/screen header must restore after Escape");
-    console.log("✓ /screen native Fullscreen API enter, slide maximize, and Escape exit verified");
+    console.log("✓ /screen native Fullscreen API enter (1920x1080 fill) & Escape exit verified");
 
     if (!PUBLIC_ONLY) {
       assert.ok(PASSCODE && PIN, "WORKSHOP_PIN and FACILITATOR_PASSCODE required for full suite");
 
-      // 2. Presenter login & 7 viewports verification
-      await presenter.goto(`${BASE}/presenter`, { waitUntil: "networkidle" });
+      // 2. Presenter login & all 8 viewports verification
+      await presenter.goto(`${BASE}/presenter`, { waitUntil: "networkidle", timeout: 30000 });
       await presenter.getByPlaceholder("FACILITATOR_PASSCODE").fill(PASSCODE);
       await presenter.getByRole("button", { name: /Ouvrir le poste de contrôle/ }).click();
       await presenter.getByText(/AI Teacher Lab · Animateur/).waitFor({ timeout: 10000 });
@@ -244,11 +317,8 @@ async function run() {
         assertCanvasMetrics(`/presenter@${vp.name}`, m, {
           expectPortraitHint: vp.name === "phone-portrait-390",
         });
-        if (vp.name === "desktop-1440") {
-          await presenter.screenshot({ path: path.join(ARTIFACT_DIR, "canvas_desktop_1440.png") });
-        }
       }
-      console.log("✓ /presenter verified across all 7 viewports (exact 16:9, zero overflow)");
+      console.log("✓ /presenter verified across all 8 viewports (exact 16:9, zero overflow)");
 
       // Presenter Fullscreen API + ArrowRight navigation + Escape exit
       await presenter.setViewportSize({ width: 1440, height: 900 });
@@ -273,52 +343,60 @@ async function run() {
       assert.equal(presExitFs.headerPresent, true, "/presenter header must restore after Escape");
       console.log("✓ /presenter native Fullscreen API, keyboard navigation & sync verified");
 
-      // Check non-welcome slide with QR active on /screen has non-overlapping external QR sidebar
-      const screenQrMetrics = await measureCanvas(screen);
-      assertCanvasMetrics("/screen@slide2-with-qr", screenQrMetrics);
-
-      // 3. Audit all 21 slides (1..21) for zero logical canvas overflow on both /presenter and /screen
+      // 3. Audit all 21 slides (1..21) + capture 7 required Keynote screenshots at 1920x1080
+      await screen.setViewportSize({ width: 1920, height: 1080 });
       await presenter.keyboard.press("Home");
       await presenter.getByText(/Diapo 1\/21/).waitFor({ timeout: 5000 });
       await screen.getByText(/Diapo 1\/21/).waitFor({ timeout: 8000 });
 
+      const conceptualSlides = new Set([1, 2, 3, 4, 5, 7, 8, 9, 11, 12, 14, 18, 19, 20, 21]);
       for (let i = 1; i <= 21; i++) {
         await presenter.getByText(new RegExp(`Diapo ${i}/21`)).waitFor({ timeout: 5000 });
         await screen.getByText(new RegExp(`Diapo ${i}/21`)).waitFor({ timeout: 8000 });
 
+        const minBody = conceptualSlides.has(i) ? 26 : 21;
         const pm = await measureCanvas(presenter);
         const sm = await measureCanvas(screen);
-        assertCanvasMetrics(`/presenter@slide-${i}`, pm);
-        assertCanvasMetrics(`/screen@slide-${i}`, sm);
+        assertCanvasMetrics(`/presenter@slide-${i}`, pm, { minLogicalBodyPx: minBody });
+        assertCanvasMetrics(`/screen@slide-${i}`, sm, { minLogicalBodyPx: minBody });
 
-        // Check interactive overlays inside s09-live-demo (15) & s10-gallery (16)
-        if (i === 15) {
+        if (i === 1) {
+          await screen.screenshot({ path: path.join(ARTIFACT_DIR, "keynote_01_welcome.png") });
+        } else if (i === 3) {
+          await screen.screenshot({ path: path.join(ARTIFACT_DIR, "keynote_03_poll.png") });
+        } else if (i === 4) {
+          await screen.screenshot({ path: path.join(ARTIFACT_DIR, "keynote_04_concepts.png") });
+        } else if (i === 5) {
+          await screen.screenshot({ path: path.join(ARTIFACT_DIR, "keynote_05_quiz.png") });
+        } else if (i === 14) {
+          await screen.screenshot({ path: path.join(ARTIFACT_DIR, "keynote_14_ecosystem.png") });
+        } else if (i === 15) {
           await screen.getByRole("button", { name: /Voir Prompt → Prototype/ }).click();
           const demoPromptMetrics = await measureCanvas(screen);
           assertCanvasMetrics("/screen@slide-15-prompt-open", demoPromptMetrics);
           await screen.getByRole("button", { name: /Masquer le prompt/ }).click();
         } else if (i === 16) {
+          await screen.screenshot({ path: path.join(ARTIFACT_DIR, "keynote_16_gallery.png") });
           await screen.getByRole("button", { name: /Tester\s+تجريب/ }).first().click();
           const galleryOpenMetrics = await measureCanvas(screen);
           assertCanvasMetrics("/screen@slide-16-gallery-demo", galleryOpenMetrics);
-          await screen.screenshot({ path: path.join(ARTIFACT_DIR, "canvas_gallery_1080.png") });
           await screen.getByRole("button", { name: /Fermer la démo/ }).click();
         } else if (i === 21) {
-          await screen.screenshot({ path: path.join(ARTIFACT_DIR, "canvas_projector_1080_closing.png") });
+          await screen.screenshot({ path: path.join(ARTIFACT_DIR, "keynote_21_closing.png") });
         }
 
         if (i < 21) {
           await presenter.getByRole("button", { name: /^Suivant\s+التالي$/ }).click();
         }
       }
-      console.log("✓ All 21 slides verified at 1920x1080 logical canvas (zero clipping/overflow)");
+      console.log("✓ All 21 slides verified at 1920x1080 logical canvas (projector typography + zero clipping)");
 
       // Return workshop back to Slide 1 for clean baseline
       await presenter.keyboard.press("Home");
       await presenter.getByText(/Diapo 1\/21/).waitFor({ timeout: 5000 });
 
       // 4. Participant /join responsive mobile + 16:9 slide preview check
-      await participant.goto(`${BASE}/join`, { waitUntil: "networkidle" });
+      await participant.goto(`${BASE}/join`, { waitUntil: "networkidle", timeout: 30000 });
       await participant.getByPlaceholder("Ex. : 482915").fill(PIN);
       await participant.getByPlaceholder(/Ex\. : Khadija B\./).fill("Salma Canvas");
       await participant.getByRole("button", { name: /Entrer dans l'atelier/ }).click();
@@ -356,7 +434,8 @@ async function run() {
     }
 
     assert.equal(errors.length, 0, `Page errors detected: ${errors.join(" | ")}`);
-    console.log("ALL 16:9 CANVAS, ALL 21 SLIDES, VIEWPORTS & FULLSCREEN ASSERTIONS PASSED!");
+    console.log("VIEWPORT_REPORT:", JSON.stringify(viewportReport));
+    console.log("ALL 16:9 PROJECTOR TYPOGRAPHY, ALL 21 SLIDES, 8 VIEWPORTS & FULLSCREEN ASSERTIONS PASSED!");
   } finally {
     await browser.close();
   }

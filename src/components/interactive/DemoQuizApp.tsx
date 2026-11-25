@@ -45,6 +45,197 @@ export function DemoQuizApp({
     setFinished(false);
   };
 
+  if (canvas) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#0B1220] px-4 py-1.5 text-[20px] font-bold text-white">
+              <BookOpen className="h-5 w-5 text-cyan-300 shrink-0" />
+              <BilingualInline text={DEMO_QUIZ_TEXT.grade} />
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-teal-50 px-4 py-1.5 text-[20px] font-semibold text-teal-800">
+              <WifiOff className="h-5 w-5 shrink-0" />
+              <BilingualInline
+                text={{
+                  fr: "Hors ligne · Zéro compte élève",
+                  ar: "بدون إنترنت · دون حساب",
+                }}
+              />
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowPrompt((s) => !s)}
+            className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-5 py-2 text-[20px] font-bold text-slate-800 hover:border-teal-500 cursor-pointer"
+          >
+            <Code2 className="h-5 w-5 text-teal-700 shrink-0" />
+            {showPrompt ? (
+              <BilingualInline text={{ fr: "Masquer le prompt", ar: "إخفاء التوجيه" }} />
+            ) : (
+              <BilingualInline text={{ fr: "Voir Prompt → Prototype", ar: "عرض التوجيه ← النموذج" }} />
+            )}
+          </button>
+        </div>
+
+        {showPrompt ? (
+          <div className="rounded-2xl bg-[#0B1220] p-7 text-slate-100 space-y-4 h-[600px] overflow-y-auto">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-800 pb-3.5">
+              <span className="text-[22px] font-bold uppercase tracking-wider text-cyan-300">
+                Prompts sources (FR & AR) · التوجيهات المصدرية
+              </span>
+              <div className="flex gap-2.5">
+                <CopyPromptButton text={DEMO_QUIZ_TEXT.sourcePromptFr} label="Copier FR" labelAr="نسخ FR" />
+                <CopyPromptButton text={DEMO_QUIZ_TEXT.sourcePromptAr} label="Copier AR" labelAr="نسخ AR" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-8">
+              <pre dir="ltr" className="font-mono-code whitespace-pre-wrap text-[21px] leading-relaxed">
+                {DEMO_QUIZ_TEXT.sourcePromptFr}
+              </pre>
+              <pre
+                dir="rtl"
+                lang="ar"
+                className="font-arabic whitespace-pre-wrap border-l border-slate-700 pl-8 text-[24px] leading-relaxed text-cyan-100"
+              >
+                {DEMO_QUIZ_TEXT.sourcePromptAr}
+              </pre>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-12 gap-8 h-[600px]">
+            <div
+              data-slide-body="true"
+              className="col-span-6 h-full overflow-y-auto rounded-2xl border-2 border-slate-200 bg-white p-7 space-y-4"
+            >
+              <BilingualBlock
+                text={DEMO_QUIZ_TEXT.title}
+                frClassName="font-display text-[30px] font-bold text-slate-900"
+                arClassName="text-[28px] font-bold text-teal-800"
+              />
+              <div className="space-y-3" dir="ltr" lang="fr">
+                {DEMO_QUIZ_TEXT.paragraphsFr.map((p, idx) => (
+                  <p key={idx} className="text-[24px] leading-relaxed text-slate-800">
+                    {p}
+                  </p>
+                ))}
+              </div>
+              <div
+                dir="rtl"
+                lang="ar"
+                className="font-arabic space-y-3 rounded-xl border border-teal-200 bg-[#FAF8F4] p-5"
+              >
+                {DEMO_QUIZ_TEXT.paragraphsAr.map((p, idx) => (
+                  <p key={idx} className="text-[26px] leading-relaxed text-slate-900">
+                    {p}
+                  </p>
+                ))}
+              </div>
+            </div>
+
+            <div className="col-span-6 h-full overflow-y-auto rounded-2xl border-2 border-teal-200 bg-white p-7 flex flex-col justify-between">
+              {!finished ? (
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between gap-2 text-[22px] font-bold">
+                    <span className="text-teal-700">
+                      Question {currentIdx + 1} / {DEMO_QUIZ_QUESTIONS.length} ·{" "}
+                      <span dir="rtl" lang="ar" className="font-arabic">
+                        السؤال {currentIdx + 1} / {DEMO_QUIZ_QUESTIONS.length}
+                      </span>
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-4 py-1 text-slate-800">
+                      Score : {score} / {DEMO_QUIZ_QUESTIONS.length}
+                    </span>
+                  </div>
+
+                  <BilingualBlock
+                    text={q.question}
+                    frClassName="font-display text-[30px] font-bold leading-snug text-slate-900"
+                    arClassName="text-[30px] font-bold leading-snug text-teal-900"
+                  />
+
+                  <div className="space-y-3">
+                    {q.options.map((opt, idx) => {
+                      const answered = selectedIdx !== null;
+                      const isSelected = selectedIdx === idx;
+                      const isCorrect = idx === q.correctIndex;
+                      return (
+                        <button
+                          key={opt.fr}
+                          type="button"
+                          disabled={answered}
+                          onClick={() => handleSelect(idx)}
+                          className={`flex w-full items-center justify-between gap-3 rounded-2xl border-2 px-5 py-3.5 text-left transition ${
+                            answered
+                              ? isCorrect
+                                ? "border-teal-600 bg-teal-50 font-semibold text-teal-950"
+                                : isSelected
+                                  ? "border-amber-600 bg-amber-50 text-amber-950"
+                                  : "border-slate-200 bg-slate-50 text-slate-500"
+                              : "border-slate-200 bg-[#FAF8F4] text-slate-900 hover:border-teal-500 cursor-pointer"
+                          }`}
+                        >
+                          <BilingualBlock
+                            text={opt}
+                            className="flex-1"
+                            frClassName="text-[24px] font-medium"
+                            arClassName="text-[26px] text-teal-900"
+                          />
+                          {answered && isCorrect && (
+                            <CheckCircle2 className="h-6 w-6 shrink-0 text-teal-600" />
+                          )}
+                          {answered && isSelected && !isCorrect && (
+                            <XCircle className="h-6 w-6 shrink-0 text-amber-600" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {selectedIdx !== null && (
+                    <div className="space-y-3 rounded-2xl border border-teal-200 bg-teal-50/80 p-4 text-slate-900">
+                      <BilingualBlock
+                        text={q.explanation}
+                        frClassName="text-[22px]"
+                        arClassName="text-[24px] text-teal-950"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleNext}
+                        className="rounded-xl bg-[#0B1220] px-5 py-2.5 text-[20px] font-bold text-white hover:bg-slate-800 cursor-pointer"
+                      >
+                        {currentIdx + 1 >= DEMO_QUIZ_QUESTIONS.length ? (
+                          <BilingualInline text={{ fr: "Voir le bilan final", ar: "عرض الحصيلة" }} />
+                        ) : (
+                          <BilingualInline text={{ fr: "Question suivante →", ar: "السؤال الموالي ←" }} />
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center space-y-5">
+                  <p className="font-display text-[96px] leading-none font-bold text-[#0F766E]">
+                    {score} / {DEMO_QUIZ_QUESTIONS.length}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleRestart}
+                    className="inline-flex items-center gap-2 rounded-2xl bg-teal-600 px-6 py-3 text-[24px] font-bold text-white hover:bg-teal-700 cursor-pointer"
+                  >
+                    <RotateCcw className="h-6 w-6 shrink-0" />
+                    <BilingualInline text={{ fr: "Recommencer", ar: "إعادة المحاولة" }} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -71,23 +262,15 @@ export function DemoQuizApp({
         >
           <Code2 className="h-3.5 w-3.5 text-teal-700 shrink-0" />
           {showPrompt ? (
-            <BilingualInline
-              text={{ fr: "Masquer le prompt", ar: "إخفاء التوجيه" }}
-            />
+            <BilingualInline text={{ fr: "Masquer le prompt", ar: "إخفاء التوجيه" }} />
           ) : (
-            <BilingualInline
-              text={{ fr: "Voir Prompt → Prototype", ar: "عرض التوجيه ← النموذج" }}
-            />
+            <BilingualInline text={{ fr: "Voir Prompt → Prototype", ar: "عرض التوجيه ← النموذج" }} />
           )}
         </button>
       </div>
 
       {showPrompt && (
-        <div
-          className={`rounded-2xl border border-slate-800 bg-[#0B1426] p-4 text-slate-100 space-y-3 ${
-            canvas ? "h-[520px] overflow-y-auto" : ""
-          }`}
-        >
+        <div className="rounded-2xl border border-slate-800 bg-[#0B1426] p-4 text-slate-100 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
               Prompts sources (FR & AR) · التوجيهات المصدرية
@@ -97,71 +280,58 @@ export function DemoQuizApp({
               <CopyPromptButton text={DEMO_QUIZ_TEXT.sourcePromptAr} label="Copier AR" labelAr="نسخ AR" />
             </div>
           </div>
-          <div className={canvas ? "grid grid-cols-2 gap-5" : "space-y-3"}>
-            <pre dir="ltr" className="font-mono-code whitespace-pre-wrap text-[13px] leading-relaxed">
-              {DEMO_QUIZ_TEXT.sourcePromptFr}
-            </pre>
-            <pre
-              dir="rtl"
-              lang="ar"
-              className={`font-arabic whitespace-pre-wrap text-[14px] leading-relaxed text-cyan-100 ${
-                canvas ? "border-l border-slate-700 pl-5" : "border-t border-slate-700 pt-3"
-              }`}
-            >
-              {DEMO_QUIZ_TEXT.sourcePromptAr}
-            </pre>
-          </div>
+          <pre dir="ltr" className="font-mono-code whitespace-pre-wrap text-xs leading-relaxed">
+            {DEMO_QUIZ_TEXT.sourcePromptFr}
+          </pre>
+          <pre
+            dir="rtl"
+            lang="ar"
+            className="font-arabic whitespace-pre-wrap border-t border-slate-700 pt-3 text-sm leading-relaxed text-cyan-100"
+          >
+            {DEMO_QUIZ_TEXT.sourcePromptAr}
+          </pre>
         </div>
       )}
 
-      {!(canvas && showPrompt) && (
-        <div className={canvas ? "grid grid-cols-12 gap-6 items-stretch" : "grid gap-5 lg:grid-cols-12"}>
-          <div
-            className={`${
-              canvas ? "col-span-6 h-[520px] overflow-y-auto" : "lg:col-span-6"
-            } rounded-2xl border border-slate-200 bg-ivory-50 p-5 shadow-xs space-y-3.5`}
-          >
-            <BilingualBlock
-              text={DEMO_QUIZ_TEXT.title}
-              frClassName={`font-display font-bold text-slate-900 ${large ? "text-xl" : "text-lg"}`}
-              arClassName={`font-bold text-teal-900 ${large ? "text-lg" : "text-base"}`}
-            />
+      <div className="grid gap-5 lg:grid-cols-12">
+        <div className="lg:col-span-6 rounded-2xl border border-slate-200 bg-ivory-50 p-5 shadow-xs space-y-4">
+          <BilingualBlock
+            text={DEMO_QUIZ_TEXT.title}
+            frClassName={`font-display font-bold text-slate-900 ${large ? "text-2xl" : "text-lg"}`}
+            arClassName={`font-bold text-teal-900 ${large ? "text-xl" : "text-base"}`}
+          />
 
-            <div className="space-y-2" dir="ltr" lang="fr">
-              {DEMO_QUIZ_TEXT.paragraphsFr.map((p, idx) => (
-                <p key={idx} className={`leading-relaxed text-slate-800 ${large ? "text-[14px]" : "text-sm"}`}>
-                  {p}
-                </p>
-              ))}
-            </div>
-
-            <div
-              dir="rtl"
-              lang="ar"
-              className="font-arabic space-y-2 rounded-xl border border-teal-200/80 bg-white p-3.5"
-            >
-              {DEMO_QUIZ_TEXT.paragraphsAr.map((p, idx) => (
-                <p key={idx} className={`leading-relaxed text-slate-900 ${large ? "text-[14px]" : "text-sm"}`}>
-                  {p}
-                </p>
-              ))}
-            </div>
-
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-medium text-amber-900">
-              <BilingualBlock
-                text={{
-                  fr: "Support d'exemple validable et modifiable librement par l'enseignant.",
-                  ar: "نموذج تجريبي قابل للمراجعة والتعديل بحرية من طرف الأستاذ(ة).",
-                }}
-              />
-            </div>
+          <div className="space-y-2.5" dir="ltr" lang="fr">
+            {DEMO_QUIZ_TEXT.paragraphsFr.map((p, idx) => (
+              <p key={idx} className={`leading-relaxed text-slate-800 ${large ? "text-base" : "text-sm"}`}>
+                {p}
+              </p>
+            ))}
           </div>
 
           <div
-            className={`${
-              canvas ? "col-span-6 h-[520px] overflow-y-auto" : "lg:col-span-6"
-            } rounded-2xl border border-slate-200 bg-white p-5 shadow-xs`}
+            dir="rtl"
+            lang="ar"
+            className="font-arabic space-y-2.5 rounded-xl border border-teal-200/80 bg-white p-4"
           >
+            {DEMO_QUIZ_TEXT.paragraphsAr.map((p, idx) => (
+              <p key={idx} className={`leading-relaxed text-slate-900 ${large ? "text-base" : "text-sm"}`}>
+                {p}
+              </p>
+            ))}
+          </div>
+
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-medium text-amber-900">
+            <BilingualBlock
+              text={{
+                fr: "Support d'exemple validable et modifiable librement par l'enseignant.",
+                ar: "نموذج تجريبي قابل للمراجعة والتعديل بحرية من طرف الأستاذ(ة).",
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="lg:col-span-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
           {!finished ? (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
@@ -281,9 +451,8 @@ export function DemoQuizApp({
               </button>
             </div>
           )}
-          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

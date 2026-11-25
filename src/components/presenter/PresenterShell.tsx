@@ -743,7 +743,7 @@ export function PresenterShell({
             ? "fixed inset-0 z-50 h-[100dvh] w-screen bg-[#060B16] p-0 m-0 flex flex-col items-center justify-center overflow-hidden"
             : isFullscreen
               ? "h-[100dvh] w-screen bg-[#060B16] p-0 m-0 flex flex-col items-center justify-center overflow-hidden"
-              : "relative flex flex-1 min-h-0 w-full flex-col items-center justify-center overflow-hidden px-2 py-2 sm:px-5 sm:py-3"
+              : "relative flex flex-1 min-h-0 min-w-0 w-full flex-col items-center justify-center overflow-hidden px-2 py-2 sm:px-5 sm:py-3"
         }
       >
         <PresentationViewport rounded={!isFullscreen}>
@@ -969,6 +969,20 @@ export function PresenterShell({
                 frClassName="text-slate-100"
                 arClassName="text-teal-200"
               />
+            </div>
+
+            <div className="rounded-xl border border-teal-500/30 bg-teal-950/30 p-3.5 text-xs space-y-1.5">
+              <BilingualBlock
+                text={currentSlide.darijaNote.title}
+                frClassName="font-bold text-teal-300"
+                arClassName="font-bold text-teal-200"
+              />
+              <p dir="ltr" lang="fr" className="text-slate-200 leading-relaxed">
+                {currentSlide.darijaNote.fr}
+              </p>
+              <p dir="rtl" lang="ar" className="font-arabic text-sm text-teal-100 leading-relaxed">
+                {currentSlide.darijaNote.arabic}
+              </p>
             </div>
 
             <div className="space-y-2 text-xs">

@@ -51,23 +51,23 @@ function BilingualYAxisTick({
   return (
     <g transform={`translate(${x},${y})`}>
       <text
-        x={-8}
-        y={-5}
+        x={large ? -12 : -8}
+        y={large ? -8 : -5}
         textAnchor="end"
         fill="#0F172A"
-        fontSize={large ? 13 : 11}
+        fontSize={large ? 20 : 11}
         fontWeight={700}
       >
         {entry.fr}
       </text>
       {entry.ar && (
         <text
-          x={-8}
-          y={11}
+          x={large ? -12 : -8}
+          y={large ? 18 : 11}
           textAnchor="end"
           fill="#0F766E"
-          fontSize={large ? 12 : 10}
-          fontWeight={600}
+          fontSize={large ? 20 : 10}
+          fontWeight={700}
           className="font-arabic"
         >
           {entry.ar}
@@ -95,8 +95,8 @@ export function OptionBarChart({
   const labelMap = new Map<string, { fr: string; ar: string }>();
 
   const chartData = data.map((item) => {
-    const fr = large ? item.label.fr : item.shortLabel.fr || item.label.fr;
-    const ar = large ? item.label.ar : item.shortLabel.ar || item.label.ar;
+    const fr = item.shortLabel.fr || item.label.fr;
+    const ar = item.shortLabel.ar || item.label.ar;
     labelMap.set(item.optionId, { fr, ar });
     return {
       optionId: item.optionId,
@@ -109,7 +109,7 @@ export function OptionBarChart({
 
   const computedHeight = fixedHeight
     ? height
-    : Math.max(height, data.length * (large ? 64 : 52));
+    : Math.max(height, data.length * (large ? 76 : 52));
 
   return (
     <div style={{ width: "100%", height: computedHeight }} className="min-h-[200px]">
@@ -120,14 +120,18 @@ export function OptionBarChart({
           <BarChart
             data={chartData}
             layout="vertical"
-            margin={{ top: 10, right: 80, left: 10, bottom: 10 }}
+            margin={{ top: 10, right: large ? 128 : 68, left: 10, bottom: 10 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" horizontal={false} />
-            <XAxis type="number" allowDecimals={false} tick={{ fill: "#475569", fontSize: 12 }} />
+            <XAxis
+              type="number"
+              allowDecimals={false}
+              tick={{ fill: "#475569", fontSize: large ? 18 : 12 }}
+            />
             <YAxis
               type="category"
               dataKey="optionId"
-              width={large ? 305 : 170}
+              width={large ? 250 : 170}
               interval={0}
               tick={<BilingualYAxisTick large={large} labelMap={labelMap} />}
             />
@@ -144,13 +148,13 @@ export function OptionBarChart({
               contentStyle={{
                 borderRadius: "12px",
                 borderColor: "#CBD5E1",
-                fontSize: "12px",
+                fontSize: large ? "16px" : "12px",
               }}
             />
             <Bar
               dataKey="count"
-              radius={[0, 8, 8, 0]}
-              barSize={large ? 28 : 22}
+              radius={[0, 10, 10, 0]}
+              barSize={large ? 38 : 22}
               isAnimationActive={!prefersReducedMotion}
               animationDuration={320}
             >
@@ -160,7 +164,7 @@ export function OptionBarChart({
               <LabelList
                 dataKey="display"
                 position="right"
-                style={{ fill: "#0F172A", fontSize: large ? 13 : 11, fontWeight: 700 }}
+                style={{ fill: "#0F172A", fontSize: large ? 22 : 11, fontWeight: 700 }}
               />
             </Bar>
           </BarChart>
@@ -173,11 +177,13 @@ export function OptionBarChart({
 interface ShowcaseGroupedChartProps {
   tallies: ShowcaseCategoryTally[];
   height?: number;
+  large?: boolean;
 }
 
 export function ShowcaseGroupedChart({
   tallies,
   height = 330,
+  large = false,
 }: ShowcaseGroupedChartProps) {
   const isClient = useIsClient();
   const prefersReducedMotion = useReducedMotion();
@@ -204,16 +210,16 @@ export function ShowcaseGroupedChart({
         <div className="h-full w-full rounded-xl bg-slate-100/70 animate-pulse" />
       ) : (
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 16 }}>
+          <BarChart data={chartData} margin={{ top: 14, right: 20, left: 6, bottom: 18 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
             <XAxis
               dataKey="name"
-              tick={{ fill: "#0F172A", fontSize: 11, fontWeight: 600 }}
+              tick={{ fill: "#0F172A", fontSize: large ? 17 : 11, fontWeight: 700 }}
               interval={0}
             />
-            <YAxis allowDecimals={false} tick={{ fill: "#475569", fontSize: 12 }} />
+            <YAxis allowDecimals={false} tick={{ fill: "#475569", fontSize: large ? 16 : 12 }} />
             <Tooltip contentStyle={{ borderRadius: "12px", borderColor: "#CBD5E1" }} />
-            <Legend wrapperStyle={{ fontSize: "12px" }} />
+            <Legend wrapperStyle={{ fontSize: large ? "18px" : "12px" }} />
             <Bar
               dataKey="most_useful"
               name="Plus utile · الأكثر فائدة"

@@ -183,56 +183,68 @@ export function ExitTicketWidget({
       )}
 
       {(showResults || status === "revealed" || status === "closed" || !canSubmit) && aggregate && (
-        <div className={canvas ? "grid grid-cols-12 gap-6 items-stretch" : "grid gap-4 lg:grid-cols-12"}>
+        <div className={canvas ? "grid grid-cols-12 gap-8 items-stretch" : "grid gap-4 lg:grid-cols-12"}>
           {aggregate.optionTallies && (
             <div
               className={`${
-                canvas ? "col-span-6 p-5" : "lg:col-span-6 p-4"
-              } rounded-2xl border border-slate-200 bg-white shadow-xs`}
+                canvas ? "col-span-6 p-7" : "lg:col-span-6 p-4"
+              } rounded-2xl border-2 border-slate-200 bg-white shadow-xs`}
             >
               <BilingualBlock
                 text={{
                   fr: "Axes choisis cette semaine",
                   ar: "المجالات المختارة هذا الأسبوع",
                 }}
-                className="mb-2"
-                frClassName="text-sm font-bold text-slate-900"
-                arClassName="text-xs font-bold text-teal-800"
+                className="mb-3"
+                frClassName={canvas ? "text-[28px] font-bold text-slate-900" : "text-sm font-bold text-slate-900"}
+                arClassName={canvas ? "text-[26px] font-bold text-teal-800" : "text-xs font-bold text-teal-800"}
               />
               <OptionBarChart
                 data={aggregate.optionTallies}
-                height={canvas ? 380 : 270}
+                height={canvas ? 470 : 270}
+                large={canvas}
                 fixedHeight={canvas}
               />
             </div>
           )}
 
           <div
+            data-slide-body="true"
             className={`${
-              canvas ? "col-span-6 p-5" : "lg:col-span-6 p-4"
-            } rounded-2xl border border-slate-200 bg-white shadow-xs flex flex-col`}
+              canvas ? "col-span-6 p-7" : "lg:col-span-6 p-4"
+            } rounded-2xl border-2 border-slate-200 bg-white shadow-xs flex flex-col`}
           >
-            <h4 className="mb-3 flex items-center gap-1.5 text-sm font-bold text-slate-900">
-              <MessageSquareHeart className="h-4 w-4 text-teal-600 shrink-0" />
+            <h4
+              className={`mb-4 flex items-center gap-2 font-bold text-slate-900 ${
+                canvas ? "text-[26px]" : "text-sm"
+              }`}
+            >
+              <MessageSquareHeart className={`${canvas ? "h-7 w-7" : "h-4 w-4"} text-teal-600 shrink-0`} />
               <BilingualInline
                 text={{
-                  fr: "Mur d'engagements de Mediouna (anonyme)",
-                  ar: "جدار التزامات مديونة (مجهول الهوية)",
+                  fr: "Mur d'engagements de Mediouna",
+                  ar: "جدار التزامات مديونة",
                 }}
               />
             </h4>
             <div
-              className={`space-y-2 overflow-y-auto pr-1 ${
-                canvas ? "max-h-[410px]" : "max-h-64"
+              className={`space-y-3 overflow-y-auto pr-1 ${
+                canvas ? "max-h-[470px]" : "max-h-64"
               }`}
             >
               {aggregate.recentSnippets && aggregate.recentSnippets.length > 0 ? (
                 aggregate.recentSnippets.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-xl border border-teal-100 bg-ivory-50 px-3.5 py-2.5 text-xs text-slate-800"
+                    className={`rounded-xl border border-teal-100 bg-ivory-50 text-slate-800 ${
+                      canvas ? "px-5 py-4 text-[28px] leading-snug" : "px-3.5 py-2.5 text-xs"
+                    }`}
                   >
-                    <span className="mr-2 inline-block rounded-md bg-teal-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                    <span
+                      className={`mr-2 inline-block rounded-md bg-teal-600 font-bold text-white ${
+                        canvas ? "px-3.5 py-1 text-[20px]" : "px-2 py-0.5 text-[10px]"
+                      }`}
+                    >
                       {item.label}
                     </span>
                     <span>{item.content}</span>
@@ -244,8 +256,8 @@ export function ExitTicketWidget({
                     fr: "Les engagements des collègues apparaîtront ici en direct.",
                     ar: "ستظهر هنا التزامات الزملاء مباشرة.",
                   }}
-                  frClassName="text-xs text-slate-500"
-                  arClassName="text-xs text-slate-500"
+                  frClassName={canvas ? "text-[28px] text-slate-600" : "text-xs text-slate-500"}
+                  arClassName={canvas ? "text-[30px] text-slate-700" : "text-xs text-slate-500"}
                 />
               )}
             </div>

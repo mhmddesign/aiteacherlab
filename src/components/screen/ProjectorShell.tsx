@@ -173,9 +173,9 @@ export function ProjectorShell({ initialSnapshot }: ProjectorShellProps) {
         {showSideQr && (
           <aside
             data-projector-qr-region="true"
-            className="no-print hidden xl:flex w-64 shrink-0 flex-col justify-center border-l border-slate-800/80 bg-[#0B1220] px-4 py-4"
+            className="no-print hidden 2xl:flex w-52 shrink-0 flex-col justify-center border-l border-slate-800/80 bg-[#0B1220] px-3 py-3"
           >
-            <QrJoinPanel size={150} darkSurface />
+            <QrJoinPanel size={132} darkSurface />
           </aside>
         )}
       </div>

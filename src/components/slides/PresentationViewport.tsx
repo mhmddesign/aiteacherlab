@@ -15,8 +15,9 @@ interface PresentationViewportProps {
 }
 
 /**
- * Proportionally scales a 1920x1080 SlideCanvas to fit the available container
- * without triggering React re-renders or layout overflow.
+ * Proportionally scales a fixed 1920x1080 SlideCanvas to fill the maximum
+ * 16:9 area inside its parent container without distortion, cropping, or
+ * resize-driven React re-renders.
  */
 export function PresentationViewport({
   children,
@@ -60,6 +61,7 @@ export function PresentationViewport({
 
       frame.style.width = `${renderedWidth}px`;
       frame.style.height = `${renderedHeight}px`;
+      frame.dataset.scale = scale.toFixed(6);
       canvas.style.transform = `scale(${scale})`;
     };
 
@@ -90,12 +92,13 @@ export function PresentationViewport({
     <div
       ref={containerRef}
       data-presentation-viewport="true"
-      className={`relative flex flex-1 min-h-0 min-w-0 w-full h-full items-center justify-center overflow-hidden ${className}`}
+      className={`relative flex-1 min-h-0 min-w-0 w-full h-full overflow-hidden ${className}`}
     >
       <div
         ref={frameRef}
         data-slide-frame="true"
-        className={`relative shrink-0 overflow-hidden shadow-2xl ${
+        style={{ aspectRatio: "16 / 9" }}
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden shadow-2xl ${
           rounded ? "rounded-xl ring-1 ring-white/10" : ""
         } ${interactive ? "" : "pointer-events-none select-none"}`}
       >
