@@ -484,7 +484,7 @@ export function PromptBuilderWidget({
             <button
               type="submit"
               disabled={isLocked || submitting}
-              className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700 disabled:opacity-50 cursor-pointer"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-teal-700 px-4 py-2 text-xs font-bold text-white hover:bg-[#0D655E] disabled:opacity-50 cursor-pointer"
             >
               {submitting ? (
                 <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
@@ -506,9 +506,9 @@ export function PromptBuilderWidget({
       )}
 
       <div className={`${canSubmit ? "lg:col-span-5" : "lg:col-span-12"} space-y-4`}>
-        <div className="rounded-2xl border border-slate-800 bg-[#0B1426] p-4 text-slate-100 space-y-3">
+        <div className="rounded-2xl border border-navy-700 bg-navy-900 p-4 text-ivory-50 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
+            <span className="text-xs font-bold uppercase tracking-wider text-teal-bright">
               Prompt assemblé (FR) · التوجيه المركّب
             </span>
             <CopyPromptButton text={assembledPromptFr} label="Copier FR" labelAr="نسخ FR" />

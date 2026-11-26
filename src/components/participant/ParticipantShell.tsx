@@ -167,10 +167,13 @@ export function ParticipantShell({
 
   if (!participant) {
     return (
-      <main className="min-h-[100dvh] bg-[#060B16] safe-top safe-bottom px-4 py-8 flex items-center justify-center">
-        <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-[#FAF8F4] p-6 sm:p-8 shadow-2xl space-y-5">
+      <main
+        data-surface="light"
+        className="min-h-[100dvh] bg-navy-950 safe-top safe-bottom px-4 py-8 flex items-center justify-center"
+      >
+        <div className="w-full max-w-md rounded-2xl border border-ivory-200 bg-ivory-50 p-6 sm:p-8 shadow-2xl space-y-5">
           <div className="space-y-2.5">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 border border-teal-200 px-3 py-1 text-xs font-bold text-teal-800">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-700/20 bg-ivory-100 px-3 py-1 text-xs font-bold text-teal-700">
               <Smartphone className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <BilingualInline
                 text={{
@@ -184,22 +187,22 @@ export function ParticipantShell({
                 fr: "Rejoindre AI Teacher Lab",
                 ar: "الانضمام إلى مختبر المعلم",
               }}
-              frClassName="font-display text-2xl font-bold text-[#0F172A]"
-              arClassName="text-xl font-bold text-teal-800"
+              frClassName="font-display text-2xl font-bold text-navy-900"
+              arClassName="text-xl font-bold text-teal-700"
             />
             <BilingualBlock
               text={{
                 fr: "Saisissez le code PIN communiqué dans la salle et votre prénom affiché. Aucun compte requis.",
                 ar: "أدخلوا رمز PIN المعلن في القاعة واسمكم المعروض. لا حاجة لأي حساب.",
               }}
-              frClassName="text-sm text-slate-600 leading-relaxed"
+              frClassName="text-sm text-slate-700 leading-relaxed"
               arClassName="text-sm text-slate-700 leading-relaxed"
             />
           </div>
 
           <form onSubmit={handleJoin} className="space-y-4">
             <div>
-              <label htmlFor="join-pin" className="block text-xs font-bold text-slate-800 mb-1.5">
+              <label htmlFor="join-pin" className="block text-xs font-bold text-navy-900 mb-1.5">
                 <BilingualInline
                   text={{
                     fr: "Code PIN de l'atelier",
@@ -217,12 +220,12 @@ export function ParticipantShell({
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
                 dir="ltr"
-                className="w-full min-h-[48px] rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-mono-code text-base tracking-widest text-slate-900 focus:border-teal-600 focus:outline-none"
+                className="w-full min-h-[48px] rounded-xl border border-slate-400 bg-white px-4 py-2.5 font-mono-code text-base tracking-widest text-navy-900 focus:border-teal-700 focus:outline-none"
               />
             </div>
 
             <div>
-              <label htmlFor="join-name" className="block text-xs font-bold text-slate-800 mb-1.5">
+              <label htmlFor="join-name" className="block text-xs font-bold text-navy-900 mb-1.5">
                 <BilingualInline
                   text={{
                     fr: "Votre prénom ou nom affiché",
@@ -239,14 +242,14 @@ export function ParticipantShell({
                 placeholder="Ex. : Khadija B. / خديجة ب."
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                className="w-full min-h-[48px] rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900 focus:border-teal-600 focus:outline-none"
+                className="w-full min-h-[48px] rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-base text-navy-900 focus:border-teal-700 focus:outline-none"
               />
             </div>
 
             {joinError && (
               <div
                 role="alert"
-                className="rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-xs font-semibold text-amber-900"
+                className="rounded-xl border border-red-800/20 bg-status-error-bg px-3.5 py-2.5 text-xs font-semibold text-status-error"
               >
                 {joinError}
               </div>
@@ -256,7 +259,7 @@ export function ParticipantShell({
               type="submit"
               disabled={joining}
               aria-busy={joining}
-              className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[#0F766E] px-4 py-3 text-sm font-bold text-white hover:bg-[#0D655E] disabled:opacity-75 cursor-pointer"
+              className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-4 py-3 text-sm font-bold text-white hover:bg-[#0D655E] disabled:opacity-75 cursor-pointer"
             >
               {joining ? (
                 <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden="true" />
@@ -374,20 +377,20 @@ export function ParticipantShell({
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-3 sm:px-5 pt-4 space-y-4">
+      <main data-surface="light" className="mx-auto max-w-4xl px-3 sm:px-5 pt-4 space-y-4">
         {error && (
           <div
             role="status"
             aria-live="polite"
-            className="rounded-xl border border-amber-400/50 bg-amber-500/15 px-4 py-2.5 text-xs font-medium text-amber-100"
+            className="rounded-xl border border-amber-800/20 bg-status-warning-bg px-4 py-2.5 text-xs font-semibold text-status-warning"
           >
             {error}
           </div>
         )}
 
         {activeSnapshot.state.isPaused && (
-          <div className="flex items-start gap-3 rounded-2xl border border-amber-400 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">
-            <PauseCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden="true" />
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-800/20 bg-status-warning-bg px-4 py-3 text-sm font-semibold text-status-warning">
+            <PauseCircle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
             <BilingualBlock
               text={{
                 fr: "Pause atelier : l'animateur a momentanément suspendu les soumissions. Échangeons en salle !",

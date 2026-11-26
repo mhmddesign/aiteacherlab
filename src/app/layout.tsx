@@ -55,7 +55,7 @@ export default function RootLayout({
       lang="fr"
       className={`${plusJakarta.variable} ${fraunces.variable} ${ibmArabic.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="min-h-screen bg-[#0B1426] text-slate-900 antialiased selection:bg-teal-500/20 selection:text-teal-900">
+      <body className="min-h-screen bg-navy-950 text-ivory-50 antialiased">
         {children}
       </body>
     </html>

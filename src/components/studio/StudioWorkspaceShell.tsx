@@ -290,25 +290,33 @@ export function StudioWorkspaceShell({
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[#060B16] text-slate-100 flex flex-col">
+    <div className="min-h-[100dvh] bg-navy-950 text-ivory-50 flex flex-col">
       {/* Sticky Single-Row Studio Top Bar */}
-      <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-[#0B1220]/95 backdrop-blur safe-top">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 sm:px-6">
+      <header className="sticky top-0 z-30 border-b border-navy-700 bg-navy-900 safe-top">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-2.5">
             <Link
               href="/"
               aria-label="Accueil / الرئيسية"
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-700/80 bg-[#111C33] text-slate-300 hover:border-teal-400 hover:text-white"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-navy-700 bg-navy-800 text-slate-300 hover:border-teal-bright hover:text-ivory-50"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             </Link>
+            <img
+              src="/icon.svg"
+              alt=""
+              aria-hidden="true"
+              width={28}
+              height={28}
+              className="hidden sm:block h-7 w-7 rounded-lg shrink-0"
+            />
             <div className="min-w-0">
-              <p className="font-display text-sm sm:text-base font-bold text-white truncate">
+              <p className="font-display text-sm sm:text-base font-bold text-ivory-50 truncate">
                 AI Teacher Lab · Studio{" "}
                 <span
                   dir="rtl"
                   lang="ar"
-                  className="font-arabic text-teal-300 font-semibold"
+                  className="font-arabic text-teal-bright font-semibold"
                 >
                   استوديو القاعات
                 </span>
@@ -320,13 +328,20 @@ export function StudioWorkspaceShell({
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
+            <Link
+              href="/screen"
+              className="hidden md:inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-navy-700 bg-navy-800 px-3 py-1.5 text-xs font-semibold text-ivory-50 hover:border-teal-bright whitespace-nowrap"
+            >
+              <Monitor className="h-3.5 w-3.5 shrink-0 text-teal-bright" aria-hidden="true" />
+              <BilingualInline text={{ fr: "Projecteur", ar: "شاشة العرض" }} />
+            </Link>
             <button
               type="button"
               onClick={() => setShowCreateModal(true)}
               data-testid="studio-new-room-btn"
-              className="min-h-[42px] inline-flex items-center gap-1.5 rounded-xl bg-[#0F766E] px-3.5 py-2 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#0D655E] cursor-pointer transition active:scale-[0.98] whitespace-nowrap"
+              className="min-h-[42px] inline-flex items-center gap-1.5 rounded-xl bg-teal-bright px-3.5 py-2 text-xs sm:text-sm font-bold text-navy-900 hover:bg-[#5EEAD4] cursor-pointer transition active:scale-[0.98] whitespace-nowrap"
             >
-              <Plus className="h-4 w-4 shrink-0" />
+              <Plus className="h-4 w-4 shrink-0" aria-hidden="true" />
               <BilingualInline
                 text={{ fr: "Nouvelle salle", ar: "قاعة جديدة" }}
               />
@@ -335,48 +350,36 @@ export function StudioWorkspaceShell({
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-3 py-5 sm:px-6 sm:py-7 space-y-6 safe-bottom">
-        {/* Studio Architecture Notice Banner */}
-        <section className="rounded-2xl border border-teal-500/25 bg-gradient-to-br from-[#0F2438] via-[#0E192D] to-[#0A1222] p-4 sm:p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1.5">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-400/35 bg-teal-500/15 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-teal-200">
-                <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                <BilingualInline
-                  text={{
-                    fr: "Studio Numérique Permanent · Province de Mediouna",
-                    ar: "الاستوديو الرقمي الدائم · إقليم مديونة",
-                  }}
-                />
+      <main className="mx-auto w-full max-w-7xl flex-1 px-3 py-5 sm:px-6 sm:py-7 space-y-5 safe-bottom">
+        {/* Clean Editorial Studio Bar (no gradient banner or eyebrow bloat) */}
+        <section className="flex flex-col gap-3 border-b border-navy-700/80 pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-1">
+            <h1 className="font-display text-xl sm:text-2xl font-bold text-ivory-50">
+              Salles &amp; Ateliers ·{" "}
+              <span dir="rtl" lang="ar" className="font-arabic text-teal-bright">
+                القاعات والورشات
               </span>
-              <BilingualBlock
-                text={{
-                  fr: "Préparez vos salles, lancez vos présentations 16:9 et conservez les résultats de chaque cohorte.",
-                  ar: "أعدّوا قاعاتكم، أطلقوا عروضكم 16:9 واحتفظوا بنتائج كل فوج بشكل مستقل وآمن.",
-                }}
-                frClassName="text-sm sm:text-base font-semibold text-white"
-                arClassName="text-sm font-semibold text-teal-200"
-              />
-            </div>
+            </h1>
+            <BilingualBlock
+              text={{
+                fr: "Préparez vos salles, lancez vos présentations 16:9 et conservez les résultats de chaque cohorte.",
+                ar: "أعدّوا قاعاتكم، أطلقوا عروضكم 16:9 واحتفظوا بنتائج كل فوج بشكل مستقل وآمن.",
+              }}
+              frClassName="text-xs sm:text-sm text-slate-300"
+              arClassName="text-xs sm:text-sm text-slate-300"
+            />
+          </div>
 
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <Link
-                href="/presenter"
-                className="min-h-[42px] inline-flex items-center gap-1.5 rounded-xl bg-[#0F766E] px-4 py-2 text-xs font-bold text-white hover:bg-[#0D655E] transition active:scale-[0.98]"
-              >
-                <Play className="h-3.5 w-3.5 shrink-0" />
-                <BilingualInline
-                  text={{ fr: "Lancer Salle #1", ar: "تشغيل القاعة 1" }}
-                />
-              </Link>
-              <Link
-                href="/screen"
-                className="min-h-[42px] inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-[#111C33] px-3.5 py-2 text-xs font-semibold text-slate-200 hover:border-teal-400 transition active:scale-[0.98]"
-              >
-                <Monitor className="h-3.5 w-3.5 shrink-0 text-teal-300" />
-                <BilingualInline text={{ fr: "Projecteur", ar: "شاشة العرض" }} />
-              </Link>
-            </div>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Link
+              href="/presenter"
+              className="min-h-[42px] inline-flex items-center gap-1.5 rounded-xl bg-teal-700 px-4 py-2 text-xs font-bold text-white hover:bg-[#0D655E] transition active:scale-[0.98]"
+            >
+              <Play className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <BilingualInline
+                text={{ fr: "Lancer Salle #1", ar: "تشغيل القاعة 1" }}
+              />
+            </Link>
           </div>
         </section>
 
@@ -384,90 +387,92 @@ export function StudioWorkspaceShell({
           <div
             role="status"
             aria-live="polite"
-            className="flex items-center justify-between gap-3 rounded-xl border border-teal-500/35 bg-teal-950/50 px-4 py-2.5 text-xs font-medium text-teal-100"
+            className="flex items-center justify-between gap-3 rounded-xl border border-teal-bright/40 bg-navy-800 px-4 py-2.5 text-xs font-medium text-teal-bright"
           >
             <span>{statusNotice}</span>
             <button
               type="button"
               onClick={() => setStatusNotice(null)}
               aria-label="Fermer / إغلاق"
-              className="rounded-lg p-1 text-teal-200 hover:bg-teal-900 cursor-pointer"
+              className="rounded-lg p-1 text-teal-bright hover:bg-navy-700 cursor-pointer"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         )}
 
-        {/* Main Studio Grid: Room Sidebar + 6-Tab Room Workspace */}
+        {/* Main Studio Grid: Quiet Left Room Rail + Elevated Right Room Workspace */}
         <div className="grid gap-6 lg:grid-cols-12 items-start">
           {/* Left Column: Persistent Rooms Directory */}
-          <aside className="lg:col-span-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <BilingualBlock
-                text={{
-                  fr: `Mes salles (${rooms.length})`,
-                  ar: `قاعاتي (${rooms.length})`,
-                }}
-                frClassName="text-xs font-bold uppercase tracking-wider text-slate-400"
-                arClassName="text-xs font-bold text-teal-300"
-              />
-              <button
-                type="button"
-                onClick={() => setShowCreateModal(true)}
-                className="text-xs font-semibold text-teal-300 hover:text-teal-200 cursor-pointer"
-              >
-                + <BilingualInline text={{ fr: "Modèles", ar: "النماذج" }} />
-              </button>
-            </div>
-
+          <aside className="lg:col-span-4 space-y-5">
             <div className="space-y-2.5">
-              {rooms.map((room) => {
-                const selected = room.id === selectedRoom.id;
-                const badge = STATUS_BADGE[room.status];
-                return (
-                  <button
-                    key={room.id}
-                    type="button"
-                    onClick={() => setSelectedRoomId(room.id)}
-                    aria-pressed={selected}
-                    className={`w-full rounded-2xl border p-4 text-left transition cursor-pointer ${
-                      selected
-                        ? "border-teal-400 bg-[#11203B] shadow-lg ring-1 ring-teal-400/40"
-                        : "border-slate-800 bg-[#0D1628] hover:border-slate-600"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <span
-                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${badge.className}`}
-                      >
-                        <BilingualInline text={{ fr: badge.fr, ar: badge.ar }} />
-                      </span>
-                      <span className="font-mono-code text-[11px] text-slate-400">
-                        {room.slidesCount} diapos · {room.activitiesCount} act.
-                      </span>
-                    </div>
-                    <BilingualBlock
-                      text={room.title}
-                      frClassName="text-sm font-bold text-white leading-snug"
-                      arClassName="text-xs font-bold text-teal-300 mt-0.5 leading-snug"
-                    />
-                    <p className="mt-2 text-[11px] text-slate-400">
-                      <BilingualInline text={room.updatedLabel} />
-                    </p>
-                  </button>
-                );
-              })}
+              <div className="flex items-center justify-between px-1">
+                <BilingualBlock
+                  text={{
+                    fr: `Mes salles (${rooms.length})`,
+                    ar: `قاعاتي (${rooms.length})`,
+                  }}
+                  frClassName="text-xs font-bold text-slate-300"
+                  arClassName="text-xs font-bold text-teal-bright"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(true)}
+                  className="text-xs font-semibold text-teal-bright hover:underline cursor-pointer"
+                >
+                  + <BilingualInline text={{ fr: "Modèles", ar: "النماذج" }} />
+                </button>
+              </div>
+
+              <div className="divide-y divide-navy-700/70 rounded-2xl border border-navy-700 bg-navy-900 overflow-hidden">
+                {rooms.map((room) => {
+                  const selected = room.id === selectedRoom.id;
+                  const badge = STATUS_BADGE[room.status];
+                  return (
+                    <button
+                      key={room.id}
+                      type="button"
+                      onClick={() => setSelectedRoomId(room.id)}
+                      aria-pressed={selected}
+                      className={`w-full p-4 text-left transition cursor-pointer ${
+                        selected
+                          ? "bg-navy-800 ring-1 ring-inset ring-teal-bright/60"
+                          : "bg-navy-900 hover:bg-navy-800/60"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <span
+                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${badge.className}`}
+                        >
+                          <BilingualInline text={{ fr: badge.fr, ar: badge.ar }} />
+                        </span>
+                        <span className="font-mono-code text-[11px] text-slate-400">
+                          {room.slidesCount} diapos · {room.activitiesCount} act.
+                        </span>
+                      </div>
+                      <BilingualBlock
+                        text={room.title}
+                        frClassName="text-sm font-bold text-ivory-50 leading-snug"
+                        arClassName="text-xs font-bold text-teal-bright mt-0.5 leading-snug"
+                      />
+                      <p className="mt-1.5 text-[11px] text-slate-400">
+                        <BilingualInline text={room.updatedLabel} />
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Templates Quick Strip */}
-            <div className="rounded-2xl border border-slate-800 bg-[#0B1220] p-4 space-y-2.5">
+            <div className="space-y-2.5">
               <BilingualBlock
                 text={{
                   fr: "Modèles rapides (5 blueprints)",
                   ar: "نماذج سريعة جاهزة (5 قوالب)",
                 }}
-                frClassName="text-xs font-bold text-white"
-                arClassName="text-xs font-bold text-teal-300"
+                frClassName="px-1 text-xs font-bold text-ivory-50"
+                arClassName="px-1 text-xs font-bold text-teal-bright"
               />
               <div className="space-y-1.5">
                 {STUDIO_TEMPLATES.map((tpl) => (
@@ -478,12 +483,12 @@ export function StudioWorkspaceShell({
                       setSelectedTemplateKey(tpl.key);
                       setShowCreateModal(true);
                     }}
-                    className="min-h-[42px] flex w-full items-center justify-between gap-2 rounded-xl border border-slate-800 bg-[#111C33]/80 px-3 py-2 text-left text-xs hover:border-teal-400/60 cursor-pointer"
+                    className="min-h-[44px] flex w-full items-center justify-between gap-2 rounded-xl border border-navy-700/80 bg-navy-900 px-3.5 py-2.5 text-left text-xs hover:border-teal-bright cursor-pointer"
                   >
                     <BilingualBlock
                       text={tpl.title}
-                      frClassName="font-semibold text-slate-200"
-                      arClassName="text-[11px] text-teal-300"
+                      frClassName="font-semibold text-ivory-50"
+                      arClassName="text-[11px] text-teal-bright"
                     />
                     <span className="shrink-0 font-mono-code text-[11px] text-slate-400">
                       {tpl.estimatedMinutes}m
@@ -495,9 +500,9 @@ export function StudioWorkspaceShell({
           </aside>
 
           {/* Right Column: Selected Room 6-Tab Inspector */}
-          <section className="lg:col-span-8 rounded-2xl border border-slate-800 bg-[#0D1628] overflow-hidden shadow-2xl">
+          <section className="lg:col-span-8 rounded-2xl border border-navy-700 bg-navy-900 overflow-hidden shadow-xl">
             {/* Room Header */}
-            <div className="border-b border-slate-800 bg-[#0B1220] p-4 sm:p-6 space-y-4">
+            <div className="border-b border-navy-700 bg-navy-800/50 p-4 sm:p-6 space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -517,12 +522,12 @@ export function StudioWorkspaceShell({
                   </div>
                   <BilingualBlock
                     text={selectedRoom.title}
-                    frClassName="font-display text-lg sm:text-xl font-bold text-white"
-                    arClassName="text-base sm:text-lg font-bold text-teal-300"
+                    frClassName="font-display text-lg sm:text-2xl font-bold text-ivory-50"
+                    arClassName="text-base sm:text-lg font-bold text-teal-bright"
                   />
                   <BilingualBlock
                     text={selectedRoom.subtitle}
-                    frClassName="text-xs text-slate-400"
+                    frClassName="text-xs text-slate-300"
                     arClassName="text-xs text-slate-400"
                   />
                 </div>
@@ -531,17 +536,17 @@ export function StudioWorkspaceShell({
                   <button
                     type="button"
                     onClick={() => handleDuplicateRoom(selectedRoom)}
-                    className="min-h-[40px] inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-[#111C33] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-teal-400 cursor-pointer"
+                    className="min-h-[40px] inline-flex items-center gap-1.5 rounded-xl border border-navy-700 bg-navy-800 px-3 py-1.5 text-xs font-semibold text-ivory-50 hover:border-teal-bright cursor-pointer"
                   >
-                    <CopyPlus className="h-3.5 w-3.5 text-teal-300" />
+                    <CopyPlus className="h-3.5 w-3.5 text-teal-bright" aria-hidden="true" />
                     <BilingualInline text={{ fr: "Dupliquer", ar: "استنساخ" }} />
                   </button>
                   {selectedRoom.isLivePrimary && (
                     <Link
                       href="/presenter"
-                      className="min-h-[40px] inline-flex items-center gap-1.5 rounded-xl bg-[#0F766E] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#0D655E] transition active:scale-[0.98]"
+                      className="min-h-[40px] inline-flex items-center gap-1.5 rounded-xl bg-teal-bright px-3.5 py-1.5 text-xs font-bold text-navy-900 hover:bg-[#5EEAD4] transition active:scale-[0.98]"
                     >
-                      <Play className="h-3.5 w-3.5" />
+                      <Play className="h-3.5 w-3.5" aria-hidden="true" />
                       <BilingualInline text={{ fr: "Présenter", ar: "تقديم" }} />
                     </Link>
                   )}
@@ -566,11 +571,11 @@ export function StudioWorkspaceShell({
                       onClick={() => setActiveTab(tab.key)}
                       className={`min-h-[42px] shrink-0 inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold whitespace-nowrap cursor-pointer transition ${
                         isActive
-                          ? "border-teal-400 bg-teal-500/20 text-white"
-                          : "border-slate-800 bg-[#111C33]/70 text-slate-300 hover:border-slate-600"
+                          ? "border-teal-bright bg-navy-900 text-teal-bright"
+                          : "border-navy-700/70 bg-navy-800/70 text-slate-300 hover:border-slate-500"
                       }`}
                     >
-                      <Icon className="h-3.5 w-3.5 shrink-0 text-teal-300" />
+                      <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                       <BilingualInline text={{ fr: tab.fr, ar: tab.ar }} />
                     </button>
                   );
@@ -579,7 +584,7 @@ export function StudioWorkspaceShell({
             </div>
 
             {/* Active Tab Panel */}
-            <div className="p-4 sm:p-6 space-y-5">
+            <div key={activeTab} className="p-4 sm:p-6 space-y-5 animate-stage-enter">
               {activeTab === "overview" && (
                 <div className="space-y-5">
                   <BilingualBlock
@@ -991,22 +996,22 @@ export function StudioWorkspaceShell({
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowCreateModal(false)}
-                className="min-h-[42px] rounded-xl border border-slate-700 px-4 py-2 text-xs font-semibold text-slate-300 hover:text-white cursor-pointer"
-              >
-                <BilingualInline text={{ fr: "Annuler", ar: "إلغاء" }} />
-              </button>
-              <button
-                type="submit"
-                className="min-h-[42px] inline-flex items-center gap-1.5 rounded-xl bg-[#0F766E] px-4 py-2 text-xs font-bold text-white hover:bg-[#0D655E] cursor-pointer"
-              >
-                <Plus className="h-4 w-4" />
-                <BilingualInline
-                  text={{ fr: "Créer la salle", ar: "إنشاء القاعة" }}
-                />
-              </button>
+            <button
+              type="button"
+              onClick={() => setShowCreateModal(false)}
+              className="min-h-[42px] rounded-xl border border-navy-700 px-4 py-2 text-xs font-semibold text-slate-300 hover:text-white cursor-pointer"
+            >
+              <BilingualInline text={{ fr: "Annuler", ar: "إلغاء" }} />
+            </button>
+            <button
+              type="submit"
+              className="min-h-[42px] inline-flex items-center gap-1.5 rounded-xl bg-teal-bright px-4 py-2 text-xs font-bold text-navy-900 hover:bg-[#5EEAD4] cursor-pointer"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              <BilingualInline
+                text={{ fr: "Créer la salle", ar: "إنشاء القاعة" }}
+              />
+            </button>
             </div>
           </form>
         </div>

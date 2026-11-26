@@ -4,32 +4,42 @@ import { NavActionLink } from "@/components/ui/NavActionLink";
 
 export default function HomePage() {
   return (
-    <div className="min-h-[100dvh] bg-[#060B16] text-white safe-top safe-bottom flex flex-col justify-between px-5 py-8 sm:px-6 sm:py-14">
+    <div className="min-h-[100dvh] bg-navy-950 text-ivory-50 safe-top safe-bottom flex flex-col justify-between px-5 py-8 sm:px-6 sm:py-14">
       <main className="mx-auto w-full max-w-3xl flex-1 flex flex-col justify-center space-y-8 sm:space-y-10">
         <header className="space-y-4 sm:space-y-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-400">
-            <BilingualInline
-              text={{
-                fr: "Province de Mediouna · Centre de Digitalisation",
-                ar: "إقليم مديونة · مركز الرقمنة",
-              }}
+          <div className="flex items-center gap-3">
+            <img
+              src="/icon.svg"
+              alt=""
+              aria-hidden="true"
+              width={36}
+              height={36}
+              className="h-9 w-9 rounded-lg shrink-0"
             />
-          </p>
+            <p className="text-xs font-semibold tracking-wide text-teal-bright">
+              <BilingualInline
+                text={{
+                  fr: "Province de Mediouna · Centre de Digitalisation",
+                  ar: "إقليم مديونة · مركز الرقمنة",
+                }}
+              />
+            </p>
+          </div>
 
           <div className="space-y-2.5">
-            <h1 className="font-display text-4xl sm:text-6xl font-bold tracking-tight text-[#FAF8F4] leading-[1.06]">
+            <h1 className="font-display text-4xl sm:text-6xl font-bold tracking-tight text-ivory-50 leading-[1.06]">
               AI Teacher Lab
             </h1>
             <p
               dir="rtl"
               lang="ar"
-              className="font-arabic text-2xl sm:text-4xl font-bold text-teal-300"
+              className="font-arabic text-2xl sm:text-4xl font-bold text-teal-bright"
             >
               مختبر المعلم للذكاء الاصطناعي
             </p>
           </div>
 
-          <div className="border-t border-slate-800/90 pt-5">
+          <div className="border-t border-navy-700 pt-5">
             <BilingualBlock
               text={{
                 fr: "Atelier collaboratif de 2 heures pour les enseignantes et enseignants du primaire public (1AEP–6AEP).",
@@ -62,7 +72,7 @@ export default function HomePage() {
         </nav>
       </main>
 
-      <footer className="mx-auto w-full max-w-3xl border-t border-slate-800/80 pt-4 mt-8 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+      <footer className="mx-auto w-full max-w-3xl border-t border-navy-700/80 pt-4 mt-8 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
         <span>12 sections · 21 diapositives · FR / AR</span>
         <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           <NavActionLink

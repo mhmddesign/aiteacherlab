@@ -69,17 +69,17 @@ export function ProjectorShell({ initialSnapshot }: ProjectorShellProps) {
   return (
     <div
       data-compact-landscape={isCompactLandscape ? "true" : "false"}
-      className="h-[100dvh] w-full overflow-hidden bg-[#060B16] text-white flex flex-col"
+      className="h-[100dvh] w-full overflow-hidden bg-navy-950 text-ivory-50 flex flex-col"
     >
       {/* Single-Row Non-Wrapping Projector Header (auto-collapses in fullscreen & phone landscape) */}
       {!hideChrome && (
-        <header className="no-print safe-top shrink-0 border-b border-slate-800/80 bg-[#0B1220]">
+        <header className="no-print safe-top shrink-0 border-b border-navy-700 bg-navy-900">
           <div className="mx-auto flex h-12 sm:h-13 max-w-[1600px] items-center justify-between gap-2 px-3 sm:px-6">
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-              <span className="truncate font-display text-xs sm:text-sm font-bold text-white">
+              <span className="truncate font-display text-xs sm:text-sm font-bold text-ivory-50">
                 AI Teacher Lab{" "}
                 <span className="hidden sm:inline">· Mediouna · </span>
-                <span dir="rtl" lang="ar" className="font-arabic text-teal-300">
+                <span dir="rtl" lang="ar" className="font-arabic text-teal-bright">
                   مديونة
                 </span>
               </span>
@@ -91,7 +91,7 @@ export function ProjectorShell({ initialSnapshot }: ProjectorShellProps) {
                   Section {active.state.currentSection}/{TOTAL_SECTIONS} ·{" "}
                 </span>
                 Diapo {slideIdx + 1}/{SLIDES.length}
-                <span dir="rtl" lang="ar" className="font-arabic text-teal-300 hidden xl:inline">
+                <span dir="rtl" lang="ar" className="font-arabic text-teal-bright hidden xl:inline">
                   {" "}
                   · الشريحة {slideIdx + 1}/{SLIDES.length}
                 </span>
@@ -99,11 +99,11 @@ export function ProjectorShell({ initialSnapshot }: ProjectorShellProps) {
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
-              <span className="hidden lg:inline-flex items-center gap-1.5 text-xs font-semibold text-slate-200 whitespace-nowrap tabular-nums">
-                <Users className="h-3.5 w-3.5 text-teal-400 shrink-0" aria-hidden="true" />
+              <span className="hidden lg:inline-flex items-center gap-1.5 text-xs font-semibold text-ivory-50 whitespace-nowrap tabular-nums">
+                <Users className="h-3.5 w-3.5 text-teal-bright shrink-0" aria-hidden="true" />
                 <span>
                   {active.connectedCount} collègues en ligne ·{" "}
-                  <span dir="rtl" lang="ar" className="font-arabic text-teal-300">
+                  <span dir="rtl" lang="ar" className="font-arabic text-teal-bright">
                     {active.connectedCount} متصل(ة)
                   </span>
                 </span>
@@ -121,7 +121,7 @@ export function ProjectorShell({ initialSnapshot }: ProjectorShellProps) {
                 type="button"
                 onClick={toggleFullscreen}
                 aria-label="Plein écran / ملء الشاشة"
-                className="inline-flex min-h-[36px] min-w-[36px] sm:min-h-[34px] items-center justify-center gap-1.5 rounded-lg border border-slate-700 px-2.5 py-1 text-xs font-semibold text-slate-200 hover:border-teal-400 cursor-pointer whitespace-nowrap"
+                className="inline-flex min-h-[36px] min-w-[36px] sm:min-h-[34px] items-center justify-center gap-1.5 rounded-lg border border-navy-700 bg-navy-800 px-2.5 py-1 text-xs font-semibold text-ivory-50 hover:border-teal-bright cursor-pointer whitespace-nowrap"
               >
                 <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span className="hidden md:inline">
@@ -131,9 +131,9 @@ export function ProjectorShell({ initialSnapshot }: ProjectorShellProps) {
             </div>
           </div>
 
-          <div className="h-0.5 w-full bg-slate-900">
+          <div className="h-0.5 w-full bg-navy-950">
             <div
-              className="h-full bg-teal-500 transition-[width] duration-200 ease-out"
+              className="h-full bg-teal-bright transition-[width] duration-200 ease-out"
               style={{ width: `${progressPct}%` }}
             />
           </div>

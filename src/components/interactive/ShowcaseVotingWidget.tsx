@@ -408,7 +408,7 @@ export function ShowcaseVotingWidget({
                   <button
                     type="submit"
                     disabled={contributing}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700 disabled:opacity-70 cursor-pointer"
+                    className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-teal-700 px-4 py-2 text-xs font-bold text-white hover:bg-[#0D655E] disabled:opacity-70 cursor-pointer"
                   >
                     {contributing ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />

@@ -141,14 +141,14 @@ export function ExitTicketWidget({
                 onClick={() => setCategory(opt.id)}
                 className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition ${
                   category === opt.id
-                    ? "border-teal-600 bg-teal-600 text-white"
-                    : "border-slate-200 bg-slate-50 text-slate-700"
+                    ? "border-teal-700 bg-teal-700 text-white"
+                    : "border-slate-300 bg-ivory-50 text-navy-900 hover:border-teal-700"
                 }`}
               >
                 <BilingualBlock
                   text={opt.label}
                   frClassName="text-xs"
-                  arClassName={`text-[11px] ${category === opt.id ? "text-teal-50" : "text-teal-800"}`}
+                  arClassName={`text-[11px] ${category === opt.id ? "text-white/95" : "text-teal-700"}`}
                 />
               </button>
             ))}
@@ -187,7 +187,7 @@ export function ExitTicketWidget({
               type="submit"
               disabled={isLocked}
               aria-busy={saveState === "saving"}
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700 disabled:opacity-50 cursor-pointer"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-teal-700 px-4 py-2 text-xs font-bold text-white hover:bg-[#0D655E] disabled:opacity-50 cursor-pointer"
             >
               {saveState === "saving" ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />

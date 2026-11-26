@@ -399,11 +399,14 @@ export function PresenterShell({
 
   if (!authenticated || !active) {
     return (
-      <main className="min-h-screen bg-[#0B1220] px-4 py-12 flex items-center justify-center">
-        <div className="w-full max-w-md rounded-2xl bg-[#FAF8F4] p-8 shadow-2xl space-y-5">
+      <main
+        data-surface="light"
+        className="min-h-screen bg-navy-950 px-4 py-12 flex items-center justify-center"
+      >
+        <div className="w-full max-w-md rounded-2xl border border-ivory-200 bg-ivory-50 p-8 shadow-2xl space-y-5">
           <div className="space-y-2">
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-800">
-              <Lock className="h-3.5 w-3.5 shrink-0" />
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-700">
+              <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <BilingualInline
                 text={{
                   fr: "Espace Animateur Protégé",
@@ -416,8 +419,8 @@ export function PresenterShell({
                 fr: "Présentation · Mediouna",
                 ar: "العرض التقديمي · مديونة",
               }}
-              frClassName="font-display text-2xl font-bold text-slate-900"
-              arClassName="text-lg font-bold text-teal-800"
+              frClassName="font-display text-2xl font-bold text-navy-900"
+              arClassName="text-lg font-bold text-teal-700"
             />
             <BilingualBlock
               text={{
@@ -432,7 +435,7 @@ export function PresenterShell({
             <div className="space-y-1.5">
               <label
                 htmlFor="presenter-passcode"
-                className="block text-xs font-bold text-slate-700"
+                className="block text-xs font-bold text-navy-900"
               >
                 <BilingualInline
                   text={{
@@ -450,13 +453,13 @@ export function PresenterShell({
                 onChange={(e) => setPasscode(e.target.value)}
                 placeholder="FACILITATOR_PASSCODE"
                 dir="ltr"
-                className="min-h-[48px] w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 focus:border-teal-600 focus:outline-none"
+                className="min-h-[48px] w-full rounded-xl border border-slate-400 bg-white px-3.5 py-2.5 text-base text-navy-900 focus:border-teal-700 focus:outline-none"
               />
             </div>
             {loginError && (
               <p
                 role="alert"
-                className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900"
+                className="rounded-xl border border-red-800/20 bg-status-error-bg px-3 py-2 text-xs font-semibold text-status-error"
               >
                 {loginError}
               </p>
@@ -465,7 +468,7 @@ export function PresenterShell({
               type="submit"
               disabled={loggingIn}
               aria-busy={loggingIn}
-              className="min-h-[48px] w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#0F766E] px-4 py-3 text-sm font-bold text-white hover:bg-[#0D655E] disabled:opacity-75 cursor-pointer transition active:scale-[0.99]"
+              className="min-h-[48px] w-full inline-flex items-center justify-center gap-2 rounded-xl bg-teal-700 px-4 py-3 text-sm font-bold text-white hover:bg-[#0D655E] disabled:opacity-75 cursor-pointer transition active:scale-[0.99]"
             >
               {loggingIn && <Loader2 className="h-4 w-4 animate-spin shrink-0" />}
               <BilingualInline
@@ -952,7 +955,7 @@ export function PresenterShell({
               type="button"
               disabled={currentIdx === SLIDES.length - 1}
               onClick={goNext}
-              className="min-h-[44px] sm:min-h-[38px] inline-flex items-center gap-1.5 rounded-xl bg-[#0F766E] px-4 py-1.5 sm:px-5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#0D655E] disabled:opacity-40 cursor-pointer transition active:scale-[0.98]"
+              className="min-h-[44px] sm:min-h-[38px] inline-flex items-center gap-1.5 rounded-xl bg-teal-bright px-4 py-1.5 sm:px-5 text-xs sm:text-sm font-bold text-navy-900 hover:bg-[#5EEAD4] disabled:opacity-40 cursor-pointer transition active:scale-[0.98]"
             >
               <BilingualInline text={{ fr: "Suivant", ar: "التالي" }} />
               <ChevronRight className="h-4 w-4 shrink-0" />
@@ -970,7 +973,7 @@ export function PresenterShell({
           className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-[1px]"
         >
           <div className="flex-1" onClick={() => setDrawer("none")} />
-          <aside className="w-full max-w-xs bg-[#0B1220] border-l border-slate-800 h-full overflow-y-auto p-4 space-y-4 safe-bottom">
+          <aside className="w-full max-w-xs bg-navy-900 border-l border-navy-700 h-full overflow-y-auto p-4 space-y-4 safe-bottom animate-drawer-in-right">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <BilingualBlock
                 text={{ fr: "Menu Animateur", ar: "قائمة المنشط" }}
@@ -1065,7 +1068,7 @@ export function PresenterShell({
           aria-label="Plan de la présentation / فهرس العرض التقديمي"
           className="fixed inset-0 z-50 flex justify-start bg-black/55 backdrop-blur-[1px]"
         >
-          <div className="w-full max-w-md bg-[#0B1220] border-r border-slate-800 h-full overflow-y-auto p-5 space-y-4">
+          <div className="w-full max-w-md bg-navy-900 border-r border-navy-700 h-full overflow-y-auto p-5 space-y-4 animate-drawer-in-left">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <BilingualBlock
                 text={{

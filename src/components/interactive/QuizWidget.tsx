@@ -323,12 +323,12 @@ export function QuizWidget({
                       aria-pressed={isMine}
                       disabled={questionLocked}
                       onClick={() => handleAnswer(q.id, opt.id)}
-                      className={`w-full rounded-xl border px-3.5 py-2.5 text-left transition-all duration-150 active:scale-[0.99] ${
+                      className={`min-h-[44px] w-full rounded-xl border px-3.5 py-2.5 text-left transition-all duration-150 active:scale-[0.99] ${
                         isCorrectOpt
-                          ? "border-teal-600 bg-teal-50 text-teal-950 font-semibold"
+                          ? "border-teal-700 bg-status-success-bg text-status-success font-semibold"
                           : isMine
-                            ? "border-teal-600 bg-teal-50/90 text-slate-950 font-semibold ring-2 ring-teal-500/25"
-                            : "border-slate-200 bg-slate-50/70 text-slate-800 hover:border-teal-400"
+                            ? "border-teal-700 bg-ivory-100 text-navy-900 font-semibold ring-2 ring-teal-700/25"
+                            : "border-slate-300 bg-white text-navy-900 hover:border-teal-700"
                       } ${questionLocked ? "cursor-default" : "cursor-pointer"}`}
                     >
                       <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
@@ -359,13 +359,16 @@ export function QuizWidget({
               </div>
 
               {hasError && localState?.error && (
-                <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+                <div
+                  role="alert"
+                  className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-red-800/20 bg-status-error-bg px-3 py-2 text-xs font-medium text-status-error"
+                >
                   <span>{localState.error}</span>
                   {isOpen && (
                     <button
                       type="button"
                       onClick={() => handleAnswer(q.id, localState.optionId)}
-                      className="rounded-lg bg-amber-600 px-2.5 py-1 font-bold text-white hover:bg-amber-700 cursor-pointer"
+                      className="rounded-lg bg-teal-700 px-2.5 py-1 font-bold text-white hover:bg-[#0D655E] cursor-pointer"
                     >
                       <BilingualInline text={{ fr: "Réessayer", ar: "إعادة المحاولة" }} />
                     </button>

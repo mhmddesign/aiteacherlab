@@ -35,13 +35,17 @@ export function QrJoinPanel({
         isLarge ? "gap-4 p-6" : "gap-3 p-4"
       } ${
         darkSurface
-          ? "border-slate-700/70 bg-navy-800/90 text-white"
-          : "border-slate-200 bg-white text-slate-900 shadow-sm"
+          ? "border-navy-700 bg-navy-800 text-ivory-50"
+          : "border-ivory-200 bg-white text-navy-900"
       }`}
     >
-      <div className={`space-y-0.5 font-bold text-teal-600 ${isLarge ? "text-[20px]" : "text-xs"}`}>
+      <div
+        className={`space-y-0.5 font-bold ${
+          darkSurface ? "text-teal-bright" : "text-teal-700"
+        } ${isLarge ? "text-[20px]" : "text-xs"}`}
+      >
         <div className="flex items-center justify-center gap-2 uppercase tracking-wider">
-          <Smartphone className={isLarge ? "h-5 w-5" : "h-4 w-4"} />
+          <Smartphone className={isLarge ? "h-5 w-5" : "h-4 w-4"} aria-hidden="true" />
           <span>Rejoindre l&apos;atelier (/join)</span>
         </div>
         <div dir="rtl" lang="ar" className={`font-arabic font-bold ${isLarge ? "text-[22px]" : "text-xs"}`}>
@@ -49,12 +53,12 @@ export function QrJoinPanel({
         </div>
       </div>
 
-      <div className="rounded-xl bg-white p-3 shadow-xs">
+      <div className="rounded-xl border border-ivory-200 bg-white p-3">
         <QRCodeSVG
           value={joinUrl}
           size={size}
           bgColor="#ffffff"
-          fgColor="#0b1426"
+          fgColor="#0B1220"
           level="M"
         />
       </div>
@@ -64,7 +68,11 @@ export function QrJoinPanel({
           {joinUrl}
         </p>
         {showPinHint ? (
-          <div className={`font-bold text-amber-600 space-y-0.5 ${isLarge ? "text-[22px]" : "text-xs"}`}>
+          <div
+            className={`font-bold space-y-0.5 ${
+              darkSurface ? "text-amber-300" : "text-status-warning"
+            } ${isLarge ? "text-[22px]" : "text-xs"}`}
+          >
             <p>
               Code PIN partagé : <span dir="ltr" className="font-mono-code">{showPinHint}</span>
             </p>

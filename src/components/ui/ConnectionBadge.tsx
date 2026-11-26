@@ -22,31 +22,31 @@ const MODE_META: Record<
   connecting: {
     fr: "Connexion",
     ar: "اتصال",
-    tone: "border-slate-600/50 bg-slate-800/70 text-slate-200",
+    tone: "border-navy-700 bg-navy-800 text-ivory-50",
     icon: "spin",
   },
   realtime: {
     fr: "Temps réel",
     ar: "مباشر",
-    tone: "border-cyan-400/35 bg-cyan-500/12 text-cyan-200",
+    tone: "border-teal-bright/40 bg-navy-800 text-teal-bright",
     icon: "radio",
   },
   polling: {
     fr: "Synchro HTTP",
     ar: "مزامنة HTTP",
-    tone: "border-slate-500/40 bg-slate-800/80 text-slate-200",
+    tone: "border-slate-blue/70 bg-navy-800 text-ivory-50",
     icon: "refresh",
   },
   reconnecting: {
     fr: "Reconnexion",
     ar: "إعادة اتصال",
-    tone: "border-amber-500/45 bg-amber-500/15 text-amber-200",
+    tone: "border-amber-400/50 bg-amber-950/60 text-amber-200",
     icon: "spin",
   },
   offline: {
     fr: "Hors ligne",
     ar: "غير متصل",
-    tone: "border-amber-500/60 bg-amber-500/20 text-amber-100",
+    tone: "border-red-400/60 bg-red-950/60 text-red-200",
     icon: "offline",
   },
 };
@@ -69,14 +69,14 @@ export const ConnectionBadge = React.memo(function ConnectionBadge({
       <span
         className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold whitespace-nowrap transition-colors duration-150 ${
           demoMode
-            ? "border border-amber-400/45 bg-amber-500/15 text-amber-200"
-            : "border border-teal-400/40 bg-teal-500/15 text-teal-200"
+            ? "border border-amber-400/50 bg-amber-950/60 text-amber-200"
+            : "border border-teal-bright/40 bg-navy-800 text-teal-bright"
         }`}
       >
         <span
           aria-hidden="true"
           className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-            demoMode ? "bg-amber-400" : "bg-teal-400"
+            demoMode ? "bg-amber-300" : "bg-teal-bright"
           }`}
         />
         {demoMode ? (
@@ -121,13 +121,13 @@ export const ConnectionBadge = React.memo(function ConnectionBadge({
         className={`inline-flex h-7 min-w-[136px] shrink-0 items-center justify-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium whitespace-nowrap transition-colors duration-150 ${meta.tone}`}
       >
         {meta.icon === "radio" ? (
-          <Radio className="h-3 w-3 shrink-0 text-cyan-300" aria-hidden="true" />
+          <Radio className="h-3 w-3 shrink-0 text-teal-bright" aria-hidden="true" />
         ) : meta.icon === "refresh" ? (
-          <RefreshCw className="h-3 w-3 shrink-0 text-teal-300" aria-hidden="true" />
+          <RefreshCw className="h-3 w-3 shrink-0 text-teal-bright" aria-hidden="true" />
         ) : meta.icon === "spin" ? (
           <Loader2 className="h-3 w-3 shrink-0 animate-spin text-amber-300" aria-hidden="true" />
         ) : (
-          <WifiOff className="h-3 w-3 shrink-0 text-amber-300" aria-hidden="true" />
+          <WifiOff className="h-3 w-3 shrink-0 text-red-300" aria-hidden="true" />
         )}
         <span>{meta.fr}</span>
         <span aria-hidden="true" className="opacity-50">·</span>

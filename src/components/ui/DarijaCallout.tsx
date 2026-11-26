@@ -19,16 +19,16 @@ export function DarijaCallout({
 }: DarijaCalloutProps) {
   if (canvas) {
     return (
-      <div className="border-l-4 border-teal-600 bg-[#F4F0E8]/85 rounded-r-xl px-6 py-2.5 text-slate-900 space-y-1">
-        <div className="text-[12px] font-bold uppercase tracking-wider text-teal-800">
+      <div className="rounded-xl border border-ivory-200 bg-ivory-100 px-6 py-2.5 text-navy-900 space-y-1">
+        <div className="text-[12px] font-bold uppercase tracking-wider text-teal-700">
           <BilingualInline text={title} />
         </div>
 
         <div className="grid grid-cols-2 gap-8 items-start">
-          <p dir="ltr" lang="fr" className="text-[15px] leading-snug text-slate-800">
+          <p dir="ltr" lang="fr" className="text-[15px] leading-snug text-slate-700">
             {fr}
           </p>
-          <p dir="rtl" lang="ar" className="font-arabic text-[17px] leading-snug text-slate-900 font-medium">
+          <p dir="rtl" lang="ar" className="font-arabic text-[17px] leading-snug text-navy-900 font-medium">
             {arabic}
           </p>
         </div>
@@ -38,11 +38,11 @@ export function DarijaCallout({
 
   return (
     <div
-      className={`border-l-4 border-teal-600 bg-[#F4F0E8]/70 rounded-r-xl text-slate-900 space-y-2 ${
+      className={`rounded-xl border border-ivory-200 bg-ivory-100 text-navy-900 space-y-2 ${
         large ? "px-6 py-4" : "px-4 py-3"
       }`}
     >
-      <div className="text-[11px] font-bold uppercase tracking-wider text-teal-800">
+      <div className="text-[12px] font-bold uppercase tracking-wider text-teal-700">
         <BilingualInline text={title} />
       </div>
 
