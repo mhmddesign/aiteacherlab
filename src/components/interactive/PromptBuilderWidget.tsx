@@ -77,6 +77,7 @@ export function PromptBuilderWidget({
   );
 
   const [submitting, setSubmitting] = useState(false);
+  const [optimisticSaved, setOptimisticSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const targetLangFr =
@@ -156,12 +157,13 @@ export function PromptBuilderWidget({
     qualityCriteria,
   ]);
 
-  const isLocked = isPaused || status !== "open" || Boolean(existing);
+  const isLocked = isPaused || status !== "open" || Boolean(existing) || optimisticSaved;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit || isLocked || submitting) return;
     setSubmitting(true);
+    setOptimisticSaved(true);
     setError(null);
     try {
       const res = await fetch("/api/participant/respond", {
@@ -184,6 +186,7 @@ export function PromptBuilderWidget({
       });
       const data = await res.json();
       if (!res.ok) {
+        setOptimisticSaved(false);
         setError(
           data.error ??
             "Impossible de partager votre prompt. / تعذر مشاركة التوجيه."
@@ -192,6 +195,7 @@ export function PromptBuilderWidget({
       }
       onSubmitted?.(data.response as ParticipantResponseItem | undefined);
     } catch {
+      setOptimisticSaved(false);
       setError(
         "Erreur réseau lors de l'envoi. Votre prompt reste copiable ci-contre. / خطأ في الشبكة أثناء الإرسال، يمكنكم نسخ التوجيه."
       );
@@ -294,10 +298,20 @@ export function PromptBuilderWidget({
               frClassName="text-sm font-bold text-slate-900"
               arClassName="text-xs font-bold text-teal-800"
             />
-            {existing ? (
+            {existing || optimisticSaved ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
-                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                <BilingualInline text={{ fr: "Partagé avec la salle", ar: "تمت المشاركة مع القاعة" }} />
+                {submitting ? (
+                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                )}
+                <BilingualInline
+                  text={
+                    submitting
+                      ? { fr: "Partage en cours...", ar: "جاري المشاركة..." }
+                      : { fr: "Partagé avec la salle", ar: "تمت المشاركة مع القاعة" }
+                  }
+                />
               </span>
             ) : status !== "open" || isPaused ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">

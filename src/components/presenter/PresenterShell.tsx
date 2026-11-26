@@ -12,11 +12,13 @@ import {
   ExternalLink,
   Eye,
   FileText,
+  LayoutGrid,
   ListOrdered,
   Loader2,
   Lock,
   LogOut,
   Maximize2,
+  Menu,
   Minimize2,
   Pause,
   Play,
@@ -39,6 +41,7 @@ import {
 } from "@/content/slides";
 import type { PresenterSnapshot, PublicWorkshopState } from "@/content/types";
 import { useWorkshopSync } from "@/lib/realtime/client";
+import { useCompactLandscape } from "@/lib/useCompactLandscape";
 import { usePresentationFullscreen } from "@/lib/usePresentationFullscreen";
 import { PresentationViewport } from "@/components/slides/PresentationViewport";
 import { SlideRenderer } from "@/components/slides/SlideRenderer";
@@ -72,14 +75,38 @@ export function PresenterShell({
   const [purging, setPurging] = useState(false);
   const [openingScreen, setOpeningScreen] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  const [drawer, setDrawer] = useState<"none" | "outline" | "notes" | "tools">("none");
+  const [drawer, setDrawer] = useState<
+    "none" | "outline" | "notes" | "tools" | "menu"
+  >("none");
   const [showPurgeModal, setShowPurgeModal] = useState(false);
   const [purgeText, setPurgeText] = useState("");
   const [syncError, setSyncError] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const [overlayVisible, setOverlayVisible] = useState(true);
+  const overlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fullscreenWrapperRef = useRef<HTMLDivElement>(null);
+  const isCompactLandscape = useCompactLandscape();
   const { isFullscreen, isCssFullscreen, toggleFullscreen } =
     usePresentationFullscreen(fullscreenWrapperRef);
+
+  const hideChrome = isFullscreen || isCompactLandscape;
+
+  const revealLandscapeOverlay = useCallback(() => {
+    setOverlayVisible(true);
+    if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
+    overlayTimerRef.current = setTimeout(() => setOverlayVisible(false), 3200);
+  }, []);
+
+  useEffect(() => {
+    if (!hideChrome) {
+      if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
+      return;
+    }
+    overlayTimerRef.current = setTimeout(() => setOverlayVisible(false), 3200);
+    return () => {
+      if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
+    };
+  }, [hideChrome]);
 
   const {
     snapshot,
@@ -87,7 +114,7 @@ export function PresenterShell({
     refresh,
     applySnapshot,
     applyLocalState,
-    resetMinStateVersion,
+    commitServerState,
   } = useWorkshopSync({
     mode: "presenter",
     initialSnapshot,
@@ -170,8 +197,7 @@ export function PresenterShell({
         setSyncError(null);
 
         if (queueRef.current.length === 0 && payload.state) {
-          resetMinStateVersion(payload.state.stateVersion);
-          applyLocalState(payload.state);
+          commitServerState(payload.state, true);
           currentIdxRef.current = getSlideIndex(payload.state.currentSlideId);
           // Refresh aggregates in background without forcing old slide state over rapid keypresses
           if (
@@ -193,7 +219,7 @@ export function PresenterShell({
       drainingRef.current = false;
       setSyncing(false);
     }
-  }, [applyLocalState, refresh, resetMinStateVersion]);
+  }, [commitServerState, refresh]);
 
   const sendControl = useCallback(
     (patch: Record<string, unknown>) => {
@@ -245,6 +271,7 @@ export function PresenterShell({
   useEffect(() => {
     if (!authenticated || showPurgeModal) return;
     const onKey = (e: KeyboardEvent) => {
+      if (e.repeat) return;
       const el = e.target as HTMLElement | null;
       const tag = el?.tagName;
       if (
@@ -253,6 +280,10 @@ export function PresenterShell({
         tag === "SELECT" ||
         el?.isContentEditable
       ) {
+        return;
+      }
+
+      if (e.key === " " && (tag === "BUTTON" || tag === "A")) {
         return;
       }
 
@@ -368,7 +399,7 @@ export function PresenterShell({
 
   if (!authenticated || !active) {
     return (
-      <div className="min-h-screen bg-[#0B1220] px-4 py-12 flex items-center justify-center">
+      <main className="min-h-screen bg-[#0B1220] px-4 py-12 flex items-center justify-center">
         <div className="w-full max-w-md rounded-2xl bg-[#FAF8F4] p-8 shadow-2xl space-y-5">
           <div className="space-y-2">
             <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-800">
@@ -398,25 +429,35 @@ export function PresenterShell({
             />
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
-            <label className="block text-xs font-bold text-slate-700">
-              <BilingualInline
-                text={{
-                  fr: "Code d'accès animateur",
-                  ar: "رمز دخول المنشط",
-                }}
-              />
+            <div className="space-y-1.5">
+              <label
+                htmlFor="presenter-passcode"
+                className="block text-xs font-bold text-slate-700"
+              >
+                <BilingualInline
+                  text={{
+                    fr: "Code d'accès animateur",
+                    ar: "رمز دخول المنشط",
+                  }}
+                />
+              </label>
               <input
+                id="presenter-passcode"
                 type="password"
                 required
+                autoComplete="current-password"
                 value={passcode}
                 onChange={(e) => setPasscode(e.target.value)}
                 placeholder="FACILITATOR_PASSCODE"
                 dir="ltr"
-                className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-teal-600 focus:outline-none"
+                className="min-h-[48px] w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 focus:border-teal-600 focus:outline-none"
               />
-            </label>
+            </div>
             {loginError && (
-              <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
+              <p
+                role="alert"
+                className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900"
+              >
                 {loginError}
               </p>
             )}
@@ -424,7 +465,7 @@ export function PresenterShell({
               type="submit"
               disabled={loggingIn}
               aria-busy={loggingIn}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#0F766E] px-4 py-3 text-sm font-bold text-white hover:bg-[#0D655E] disabled:opacity-75 cursor-pointer"
+              className="min-h-[48px] w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#0F766E] px-4 py-3 text-sm font-bold text-white hover:bg-[#0D655E] disabled:opacity-75 cursor-pointer transition active:scale-[0.99]"
             >
               {loggingIn && <Loader2 className="h-4 w-4 animate-spin shrink-0" />}
               <BilingualInline
@@ -443,7 +484,7 @@ export function PresenterShell({
             </button>
           </form>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -452,36 +493,44 @@ export function PresenterShell({
   const progressPct = Math.round(((currentIdx + 1) / SLIDES.length) * 100);
 
   return (
-    <div className="h-[100dvh] w-full overflow-hidden bg-[#060B16] text-white flex flex-col">
-      {/* Slim Presentation-First Top Bar (Hidden in Fullscreen) */}
-      {!isFullscreen && (
-        <header className="no-print shrink-0 z-30 border-b border-slate-800/80 bg-[#0B1220]/95 backdrop-blur">
-          <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-1.5 px-2.5 py-1.5 sm:px-4 sm:py-2">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <span className="font-display text-xs sm:text-sm font-bold text-white">
-                AI Teacher Lab · Animateur ·{" "}
-                <span dir="rtl" lang="ar" className="font-arabic text-teal-300">
-                  المنشط
+    <div
+      data-compact-landscape={isCompactLandscape ? "true" : "false"}
+      className="h-[100dvh] w-full overflow-hidden bg-[#060B16] text-white flex flex-col"
+    >
+      {/* Slim Non-Wrapping Presentation-First Top Bar (Hidden in Fullscreen & Compact Landscape) */}
+      {!hideChrome && (
+        <header className="no-print shrink-0 z-30 border-b border-slate-800/80 bg-[#0B1220]/95 backdrop-blur safe-top">
+          <div className="mx-auto flex h-12 max-w-[1600px] flex-nowrap items-center justify-between gap-2 px-2.5 sm:px-4 overflow-hidden">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
+              <span className="shrink-0 font-display text-xs sm:text-sm font-bold text-white whitespace-nowrap">
+                AI Teacher Lab
+                <span className="hidden md:inline">
+                  {" "}· Animateur ·{" "}
+                  <span dir="rtl" lang="ar" className="font-arabic text-teal-300">
+                    المنشط
+                  </span>
                 </span>
               </span>
-              <span className="text-xs font-semibold text-slate-300 tabular-nums">
-                Diapo {currentIdx + 1}/{SLIDES.length}
+              <span className="shrink-0 inline-flex items-center gap-1.5 rounded-md bg-slate-800/80 px-2 py-0.5 text-xs font-semibold text-slate-200 tabular-nums whitespace-nowrap">
+                <span>Diapo {currentIdx + 1}/{SLIDES.length}</span>
+                {syncing && (
+                  <Loader2
+                    aria-label="Synchronisation / مزامنة"
+                    className="h-3 w-3 animate-spin text-teal-300 shrink-0"
+                  />
+                )}
               </span>
-              <ConnectionBadge
-                mode={connectionMode}
-                demoMode={active.state.demoMode}
-                compact
-              />
-              {syncing && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-teal-500/40 bg-teal-500/15 px-2 py-0.5 text-[11px] font-semibold text-teal-200">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  <BilingualInline text={{ fr: "Synchro...", ar: "مزامنة..." }} />
-                </span>
-              )}
+              <div className="hidden sm:flex items-center shrink-0">
+                <ConnectionBadge
+                  mode={connectionMode}
+                  demoMode={active.state.demoMode}
+                  compact
+                />
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
-              <div className="hidden md:flex items-center gap-1.5 rounded-lg border border-slate-700/80 bg-[#111C33] px-2 py-1 text-xs">
+            <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+              <div className="hidden 2xl:flex items-center gap-1.5 rounded-lg border border-slate-700/80 bg-[#111C33] px-2 py-1 text-xs">
                 <Clock className="h-3.5 w-3.5 text-teal-300" />
                 <span className="font-mono-code font-bold tabular-nums">
                   {formatSeconds(displaySeconds)}
@@ -506,8 +555,9 @@ export function PresenterShell({
 
               <button
                 type="button"
+                aria-expanded={drawer === "outline"}
                 onClick={() => setDrawer((d) => (d === "outline" ? "none" : "outline"))}
-                className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] sm:text-xs font-semibold cursor-pointer ${
+                className={`hidden sm:inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-semibold whitespace-nowrap cursor-pointer transition ${
                   drawer === "outline"
                     ? "border-teal-500 bg-teal-600 text-white"
                     : "border-slate-700 bg-[#111C33] text-slate-200 hover:border-teal-400"
@@ -519,8 +569,9 @@ export function PresenterShell({
 
               <button
                 type="button"
+                aria-expanded={drawer === "notes"}
                 onClick={() => setDrawer((d) => (d === "notes" ? "none" : "notes"))}
-                className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] sm:text-xs font-semibold cursor-pointer ${
+                className={`hidden sm:inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-semibold whitespace-nowrap cursor-pointer transition ${
                   drawer === "notes"
                     ? "border-teal-500 bg-teal-600 text-white"
                     : "border-slate-700 bg-[#111C33] text-slate-200 hover:border-teal-400"
@@ -532,6 +583,7 @@ export function PresenterShell({
 
               <button
                 type="button"
+                aria-expanded={drawer === "tools"}
                 onClick={() => {
                   setDrawer((d) => {
                     const next = d === "tools" ? "none" : "tools";
@@ -539,7 +591,7 @@ export function PresenterShell({
                     return next;
                   });
                 }}
-                className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] sm:text-xs font-semibold cursor-pointer ${
+                className={`hidden md:inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-semibold whitespace-nowrap cursor-pointer transition ${
                   drawer === "tools"
                     ? "border-teal-500 bg-teal-600 text-white"
                     : "border-slate-700 bg-[#111C33] text-slate-200 hover:border-teal-400"
@@ -550,13 +602,21 @@ export function PresenterShell({
               </button>
 
               <Link
+                href="/studio"
+                className="hidden 2xl:inline-flex items-center gap-1 rounded-lg border border-slate-700 bg-[#111C33] px-2 py-1 text-xs font-semibold text-slate-200 hover:border-teal-400 whitespace-nowrap"
+              >
+                <LayoutGrid className="h-3.5 w-3.5 shrink-0 text-teal-300" />
+                <BilingualInline text={{ fr: "Studio", ar: "الاستوديو" }} />
+              </Link>
+
+              <Link
                 href="/screen"
                 target="_blank"
                 onClick={() => {
                   setOpeningScreen(true);
                   window.setTimeout(() => setOpeningScreen(false), 1200);
                 }}
-                className="inline-flex items-center gap-1 rounded-lg border border-teal-500/40 bg-teal-500/10 px-2 py-1 text-[11px] sm:text-xs font-bold text-teal-200 hover:bg-teal-500/20"
+                className="hidden sm:inline-flex items-center gap-1 rounded-lg border border-teal-500/40 bg-teal-500/10 px-2 py-1 text-xs font-bold text-teal-200 hover:bg-teal-500/20 whitespace-nowrap"
               >
                 {openingScreen ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
@@ -572,12 +632,24 @@ export function PresenterShell({
                 />
               </Link>
 
+              {/* Mobile Compact Menu Drawer Button */}
+              <button
+                type="button"
+                aria-expanded={drawer === "menu"}
+                aria-label="Menu outils animateur / قائمة أدوات المنشط"
+                onClick={() => setDrawer((d) => (d === "menu" ? "none" : "menu"))}
+                className="sm:hidden inline-flex h-10 min-w-[40px] items-center justify-center gap-1 rounded-lg border border-slate-700 bg-[#111C33] px-2.5 text-xs font-semibold text-slate-100 cursor-pointer"
+              >
+                <Menu className="h-4 w-4 shrink-0" />
+                <BilingualInline text={{ fr: "Outils", ar: "أدوات" }} />
+              </button>
+
               <button
                 type="button"
                 onClick={toggleFullscreen}
                 aria-label="Plein écran / ملء الشاشة"
                 title="Plein écran (F) / ملء الشاشة"
-                className="rounded-lg border border-slate-700 p-1.5 text-slate-300 hover:text-white cursor-pointer"
+                className="inline-flex h-10 w-10 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-slate-700 text-slate-300 hover:text-white cursor-pointer"
               >
                 <Maximize2 className="h-3.5 w-3.5" />
               </button>
@@ -589,7 +661,7 @@ export function PresenterShell({
                 aria-busy={loggingOut}
                 aria-label="Déconnexion / تسجيل الخروج"
                 title="Déconnexion / تسجيل الخروج"
-                className="rounded-lg border border-slate-700 p-1.5 text-slate-300 hover:text-white disabled:opacity-60 cursor-pointer"
+                className="hidden sm:inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 text-slate-300 hover:text-white disabled:opacity-60 cursor-pointer"
               >
                 {loggingOut ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -611,9 +683,12 @@ export function PresenterShell({
       )}
 
       {/* Compact Sync Error & Contextual Activity Bar (Outside 16:9 Slide Canvas) */}
-      {!isFullscreen && syncError && (
+      {!hideChrome && syncError && (
         <div className="shrink-0 mx-auto w-full max-w-[1600px] px-3 pt-1.5">
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-400/50 bg-amber-500/15 px-3 py-1.5 text-xs font-medium text-amber-100">
+          <div
+            role="alert"
+            className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-400/50 bg-amber-500/15 px-3 py-1.5 text-xs font-medium text-amber-100"
+          >
             <span className="inline-flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-300 shrink-0" />
               {syncError}
@@ -632,9 +707,9 @@ export function PresenterShell({
         </div>
       )}
 
-      {!isFullscreen && activeActivityDef && (
+      {!hideChrome && activeActivityDef && (
         <div className="shrink-0 mx-auto w-full max-w-[1600px] px-2.5 sm:px-4 pt-1.5">
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-800 bg-[#111C33] px-3 py-1.5">
+          <div className="flex flex-wrap items-center justify-between gap-1.5 rounded-xl border border-slate-800 bg-[#111C33] px-2.5 py-1.5">
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <BilingualBlock
                 text={activeActivityDef.title}
@@ -738,30 +813,34 @@ export function PresenterShell({
       <main
         ref={fullscreenWrapperRef}
         data-fullscreen-wrapper="true"
+        onPointerMove={hideChrome ? revealLandscapeOverlay : undefined}
+        onClick={hideChrome ? revealLandscapeOverlay : undefined}
         className={
           isCssFullscreen
             ? "fixed inset-0 z-50 h-[100dvh] w-screen bg-[#060B16] p-0 m-0 flex flex-col items-center justify-center overflow-hidden"
-            : isFullscreen
-              ? "h-[100dvh] w-screen bg-[#060B16] p-0 m-0 flex flex-col items-center justify-center overflow-hidden"
+            : hideChrome
+              ? "relative flex flex-1 min-h-0 min-w-0 h-[100dvh] w-screen bg-[#060B16] p-0 m-0 flex-col items-center justify-center overflow-hidden"
               : "relative flex flex-1 min-h-0 min-w-0 w-full flex-col items-center justify-center overflow-hidden px-2 py-2 sm:px-5 sm:py-3"
         }
       >
-        <PresentationViewport rounded={!isFullscreen}>
-          <SlideRenderer
-            slide={currentSlide}
-            mode="presenter"
-            activityStatus={active.state.activityStatus}
-            showResults={active.state.showResults}
-            showQrOverlay={isFullscreen ? false : active.state.showQrOverlay}
-            isPaused={active.state.isPaused}
-            aggregate={active.aggregate}
-            connectedCount={active.connectedCount}
-            totalParticipants={active.totalParticipants}
-            joinPinHint={resolvedPinHint}
-          />
+        <PresentationViewport rounded={!hideChrome}>
+          <div key={currentSlide.id} className="h-full w-full animate-stage-enter">
+            <SlideRenderer
+              slide={currentSlide}
+              mode="presenter"
+              activityStatus={active.state.activityStatus}
+              showResults={active.state.showResults}
+              showQrOverlay={hideChrome ? false : active.state.showQrOverlay}
+              isPaused={active.state.isPaused}
+              aggregate={active.aggregate}
+              connectedCount={active.connectedCount}
+              totalParticipants={active.totalParticipants}
+              joinPinHint={resolvedPinHint}
+            />
+          </div>
         </PresentationViewport>
 
-        {!isFullscreen && (
+        {!hideChrome && (
           <div
             data-orientation-hint="true"
             className="portrait-phone-hint mt-1.5 shrink-0 items-center gap-2 rounded-full border border-slate-700/80 bg-[#111C33]/90 px-3 py-1 text-[11px] text-slate-300"
@@ -776,56 +855,89 @@ export function PresenterShell({
           </div>
         )}
 
-        {/* Discreet Floating Presenter Controls in Fullscreen Mode */}
-        {isFullscreen && (
+        {/* Discreet Auto-Fading Floating Controls in Fullscreen OR Compact Mobile Landscape */}
+        {hideChrome && (
           <div
-            data-fullscreen-controls="true"
-            className="no-print absolute bottom-3 right-3 z-30 flex items-center gap-1.5 rounded-full border border-slate-700/70 bg-[#0B1220]/75 px-2.5 py-1.5 text-xs text-slate-200 backdrop-blur-md opacity-55 hover:opacity-100 focus-within:opacity-100 transition-opacity"
+            data-fullscreen-controls={isFullscreen ? "true" : undefined}
+            data-landscape-overlay={isCompactLandscape && !isFullscreen ? "true" : undefined}
+            onClick={(e) => e.stopPropagation()}
+            className={`no-print absolute bottom-3 right-3 z-30 flex items-center gap-1 rounded-full border border-slate-700/75 bg-[#0B1220]/85 px-2 py-1 text-xs text-slate-100 backdrop-blur-md shadow-xl transition-opacity duration-200 safe-bottom ${
+              overlayVisible
+                ? "opacity-95"
+                : "opacity-25 hover:opacity-100 focus-within:opacity-100"
+            }`}
           >
             <button
               type="button"
               disabled={currentIdx === 0}
-              onClick={goPrev}
+              onClick={() => {
+                revealLandscapeOverlay();
+                goPrev();
+              }}
               aria-label="Précédent / السابق"
-              className="rounded-full p-1 hover:bg-slate-700/80 disabled:opacity-40 cursor-pointer"
+              className="inline-flex h-10 w-10 sm:h-8 sm:w-8 items-center justify-center rounded-full hover:bg-slate-700/80 disabled:opacity-40 cursor-pointer"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="px-1.5 text-[11px] font-semibold tabular-nums text-slate-200">
+            <span className="px-1.5 text-[11px] font-semibold tabular-nums text-slate-100 whitespace-nowrap">
               Diapo {currentIdx + 1}/{SLIDES.length}
             </span>
             <button
               type="button"
               disabled={currentIdx === SLIDES.length - 1}
-              onClick={goNext}
+              onClick={() => {
+                revealLandscapeOverlay();
+                goNext();
+              }}
               aria-label="Suivant / التالي"
-              className="rounded-full p-1 hover:bg-slate-700/80 disabled:opacity-40 cursor-pointer"
+              className="inline-flex h-10 w-10 sm:h-8 sm:w-8 items-center justify-center rounded-full hover:bg-slate-700/80 disabled:opacity-40 cursor-pointer"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
-            <span className="h-3.5 w-px bg-slate-700" aria-hidden="true" />
+            {isCompactLandscape && !isFullscreen && (
+              <>
+                <span className="h-4 w-px bg-slate-700" aria-hidden="true" />
+                <button
+                  type="button"
+                  onClick={() => setDrawer("menu")}
+                  aria-label="Outils animateur / أدوات المنشط"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-slate-700/80 cursor-pointer"
+                >
+                  <Menu className="h-4 w-4" />
+                </button>
+              </>
+            )}
+            <span className="h-4 w-px bg-slate-700" aria-hidden="true" />
             <button
               type="button"
               onClick={toggleFullscreen}
-              aria-label="Quitter le plein écran / إنهاء ملء الشاشة"
-              title="Esc"
-              className="rounded-full p-1 hover:bg-slate-700/80 cursor-pointer"
+              aria-label={
+                isFullscreen
+                  ? "Quitter le plein écran / إنهاء ملء الشاشة"
+                  : "Plein écran / ملء الشاشة"
+              }
+              title={isFullscreen ? "Esc" : "F"}
+              className="inline-flex h-10 w-10 sm:h-8 sm:w-8 items-center justify-center rounded-full hover:bg-slate-700/80 cursor-pointer"
             >
-              <Minimize2 className="h-4 w-4" />
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
             </button>
           </div>
         )}
       </main>
 
-      {/* Bottom Presentation Navigation Bar (Hidden in Fullscreen) */}
-      {!isFullscreen && (
-        <footer className="no-print shrink-0 z-20 border-t border-slate-800/80 bg-[#0B1220]/95 backdrop-blur px-3 py-1.5 sm:px-5 sm:py-2.5">
+      {/* Bottom Presentation Navigation Bar (Hidden in Fullscreen & Compact Landscape) */}
+      {!hideChrome && (
+        <footer className="no-print shrink-0 z-20 border-t border-slate-800/80 bg-[#0B1220]/95 backdrop-blur px-3 py-1.5 sm:px-5 sm:py-2 safe-bottom">
           <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3">
             <button
               type="button"
               disabled={currentIdx === 0}
               onClick={goPrev}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-[#111C33] px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-slate-200 hover:border-teal-400 disabled:opacity-40 cursor-pointer"
+              className="min-h-[44px] sm:min-h-[38px] inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-[#111C33] px-3.5 py-1.5 sm:px-4 text-xs sm:text-sm font-semibold text-slate-200 hover:border-teal-400 disabled:opacity-40 cursor-pointer transition active:scale-[0.98]"
             >
               <ChevronLeft className="h-4 w-4 shrink-0" />
               <BilingualInline text={{ fr: "Précédent", ar: "السابق" }} />
@@ -840,7 +952,7 @@ export function PresenterShell({
               type="button"
               disabled={currentIdx === SLIDES.length - 1}
               onClick={goNext}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F766E] px-4 py-1.5 sm:px-5 sm:py-2 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#0D655E] disabled:opacity-40 cursor-pointer"
+              className="min-h-[44px] sm:min-h-[38px] inline-flex items-center gap-1.5 rounded-xl bg-[#0F766E] px-4 py-1.5 sm:px-5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#0D655E] disabled:opacity-40 cursor-pointer transition active:scale-[0.98]"
             >
               <BilingualInline text={{ fr: "Suivant", ar: "التالي" }} />
               <ChevronRight className="h-4 w-4 shrink-0" />
@@ -849,9 +961,110 @@ export function PresenterShell({
         </footer>
       )}
 
+      {/* Mobile Compact Tools Menu Drawer */}
+      {drawer === "menu" && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Outils animateur / أدوات المنشط"
+          className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-[1px]"
+        >
+          <div className="flex-1" onClick={() => setDrawer("none")} />
+          <aside className="w-full max-w-xs bg-[#0B1220] border-l border-slate-800 h-full overflow-y-auto p-4 space-y-4 safe-bottom">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <BilingualBlock
+                text={{ fr: "Menu Animateur", ar: "قائمة المنشط" }}
+                frClassName="text-sm font-bold text-white"
+                arClassName="text-xs font-bold text-teal-300"
+              />
+              <button
+                type="button"
+                onClick={() => setDrawer("none")}
+                aria-label="Fermer le menu / إغلاق القائمة"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 text-slate-300 hover:text-white cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-800 bg-[#111C33] p-3">
+              <ConnectionBadge
+                mode={connectionMode}
+                demoMode={active.state.demoMode}
+                compact
+              />
+              <span className="font-mono-code text-xs font-bold text-slate-200 tabular-nums">
+                {formatSeconds(displaySeconds)}
+              </span>
+            </div>
+
+            <div className="grid gap-2">
+              <button
+                type="button"
+                onClick={() => setDrawer("outline")}
+                className="min-h-[44px] flex items-center gap-2.5 rounded-xl border border-slate-700 bg-[#111C33] px-3.5 py-2.5 text-left text-xs font-semibold text-white cursor-pointer"
+              >
+                <ListOrdered className="h-4 w-4 text-teal-300 shrink-0" />
+                <BilingualInline text={{ fr: "Plan (21 diapos)", ar: "الفهرس (21 شريحة)" }} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setDrawer("notes")}
+                className="min-h-[44px] flex items-center gap-2.5 rounded-xl border border-slate-700 bg-[#111C33] px-3.5 py-2.5 text-left text-xs font-semibold text-white cursor-pointer"
+              >
+                <FileText className="h-4 w-4 text-teal-300 shrink-0" />
+                <BilingualInline text={{ fr: "Notes & Script", ar: "ملاحظات المنشط" }} />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void refresh({ forceState: true });
+                  setDrawer("tools");
+                }}
+                className="min-h-[44px] flex items-center gap-2.5 rounded-xl border border-slate-700 bg-[#111C33] px-3.5 py-2.5 text-left text-xs font-semibold text-white cursor-pointer"
+              >
+                <SlidersHorizontal className="h-4 w-4 text-teal-300 shrink-0" />
+                <BilingualInline text={{ fr: "Tableau de bord & QR", ar: "لوحة القيادة و QR" }} />
+              </button>
+              <Link
+                href="/studio"
+                onClick={() => setDrawer("none")}
+                className="min-h-[44px] flex items-center gap-2.5 rounded-xl border border-slate-700 bg-[#111C33] px-3.5 py-2.5 text-left text-xs font-semibold text-white"
+              >
+                <LayoutGrid className="h-4 w-4 text-teal-300 shrink-0" />
+                <BilingualInline text={{ fr: "Studio Salles", ar: "استوديو القاعات" }} />
+              </Link>
+              <Link
+                href="/screen"
+                target="_blank"
+                onClick={() => setDrawer("none")}
+                className="min-h-[44px] flex items-center gap-2.5 rounded-xl border border-teal-500/40 bg-teal-500/10 px-3.5 py-2.5 text-left text-xs font-bold text-teal-200"
+              >
+                <ExternalLink className="h-4 w-4 shrink-0" />
+                <BilingualInline text={{ fr: "Ouvrir /screen", ar: "فتح شاشة العرض" }} />
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="min-h-[44px] flex items-center gap-2.5 rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-left text-xs font-semibold text-slate-300 cursor-pointer"
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                <BilingualInline text={{ fr: "Déconnexion", ar: "تسجيل الخروج" }} />
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+
       {/* On-Demand Outline Drawer (Hidden by Default) */}
       {drawer === "outline" && (
-        <div className="fixed inset-0 z-40 flex justify-start bg-black/55 backdrop-blur-[1px]">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Plan de la présentation / فهرس العرض التقديمي"
+          className="fixed inset-0 z-50 flex justify-start bg-black/55 backdrop-blur-[1px]"
+        >
           <div className="w-full max-w-md bg-[#0B1220] border-r border-slate-800 h-full overflow-y-auto p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <BilingualBlock
@@ -936,7 +1149,12 @@ export function PresenterShell({
 
       {/* Collapsible Presenter Notes Drawer */}
       {drawer === "notes" && (
-        <div className="fixed inset-0 z-40 flex justify-end bg-black/55 backdrop-blur-[1px]">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Notes de l'animateur / ملاحظات المنشط"
+          className="fixed inset-0 z-50 flex justify-end bg-black/55 backdrop-blur-[1px]"
+        >
           <div className="flex-1" onClick={() => setDrawer("none")} />
           <aside className="w-full max-w-md bg-[#0B1220] border-l border-slate-800 h-full overflow-y-auto p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -1032,7 +1250,12 @@ export function PresenterShell({
 
       {/* Secondary Tools & Dashboard Drawer */}
       {drawer === "tools" && (
-        <div className="fixed inset-0 z-40 flex justify-end bg-black/55 backdrop-blur-[1px]">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Tableau de bord et outils atelier / لوحة القيادة وأدوات الورشة"
+          className="fixed inset-0 z-50 flex justify-end bg-black/55 backdrop-blur-[1px]"
+        >
           <div className="flex-1" onClick={() => setDrawer("none")} />
           <aside className="w-full max-w-xl bg-[#0B1220] border-l border-slate-800 h-full overflow-y-auto p-5 space-y-5">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -1272,7 +1495,12 @@ export function PresenterShell({
 
       {/* Confirmation Modal for Post-Workshop Purge */}
       {showPurgeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirmer la suppression des données réelles / تأكيد مسح المعطيات الحقيقية"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+        >
           <form
             onSubmit={handlePurge}
             className="w-full max-w-md rounded-2xl border border-slate-700 bg-white p-6 text-slate-900 space-y-4"

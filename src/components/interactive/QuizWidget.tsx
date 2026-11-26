@@ -149,7 +149,10 @@ export function QuizWidget({
         </div>
 
         {/* High-Impact Classroom Spotlight Question */}
-        <div className="rounded-3xl border-2 border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div
+          data-slide-body="true"
+          className="rounded-3xl border-2 border-slate-200 bg-white p-6 shadow-sm space-y-4 text-[28px]"
+        >
           <div className="space-y-1.5">
             <BilingualBlock
               text={q.prompt}
@@ -159,7 +162,6 @@ export function QuizWidget({
           </div>
 
           <div
-            data-slide-body="true"
             className={isTwoOpt ? "grid grid-cols-2 gap-6 pt-1" : "space-y-3"}
           >
             {q.options.map((opt) => {

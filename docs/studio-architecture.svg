@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="720" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#060B16"/>
+      <stop offset="100%" stop-color="#0D1729"/>
+    </linearGradient>
+    <linearGradient id="tealGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0F766E"/>
+      <stop offset="100%" stop-color="#14B8A6"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#13203A"/>
+      <stop offset="100%" stop-color="#0C1527"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="720" rx="24" fill="url(#bg)"/>
+  <g opacity="0.08" stroke="#94A3B8" stroke-width="1">
+    <line x1="0" y1="120" x2="1200" y2="120"/>
+    <line x1="0" y1="240" x2="1200" y2="240"/>
+    <line x1="0" y1="360" x2="1200" y2="360"/>
+    <line x1="0" y1="480" x2="1200" y2="480"/>
+    <line x1="0" y1="600" x2="1200" y2="600"/>
+    <line x1="300" y1="0" x2="300" y2="720"/>
+    <line x1="600" y1="0" x2="600" y2="720"/>
+    <line x1="900" y1="0" x2="900" y2="720"/>
+  </g>
+
+  <!-- Title Header -->
+  <rect x="48" y="34" width="230" height="28" rx="14" fill="#0F766E" fill-opacity="0.22" stroke="#14B8A6" stroke-opacity="0.5"/>
+  <text x="66" y="53" fill="#5EEAD4" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" letter-spacing="1.2">AI TEACHER LAB · STUDIO</text>
+  <text x="48" y="96" fill="#F8FAFC" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="700">Multi-Room Persistent Workspace Architecture</text>
+  <text x="48" y="122" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="14">Workspace Studio → Persistent Rooms → Reusable Content → Isolated Live Sessions → Supabase RLS &amp; Realtime</text>
+
+  <!-- Layer 1: Studio Workspace -->
+  <g filter="url(#shadow)">
+    <rect x="48" y="156" width="1104" height="96" rx="18" fill="url(#cardGrad)" stroke="#1E3A5F" stroke-width="1.5"/>
+    <rect x="48" y="156" width="8" height="96" rx="4" fill="url(#tealGrad)"/>
+    <text x="76" y="188" fill="#5EEAD4" font-family="system-ui, sans-serif" font-size="12" font-weight="700" letter-spacing="1">LAYER 1 · STUDIO WORKSPACE (/studio)</text>
+    <text x="76" y="214" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="18" font-weight="700">Facilitator Digital Studio · استوديو المنشط الدائم</text>
+    <text x="76" y="236" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="13">Room Directory · 5 Pedagogical Templates · Status Lifecycle (Draft / Ready / Live / Archived) · Clone &amp; Export</text>
+    <rect x="942" y="182" width="186" height="44" rx="12" fill="#0F766E" fill-opacity="0.25" stroke="#14B8A6" stroke-opacity="0.6"/>
+    <text x="1035" y="209" text-anchor="middle" fill="#CCFBF1" font-family="system-ui, sans-serif" font-size="13" font-weight="700">FR (LTR) + AR (RTL)</text>
+  </g>
+
+  <!-- Connector 1 -> 2 -->
+  <line x1="600" y1="252" x2="600" y2="286" stroke="#14B8A6" stroke-width="2" stroke-dasharray="5 4"/>
+  <polygon points="594,282 606,282 600,292" fill="#14B8A6"/>
+
+  <!-- Layer 2: Persistent Rooms -->
+  <g filter="url(#shadow)">
+    <rect x="48" y="294" width="352" height="178" rx="18" fill="url(#cardGrad)" stroke="#14B8A6" stroke-width="1.5"/>
+    <rect x="68" y="314" width="108" height="22" rx="11" fill="#0F766E"/>
+    <text x="122" y="329" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="11" font-weight="700">ROOM #1 · LIVE</text>
+    <text x="68" y="362" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="17" font-weight="700">Mediouna AI Teacher Lab</text>
+    <text x="68" y="384" fill="#5EEAD4" font-family="system-ui, sans-serif" font-size="13">مختبر الذكاء الاصطناعي · مديونة</text>
+    <text x="68" y="412" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="12">• 21 bilingual slides · 12 gallery categories</text>
+    <text x="68" y="432" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="12">• 8 activities · 4 group studio projects</text>
+    <text x="68" y="452" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="11">slug: mediouna-ai-teacher-lab (preserved)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="424" y="294" width="352" height="178" rx="18" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5"/>
+    <rect x="444" y="314" width="128" height="22" rx="11" fill="#1E293B" stroke="#475569"/>
+    <text x="508" y="329" text-anchor="middle" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="11" font-weight="700">6-TAB ROOM MODEL</text>
+    <text x="444" y="362" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="17" font-weight="700">Reusable Room Blueprint</text>
+    <rect x="444" y="380" width="98" height="28" rx="8" fill="#0F172A" stroke="#334155"/>
+    <text x="493" y="398" text-anchor="middle" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">1. Overview</text>
+    <rect x="550" y="380" width="102" height="28" rx="8" fill="#0F172A" stroke="#334155"/>
+    <text x="601" y="398" text-anchor="middle" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">2. Presentation</text>
+    <rect x="660" y="380" width="96" height="28" rx="8" fill="#0F172A" stroke="#334155"/>
+    <text x="708" y="398" text-anchor="middle" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">3. Resources</text>
+    <rect x="444" y="418" width="98" height="28" rx="8" fill="#0F172A" stroke="#334155"/>
+    <text x="493" y="436" text-anchor="middle" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">4. Activities</text>
+    <rect x="550" y="418" width="102" height="28" rx="8" fill="#0F172A" stroke="#334155"/>
+    <text x="601" y="436" text-anchor="middle" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">5. Participants</text>
+    <rect x="660" y="418" width="96" height="28" rx="8" fill="#0F172A" stroke="#334155"/>
+    <text x="708" y="436" text-anchor="middle" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">6. Settings</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="800" y="294" width="352" height="178" rx="18" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5"/>
+    <rect x="820" y="314" width="152" height="22" rx="11" fill="#F59E0B" fill-opacity="0.2" stroke="#F59E0B" stroke-opacity="0.6"/>
+    <text x="896" y="329" text-anchor="middle" fill="#FDE68A" font-family="system-ui, sans-serif" font-size="11" font-weight="700">ISOLATED LIVE SESSIONS</text>
+    <text x="820" y="362" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="17" font-weight="700">Run N Sessions Per Room</text>
+    <text x="820" y="390" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="12">• Session A (Cohort 1): Archived + CSV/JSON</text>
+    <text x="820" y="412" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="12">• Session B (Cohort 2): Active Live Run</text>
+    <text x="820" y="434" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="12">• Own state_version, PIN, participants, votes</text>
+    <text x="820" y="454" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="11">Zero cross-session data bleed</text>
+  </g>
+
+  <!-- Connector 2 -> 3 -->
+  <line x1="224" y1="472" x2="224" y2="516" stroke="#14B8A6" stroke-width="2" stroke-dasharray="5 4"/>
+  <line x1="600" y1="472" x2="600" y2="516" stroke="#14B8A6" stroke-width="2" stroke-dasharray="5 4"/>
+  <line x1="976" y1="472" x2="976" y2="516" stroke="#14B8A6" stroke-width="2" stroke-dasharray="5 4"/>
+
+  <!-- Layer 3: Synchronized Surfaces & Persistence -->
+  <g filter="url(#shadow)">
+    <rect x="48" y="518" width="538" height="154" rx="18" fill="url(#cardGrad)" stroke="#1E3A5F" stroke-width="1.5"/>
+    <text x="72" y="548" fill="#5EEAD4" font-family="system-ui, sans-serif" font-size="12" font-weight="700" letter-spacing="1">SYNCHRONIZED LIVE INTERFACES</text>
+    <rect x="72" y="566" width="154" height="84" rx="12" fill="#0B1220" stroke="#14B8A6" stroke-opacity="0.5"/>
+    <text x="149" y="594" text-anchor="middle" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="14" font-weight="700">/presenter</text>
+    <text x="149" y="616" text-anchor="middle" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="11">16:9 Canvas · Queue</text>
+    <text x="149" y="634" text-anchor="middle" fill="#5EEAD4" font-family="system-ui, sans-serif" font-size="11">Optimistic &lt;16ms</text>
+
+    <rect x="240" y="566" width="154" height="84" rx="12" fill="#0B1220" stroke="#334155"/>
+    <text x="317" y="594" text-anchor="middle" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="14" font-weight="700">/screen</text>
+    <text x="317" y="616" text-anchor="middle" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="11">Projector · 1920×1080</text>
+    <text x="317" y="634" text-anchor="middle" fill="#5EEAD4" font-family="system-ui, sans-serif" font-size="11">Landscape Edge-to-Edge</text>
+
+    <rect x="408" y="566" width="154" height="84" rx="12" fill="#0B1220" stroke="#334155"/>
+    <text x="485" y="594" text-anchor="middle" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="14" font-weight="700">/join</text>
+    <text x="485" y="616" text-anchor="middle" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="11">Mobile-First · Touch</text>
+    <text x="485" y="634" text-anchor="middle" fill="#5EEAD4" font-family="system-ui, sans-serif" font-size="11">Optimistic Polls/Quiz</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="614" y="518" width="538" height="154" rx="18" fill="url(#cardGrad)" stroke="#1E3A5F" stroke-width="1.5"/>
+    <text x="638" y="548" fill="#5EEAD4" font-family="system-ui, sans-serif" font-size="12" font-weight="700" letter-spacing="1">SUPABASE DATA, REALTIME &amp; SECURITY</text>
+    <text x="638" y="580" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="14" font-weight="700">Postgres 17 + Strict Default-Deny RLS + Service-Role API</text>
+    <text x="638" y="606" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="12">• Realtime Broadcast carries committed state directly (no refetch storm)</text>
+    <text x="638" y="628" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="12">• Monotonic state_version ordering + debounced HTTP polling fallback</text>
+    <text x="638" y="650" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="12">• Additive multi-room tables + room_resources bucket (zero data loss)</text>
+  </g>
+</svg>

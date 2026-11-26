@@ -20,25 +20,61 @@
   --color-amber-600: #d97706;
 }
 
+:root {
+  /* Semantic Design System Tokens — AI Teacher Lab Mediouna */
+  --surface-canvas: #060b16;
+  --surface-shell: #0b1220;
+  --surface-elevated: #111c33;
+  --surface-paper: #faf8f4;
+  --surface-card: #ffffff;
+  --ink-primary: #0f172a;
+  --ink-secondary: #334155;
+  --ink-on-dark: #faf8f4;
+  --ink-muted-dark: #94a3b8;
+  --accent-primary: #0d9488;
+  --accent-bright: #14b8a6;
+  --status-success: #0f766e;
+  --status-warning: #d97706;
+  --status-error: #dc2626;
+  --ease-expo-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
-    background-color: #0b1220;
-    color: #0f172a;
+    background-color: var(--surface-shell);
+    color: var(--ink-primary);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   button:not(:disabled) {
-    transition: transform 90ms ease-out, opacity 120ms ease-out, background-color 120ms ease-out, border-color 120ms ease-out;
+    touch-action: manipulation;
+    transition:
+      transform 110ms var(--ease-expo-out),
+      opacity 140ms ease-out,
+      background-color 140ms ease-out,
+      border-color 140ms ease-out,
+      color 140ms ease-out;
   }
 
   button:not(:disabled):active {
-    transform: scale(0.98);
+    transform: scale(0.975);
+  }
+
+  a {
+    touch-action: manipulation;
+  }
+
+  /* WCAG 2.2 AA unmistakable focus indicator */
+  :is(button, a, input, textarea, select, [tabindex]):focus-visible {
+    outline: 2px solid #14b8a6;
+    outline-offset: 2px;
   }
 }
 
@@ -48,11 +84,25 @@
 
 .font-arabic {
   font-family: var(--font-arabic);
-  line-height: 1.8;
+  line-height: 1.75;
 }
 
 .font-mono-code {
   font-family: var(--font-mono);
+}
+
+/* Safe-area helpers for notched mobile devices */
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+.safe-x {
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
 }
 
 .portrait-phone-hint {
@@ -63,6 +113,21 @@
   .portrait-phone-hint {
     display: flex;
   }
+}
+
+@keyframes panelFadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-stage-enter {
+  animation: panelFadeSlideIn 180ms var(--ease-expo-out) both;
 }
 
 [data-fullscreen-wrapper="true"]:fullscreen {

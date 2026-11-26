@@ -46,7 +46,8 @@ export function LivePollWidget({
 
   if (!activity || !activity.options) return null;
 
-  const isLocked = isPaused || status !== "open" || Boolean(existing);
+  const isLocked =
+    isPaused || status !== "open" || Boolean(existing) || saveState === "saved";
 
   const handleSubmit = async (optionId: string) => {
     if (!canSubmit || isLocked || saveState === "saving") return;

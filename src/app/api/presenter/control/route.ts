@@ -47,13 +47,13 @@ export async function PATCH(req: NextRequest) {
     const updatedState = await store.updatePresenterControl(patch);
 
     after(async () => {
+      const eventPayload = {
+        stateVersion: updatedState.stateVersion,
+        state: updatedState,
+      };
       await Promise.all([
-        broadcastWorkshopEvent(updatedState.workshopId, "public", "state_updated", {
-          stateVersion: updatedState.stateVersion,
-        }),
-        broadcastWorkshopEvent(updatedState.workshopId, "presenter", "state_updated", {
-          stateVersion: updatedState.stateVersion,
-        }),
+        broadcastWorkshopEvent(updatedState.workshopId, "public", "state_updated", eventPayload),
+        broadcastWorkshopEvent(updatedState.workshopId, "presenter", "state_updated", eventPayload),
       ]);
     });
 
