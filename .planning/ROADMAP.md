@@ -1,18 +1,23 @@
 # Roadmap — AI Teacher Lab (`teacher-workshop-live`)
 
-## Milestone v1.1: Presentation-First Redesign & Instant Live Sync
+## Milestone v1.1 (Complete — Merged to `main` @ `1282cb1`)
+- **Phase 1:** Presentation-First Architecture, Private Realtime Auth & Fixed `1920 × 1080` 16:9 Canvas
+- **Phase 2:** Platform Stabilization, Mobile-First Landscape UX & Studio Multi-Room Foundation
+- **Phase 3:** Accessible Navy / Ivory / Teal / Slate-Blue Design System & Multi-Format Favicon Deployment
 
-### Phase 1: Presentation-First Architecture, Realtime Repair & Instant Optimistic Interactions
-- **Goal:** Fix live Supabase Private Realtime auth (`Synchro HTTP` -> `Temps réel`), harden SSR & API critical paths (`after()`), refactor `/presenter` into a keynote-first workspace with ordered optimistic navigation, eliminate participant response latency with immediate local feedback + rollback, and enforce a fixed `1920 × 1080` 16:9 projector-readable canvas.
-- **Status:** Complete (merged to `main` @ `064311a`)
-- **Branch:** `fix/presentation-first-instant-interactions`
+---
 
-### Phase 2: Platform Stabilization, Mobile-First UX & Multi-Room Studio Foundation
-- **Goal:** Eliminate double-click/snap-back and refetch storms, stabilize `ConnectionBadge` with debounced 5-state sync, add automatic compact landscape chrome collapse on mobile phones, and introduce the `/studio` multi-room workspace + non-destructive migration proposal.
-- **Status:** Complete (`feat/studio-platform-stability-ux` @ `88b1f1b`)
-- **Branch:** `feat/studio-platform-stability-ux`
+## Milestone v2.0: AI Teacher Lab Studio 2.0 (Interactive Presentation Authoring Platform)
 
-### Phase 3: Complete Design System Refinement, Brand Application & Favicon Deployment
-- **Goal:** Centralize semantic Navy / Ivory / Teal / Slate-Blue design tokens in `globals.css`, enforce WCAG 2.2 AA contrast across all interactive surfaces and semantic states, refine `/studio`, `/`, `/presenter`, `/screen`, `/join` and interactive widgets into a coherent hybrid editorial design language, and deploy `icon.svg`, `favicon.ico`, and `apple-icon.png` with full 12-screen visual QA.
-- **Status:** In Progress
-- **Branch:** `feat/studio-platform-stability-ux`
+Branch: `feat/interactive-presentation-studio` (branched from `origin/main` @ `1282cb1`)
+
+| Phase | Scope | Dependencies | Key Acceptance Criteria |
+|---|---|---|---|
+| **2.0-P0** | Architecture, Product Specs & Low-Fi Wireframes | None | 6 spec docs (`STUDIO_2_PRODUCT_REQUIREMENTS.md`, `PRESENTATION_EDITOR_ARCHITECTURE.md`, `PRESENTATION_DOCUMENT_SCHEMA.md`, `EDITOR_COMPONENT_REGISTRY.md`, `AI_PRESENTATION_GENERATION_DESIGN.md`, `PDF_EXPORT_DESIGN.md`), gaps from v1.1 proposals addressed. |
+| **2.0-P1** | True 16:9 Presentation PDF + Independent A4 Classroom Handouts | P0 | Dedicated `/export/slides` print-preview & export route; 21-slide Mediouna deck exports as valid 21-page 16:9 PDF (`20in × 11.25in`); A4 portrait/landscape worksheets & 2-up/4-up handouts independent of presenter chrome. |
+| **2.0-P2** | Versioned Native Presentation Document Model & Component Registry | P0 | Declarative Zod-validated `DeckDocumentV1` on `1920 × 1080` canvas; 30+ registered General, Interactive, Primary-School (1AEP–6AEP), and Sandboxed Code components; unknown-element safe placeholder. |
+| **2.0-P3** | Deterministic Mediouna 21-Slide Importer & Parity | P2 | `importMediounaDeckToDocument()` preserves all 21 slides, 12 sections, 8 activities, FR/AR/Darija notes, and runtime parity without removing `src/content/slides.ts`. |
+| **2.0-P4** | Additive Supabase Migration & Durable Server-Backed Store + APIs | P2 | Strictly additive `202611270001_studio_2_authoring_schema.sql` (not applied to Production) + `STUDIO_2_MIGRATION_REVIEW.md` with rollback SQL; `/api/studio/*` facilitator-gated CRUD, revision history, isolated live sessions. |
+| **2.0-P5** | Full Visual Drag-and-Drop 16:9 Presentation Editor & Unified Live Runtime | P1, P2, P3, P4 | `/studio/rooms/[roomId]/decks/[deckId]/edit` with multi-select drag/resize/rotate/snap, inline FR+AR editing, undo/redo, debounced revision autosave + `409` conflict recovery, sandboxed HTML/CSS/JS `<iframe sandbox="allow-scripts">` execution, live session launch into `/presenter`, `/screen`, `/join`. |
+| **2.0-P6** | AI Presentation Generator & Selected-Slide Assistant (AI SDK 6) | P2, P4, P5 | Server-side `generateText` + `Output.object({ schema })` (`@ai-sdk/google`), staged outline-before-deck wizard, non-destructive selected-slide AI diff preview, token/cost readout, cancellation, rate limiting. |
+| **2.0-P7** | End-to-End QA, Security/Sandbox Tests, PDF Audit & Visual Verification | P1–P6 | `typecheck`, `lint`, `build`, existing suites (`verify-api`, `verify-e2e`, `verify-canvas`, `verify-studio-stability`, `verify-design-system`) + new `verify-pdf-export.mjs` & `verify-studio-2.mjs` all exit `0`. |

@@ -1,12 +1,13 @@
-# Project State — AI Teacher Lab
+# Project State — AI Teacher Lab Studio 2.0
 
 - **Repository:** `https://github.com/mhmddesign/aiteacherlab`
-- **Production Base (`main`):** `064311a14a30316673870c246985df60ecde6f12` (`https://lab.mhmd.studio`)
-- **Active Branch:** `feat/studio-platform-stability-ux` (HEAD `88b1f1b`)
-- **Current Phase:** Phase 3 — Complete Design System Refinement, Brand Application & Favicon Deployment
-- **Supabase Project:** `atuqqdjiqkuhykkgosnx` (`AI Teacher Lab v1`, `eu-west-1`, `ACTIVE_HEALTHY`, unchanged — no migrations applied)
+- **Production Base (`origin/main`):** `1282cb1` (PR #1 merged)
+- **Active Branch:** `feat/interactive-presentation-studio`
+- **Active Milestone:** Studio 2.0 — Interactive Presentation Authoring Platform
+- **Supabase Production (`atuqqdjiqkuhykkgosnx`):** Untouched (zero migrations executed; Mediouna workshop `mediouna-ai-teacher-lab` & 314 responses preserved).
 
-## Phase History
-1. **Phase 1 (Complete — `main` @ `064311a`):** Realtime Private channel auth, SSR/API hardening, `1920 × 1080` 16:9 canvas, projector-readable typography.
-2. **Phase 2 (Complete — `feat/studio-platform-stability-ux` @ `88b1f1b`):** `commitServerState` monotonic version fix, `Space`-on-button & `e.repeat` guards, visibility-aware polling + broadcast state, 5-state zero-CLS `ConnectionBadge`, compact phone landscape auto-collapse, `/studio` multi-room workspace + architecture & migration proposal docs.
-3. **Phase 3 (In Progress):** Semantic design-token system, WCAG 2.2 AA contrast enforcement, shared UI primitives, Studio & widget visual refinement, multi-format favicon deployment (`icon.svg`, `favicon.ico`, `apple-icon.png`), and 12-screen visual QA.
+## Confirmed Baseline Limitations Identified in Phase 0 Audit
+1. `StudioWorkspaceShell.tsx` previously stored draft rooms only in browser `localStorage` (`aiteacherlab_studio_draft_rooms_v1`).
+2. Existing Presentation tab displayed a static read-only inventory from `src/content/slides.ts` (`getSectionList()`).
+3. `src/app/globals.css` `@media print` forced global `@page { size: A4; margin: 14mm; }`, clipping `/presenter` into A4 portrait pages.
+4. No declarative deck JSON document schema, revision history, drag-and-drop canvas editor, component registry, AI SDK 6 generator, or isolated HTML/CSS/JS sandbox existed yet.
