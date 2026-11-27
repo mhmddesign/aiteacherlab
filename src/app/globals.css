@@ -271,16 +271,18 @@
   border-radius: 9999px;
 }
 
-/* Print-friendly classroom worksheets & formative assessment summaries */
+/* Print-friendly classroom worksheets & dedicated export page rules */
 @media print {
-  @page {
-    size: A4;
-    margin: 14mm;
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   body {
     background: #ffffff !important;
     color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .no-print {
@@ -297,5 +299,30 @@
     padding: 16px !important;
     margin: 0 !important;
     page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .export-slide-page {
+    break-after: page;
+    page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .export-slide-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .export-a4-page {
+    break-after: page;
+    page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .export-a4-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
   }
 }

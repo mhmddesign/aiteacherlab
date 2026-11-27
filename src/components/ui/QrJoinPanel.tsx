@@ -9,23 +9,26 @@ interface QrJoinPanelProps {
   size?: number;
   darkSurface?: boolean;
   showPinHint?: string;
+  joinPath?: string;
 }
 
 export function QrJoinPanel({
   size = 180,
   darkSurface = false,
   showPinHint,
+  joinPath = "/join",
 }: QrJoinPanelProps) {
   const joinUrl = useMemo(() => {
+    const cleanPath = joinPath.startsWith("/") ? joinPath : `/${joinPath}`;
     const envUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
     if (typeof window !== "undefined") {
-      return `${window.location.origin}/join`;
+      return `${window.location.origin}${cleanPath}`;
     }
     if (envUrl) {
-      return `${envUrl.replace(/\/$/, "")}/join`;
+      return `${envUrl.replace(/\/$/, "")}${cleanPath}`;
     }
-    return "http://localhost:3000/join";
-  }, []);
+    return `http://localhost:3000${cleanPath}`;
+  }, [joinPath]);
 
   const isLarge = size >= 220;
 

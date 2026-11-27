@@ -2,41 +2,64 @@
 
 import React, { useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Activity,
   ArrowLeft,
-  Check,
-  Copy,
   CopyPlus,
   ExternalLink,
+  FileText,
   FolderOpen,
-  Layers,
   LayoutGrid,
-  Monitor,
-  Play,
+  MonitorPlay,
+  Pencil,
   Plus,
   Presentation,
+  Printer,
   Settings,
   ShieldCheck,
-  Smartphone,
   Sparkles,
+  Unlock,
+  Upload,
   Users,
   X,
 } from "lucide-react";
 import { ACTIVITIES } from "@/content/activities";
-import { GALLERY_CATEGORIES } from "@/content/gallery";
 import { SLIDES, getSectionList } from "@/content/slides";
-import {
-  MEDIOUNA_ROOM_RESOURCES,
-  STUDIO_TEMPLATES,
-  type StudioRoomRecord,
-  type StudioRoomStatus,
-} from "@/content/studio-templates";
 import type { PublicWorkshopSnapshot } from "@/content/types";
-import { BilingualBlock, BilingualInline } from "@/components/ui/Bilingual";
+import type {
+  StudioDeckRecord,
+  StudioResourceRecord,
+  StudioRoom,
+  StudioSessionRecord,
+} from "@/lib/studio/studio-store";
+import type { DeckDocumentV1 } from "@/lib/studio/document-schema";
+import { BilingualBlock } from "@/components/ui/Bilingual";
+import { AiDeckWizardModal } from "@/components/studio/ai/AiDeckWizardModal";
+
+export interface StudioWorkspaceInitialData {
+  authenticated: boolean;
+  storageInfo: { mode: string; migrationPending: boolean };
+  rooms: StudioRoom[];
+  decksByRoom: Record<string, StudioDeckRecord[]>;
+  sessions: Array<{
+    id: string;
+    roomId: string;
+    deckId: string | null;
+    title: { fr: string; ar: string };
+    joinPin: string;
+    status: StudioSessionRecord["status"];
+    currentSlideIndex: number;
+    slideCount: number;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  resourcesByRoom: Record<string, StudioResourceRecord[]>;
+}
 
 interface StudioWorkspaceShellProps {
   initialSnapshot: PublicWorkshopSnapshot | null;
+  initialStudioData: StudioWorkspaceInitialData;
 }
 
 type RoomTabKey =
@@ -78,943 +101,1203 @@ const ROOM_TABS: Array<{
   icon: React.ComponentType<{ className?: string }>;
 }> = [
   { key: "overview", fr: "Vue d'ensemble", ar: "نظرة عامة", icon: LayoutGrid },
-  { key: "presentation", fr: "Présentation", ar: "العرض", icon: Presentation },
+  { key: "presentation", fr: "Présentation", ar: "العروض", icon: Presentation },
   { key: "resources", fr: "Ressources", ar: "الموارد", icon: FolderOpen },
   { key: "activities", fr: "Activités", ar: "الأنشطة", icon: Activity },
   { key: "participants", fr: "Participants", ar: "المشاركون", icon: Users },
   { key: "settings", fr: "Paramètres", ar: "الإعدادات", icon: Settings },
 ];
 
-const STATUS_BADGE: Record<
-  StudioRoomStatus,
-  { fr: string; ar: string; className: string }
-> = {
-  live: {
-    fr: "En direct",
-    ar: "مباشر",
-    className: "border-emerald-400/40 bg-emerald-500/15 text-emerald-200",
-  },
-  ready: {
-    fr: "Prête",
-    ar: "جاهزة",
-    className: "border-teal-400/40 bg-teal-500/15 text-teal-200",
-  },
-  draft: {
-    fr: "Brouillon Studio",
-    ar: "مسودة استوديو",
-    className: "border-amber-400/40 bg-amber-500/15 text-amber-200",
-  },
-  archived: {
-    fr: "Archivée",
-    ar: "مؤرشفة",
-    className: "border-slate-500/40 bg-slate-700/40 text-slate-300",
-  },
-};
-
-function slugifyRoom(input: string): string {
-  const base = input
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .slice(0, 42);
-  return base || `studio-room-${Date.now().toString().slice(-4)}`;
-}
-
 export function StudioWorkspaceShell({
   initialSnapshot,
+  initialStudioData,
 }: StudioWorkspaceShellProps) {
-  const activityList = useMemo(() => Object.values(ACTIVITIES), []);
-  const sectionList = useMemo(() => getSectionList(), []);
+  const router = useRouter();
+  const [authenticated, setAuthenticated] = useState(initialStudioData.authenticated);
+  const [passcode, setPasscode] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [showAuthBox, setShowAuthBox] = useState(false);
 
-  const primaryRoom = useMemo<StudioRoomRecord>(
-    () => ({
-      id: initialSnapshot?.state.workshopId ?? "room-mediouna-primary",
-      slug: "mediouna-ai-teacher-lab",
-      isLivePrimary: true,
-      status: "live",
-      templateKey: "workshop-bilingual",
-      title: {
-        fr:
-          initialSnapshot?.state.workshopTitle ||
-          "L'IA comme Partenaire d'Innovation Pédagogique",
-        ar: "الذكاء الاصطناعي كشريك في الابتكار التربوي",
-      },
-      subtitle: {
-        fr: "Salle #1 · Province de Mediouna · Centre de Digitalisation",
-        ar: "القاعة 1 · إقليم مديونة · مركز الرقمنة",
-      },
-      description: {
-        fr: "Atelier interactif complet synchronisant Animateur, Projecteur 16:9 et Participants mobiles avec Mode Démo et sauvegarde temps réel.",
-        ar: "ورشة تفاعلية متكاملة تزامن المنشط وشاشة العرض 16:9 والمشاركين عبر الهاتف مع الوضع التجريبي والمزامنة الفورية.",
-      },
-      slidesCount: SLIDES.length,
-      activitiesCount: activityList.length,
-      resourcesCount: MEDIOUNA_ROOM_RESOURCES.length,
-      connectedCount: initialSnapshot?.connectedCount ?? 0,
-      totalParticipants: initialSnapshot?.totalParticipants ?? 0,
-      sessionsCount: 1,
-      updatedLabel: {
-        fr: "Session active synchronisée",
-        ar: "جلسة نشطة ومتزامنة",
-      },
-      pinProtected: true,
-    }),
-    [activityList.length, initialSnapshot]
-  );
+  const [rooms, setRooms] = useState<StudioRoom[]>(initialStudioData.rooms);
+  const [decksByRoom, setDecksByRoom] = useState(initialStudioData.decksByRoom);
+  const [sessions, setSessions] = useState(initialStudioData.sessions);
+  const [resourcesByRoom, setResourcesByRoom] = useState(initialStudioData.resourcesByRoom);
 
   const rawDrafts = useSyncExternalStore(
     subscribeDraftRooms,
     getDraftRoomsRaw,
     getServerDraftRoomsRaw
   );
-  const draftRooms = useMemo<StudioRoomRecord[]>(() => {
+  const localDraftRooms = useMemo(() => {
     try {
-      const parsed = JSON.parse(rawDrafts) as StudioRoomRecord[];
-      return Array.isArray(parsed) ? parsed : [];
+      const parsed = JSON.parse(rawDrafts);
+      return Array.isArray(parsed) ? (parsed as StudioRoom[]) : [];
     } catch {
       return [];
     }
   }, [rawDrafts]);
 
-  const [selectedRoomId, setSelectedRoomId] = useState<string>(primaryRoom.id);
-  const [activeTab, setActiveTab] = useState<RoomTabKey>("overview");
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedTemplateKey, setSelectedTemplateKey] = useState(
-    STUDIO_TEMPLATES[0].key
+  const allRooms = useMemo(() => [...rooms, ...localDraftRooms], [rooms, localDraftRooms]);
+  const [selectedRoomId, setSelectedRoomId] = useState<string>(
+    allRooms[0]?.id ?? "mediouna-default"
   );
+  const [activeTab, setActiveTab] = useState<RoomTabKey>("overview");
+
+  // New Room modal
+  const [showNewRoomModal, setShowNewRoomModal] = useState(false);
   const [newTitleFr, setNewTitleFr] = useState("");
   const [newTitleAr, setNewTitleAr] = useState("");
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [statusNotice, setStatusNotice] = useState<string | null>(null);
+  const [newSubtitleFr, setNewSubtitleFr] = useState("");
+  const [newLevelBadge, setNewLevelBadge] = useState("1AEP – 6AEP");
+  const [newPin, setNewPin] = useState("4829");
 
-  const persistDrafts = (next: StudioRoomRecord[]) => {
-    try {
+  // Deck creation modal / wizards
+  const [showCreateDeckModal, setShowCreateDeckModal] = useState(false);
+  const [createDeckMode, setCreateDeckMode] = useState<
+    "blank" | "template" | "duplicate" | "mediouna" | "json" | "markdown"
+  >("template");
+  const [deckTitleFr, setDeckTitleFr] = useState("Nouvelle présentation interactive");
+  const [deckTitleAr, setDeckTitleAr] = useState("عرض تفاعلي جديد");
+  const [deckTemplateKey, setDeckTemplateKey] = useState<
+    "primary-lesson" | "teacher-training" | "quiz-session"
+  >("primary-lesson");
+  const [deckDuplicateId, setDeckDuplicateId] = useState("");
+  const [deckMarkdown, setDeckMarkdown] = useState(
+    "# Découverte des fractions\nComprendre 1/2 et 1/4 en classe de 4AEP\n\n# Exercice interactif\nIdentifier la fraction colorée sur l'écran"
+  );
+  const [deckJsonText, setDeckJsonText] = useState("");
+  const [showAiWizard, setShowAiWizard] = useState(false);
+
+  // Resource creation state
+  const [resTitleFr, setResTitleFr] = useState("");
+  const [resTitleAr, setResTitleAr] = useState("");
+  const [resContentFr, setResContentFr] = useState("");
+  const [resUrl, setResUrl] = useState("");
+  const [resKind, setResKind] = useState<"prompt" | "link" | "note" | "worksheet">("note");
+
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [busyAction, setBusyAction] = useState(false);
+
+  const selectedRoom = allRooms.find((r) => r.id === selectedRoomId) ?? allRooms[0];
+  const isLocalDraftRoom = Boolean(
+    localDraftRooms.find((r) => r.id === selectedRoom?.id)
+  );
+  const roomDecks = decksByRoom[selectedRoom?.id ?? ""] ?? [];
+  const roomResources = resourcesByRoom[selectedRoom?.id ?? ""] ?? [];
+  const roomSessions = sessions.filter((s) => s.roomId === selectedRoom?.id);
+  const sections = useMemo(() => getSectionList(), []);
+
+  async function refreshStudioFromServer() {
+    const res = await fetch("/api/studio/rooms", { cache: "no-store" });
+    if (!res.ok) return;
+    const json = await res.json();
+    setAuthenticated(Boolean(json.authenticated));
+    setRooms(json.rooms ?? []);
+    setDecksByRoom(json.decksByRoom ?? {});
+    setSessions(json.sessions ?? []);
+    setResourcesByRoom(json.resourcesByRoom ?? {});
+  }
+
+  async function handleFacilitatorUnlock(e: React.FormEvent) {
+    e.preventDefault();
+    setAuthError(null);
+    const res = await fetch("/api/presenter/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ passcode }),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      setAuthError(json.error ?? "Code animateur incorrect.");
+      return;
+    }
+    setPasscode("");
+    setShowAuthBox(false);
+    await refreshStudioFromServer();
+    setStatusMessage("Accès formateur activé · تم تفعيل صلاحية المنشط");
+  }
+
+  async function handleCreateRoom(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newTitleFr.trim() || !newTitleAr.trim()) return;
+
+    if (authenticated) {
+      setBusyAction(true);
+      try {
+        const res = await fetch("/api/studio/rooms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: { fr: newTitleFr.trim(), ar: newTitleAr.trim() },
+            subtitle: { fr: newSubtitleFr.trim(), ar: newTitleAr.trim() },
+            levelBadge: newLevelBadge.trim(),
+            joinPin: newPin.trim() || "4829",
+          }),
+        });
+        const json = await res.json();
+        if (res.ok && json.room) {
+          await refreshStudioFromServer();
+          setSelectedRoomId(json.room.id);
+          setStatusMessage(`Salle créée sur le serveur : ${json.room.title.fr}`);
+        } else {
+          setStatusMessage(json.error ?? "Erreur création salle.");
+        }
+      } finally {
+        setBusyAction(false);
+      }
+    } else {
+      // Unauthenticated visitor preview draft preserved locally (never mutates server!)
+      const draftId = `draft-${Date.now().toString(36)}`;
+      const draft: StudioRoom = {
+        id: draftId,
+        slug: draftId,
+        title: { fr: newTitleFr.trim(), ar: newTitleAr.trim() },
+        subtitle: {
+          fr: newSubtitleFr.trim() || "Brouillon local (connectez-vous pour publier en Live)",
+          ar: "مسودة محلية — يرجى تسجيل الدخول للنشر المباشر",
+        },
+        levelBadge: newLevelBadge.trim(),
+        joinPin: newPin.trim() || "4829",
+        status: "active",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      const next = [...localDraftRooms, draft];
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       window.dispatchEvent(new Event(STORAGE_EVENT));
-    } catch {
-      // Ignore storage quota errors
+      setSelectedRoomId(draftId);
+      setStatusMessage("Brouillon local créé · مسودة محلية (déverrouillez pour publier sur le serveur)");
     }
-  };
 
-  const rooms = useMemo(
-    () => [primaryRoom, ...draftRooms],
-    [primaryRoom, draftRooms]
-  );
-
-  const selectedRoom =
-    rooms.find((r) => r.id === selectedRoomId) ?? primaryRoom;
-
-  const handleCopyLink = async (id: string, path: string) => {
-    const url =
-      typeof window !== "undefined" ? `${window.location.origin}${path}` : path;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopiedId(id);
-      window.setTimeout(() => setCopiedId(null), 1800);
-    } catch {
-      setStatusNotice(url);
-    }
-  };
-
-  const handleCreateRoom = (e: React.FormEvent) => {
-    e.preventDefault();
-    const tpl =
-      STUDIO_TEMPLATES.find((t) => t.key === selectedTemplateKey) ??
-      STUDIO_TEMPLATES[0];
-    const titleFr = newTitleFr.trim() || tpl.title.fr;
-    const titleAr = newTitleAr.trim() || tpl.title.ar;
-    const created: StudioRoomRecord = {
-      id: `studio-draft-${Date.now()}`,
-      slug: slugifyRoom(titleFr),
-      isLivePrimary: false,
-      status: "draft",
-      templateKey: tpl.key,
-      title: { fr: titleFr, ar: titleAr },
-      subtitle: {
-        fr: `Modèle : ${tpl.badge.fr}`,
-        ar: `النموذج: ${tpl.badge.ar}`,
-      },
-      description: tpl.description,
-      slidesCount: tpl.defaultSlidesCount,
-      activitiesCount: tpl.defaultActivitiesCount,
-      resourcesCount: 3,
-      connectedCount: 0,
-      totalParticipants: 0,
-      sessionsCount: 0,
-      updatedLabel: {
-        fr: "Brouillon local · Prêt pour migration DB",
-        ar: "مسودة محلية · جاهزة للترحيل لقاعدة البيانات",
-      },
-      pinProtected: true,
-    };
-
-    const next = [created, ...draftRooms];
-    persistDrafts(next);
-    setSelectedRoomId(created.id);
-    setActiveTab("overview");
+    setShowNewRoomModal(false);
     setNewTitleFr("");
     setNewTitleAr("");
-    setShowCreateModal(false);
-    setStatusNotice(
-      "Nouvelle salle préparée dans le Studio (aperçu local). / تم إعداد قاعة جديدة في الاستوديو (معاينة محلية)."
-    );
-  };
+    setNewSubtitleFr("");
+  }
 
-  const handleDuplicateRoom = (room: StudioRoomRecord) => {
-    const copy: StudioRoomRecord = {
-      ...room,
-      id: `studio-copy-${Date.now()}`,
-      slug: `${room.slug}-copie`,
-      isLivePrimary: false,
-      status: "ready",
-      title: {
-        fr: `${room.title.fr} (Copie)`,
-        ar: `${room.title.ar} (نسخة)`,
-      },
-      connectedCount: 0,
-      totalParticipants: 0,
-      sessionsCount: 0,
-      updatedLabel: {
-        fr: "Dupliquée depuis le Studio",
-        ar: "تم استنساخها داخل الاستوديو",
-      },
-    };
-    const next = [copy, ...draftRooms];
-    persistDrafts(next);
-    setSelectedRoomId(copy.id);
-    setStatusNotice(
-      "Salle dupliquée avec succès. / تم استنساخ القاعة بنجاح."
-    );
-  };
+  async function createDeckInSelectedRoom(payload: {
+    mode: "blank" | "template" | "duplicate" | "mediouna" | "ai" | "json" | "markdown";
+    title: { fr: string; ar: string };
+    templateKey?: "primary-lesson" | "teacher-training" | "quiz-session";
+    sourceDeckId?: string;
+    markdown?: string;
+    rawDocument?: unknown;
+    aiDocument?: DeckDocumentV1;
+  }) {
+    if (!authenticated) {
+      setShowAuthBox(true);
+      setStatusMessage("Déverrouillez l'accès formateur pour créer un support éditable.");
+      return;
+    }
+    setBusyAction(true);
+    try {
+      const res = await fetch(
+        `/api/studio/rooms/${encodeURIComponent(selectedRoom.id)}/decks`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok) {
+        setStatusMessage(json.error ?? "Impossible de créer la présentation.");
+        return;
+      }
+      await refreshStudioFromServer();
+      setShowCreateDeckModal(false);
+      setShowAiWizard(false);
+      router.push(
+        `/studio/rooms/${encodeURIComponent(selectedRoom.id)}/decks/${encodeURIComponent(json.deck.id)}/edit`
+      );
+    } finally {
+      setBusyAction(false);
+    }
+  }
+
+  async function launchLiveForDeck(deckId: string) {
+    if (!authenticated) {
+      setShowAuthBox(true);
+      setStatusMessage("Déverrouillez l'accès formateur pour démarrer une session Live.");
+      return;
+    }
+    setBusyAction(true);
+    try {
+      const res = await fetch(
+        `/api/studio/rooms/${encodeURIComponent(selectedRoom.id)}/sessions`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ deckId }),
+        }
+      );
+      const json = await res.json();
+      if (res.ok && json.session) {
+        router.push(`/presenter?sessionId=${encodeURIComponent(json.session.id)}`);
+      } else {
+        setStatusMessage(json.error ?? "Lancement impossible.");
+      }
+    } finally {
+      setBusyAction(false);
+    }
+  }
+
+  async function handleAddResource(e: React.FormEvent) {
+    e.preventDefault();
+    if (!authenticated) {
+      setShowAuthBox(true);
+      return;
+    }
+    if (!resTitleFr.trim()) return;
+    setBusyAction(true);
+    try {
+      const res = await fetch(
+        `/api/studio/rooms/${encodeURIComponent(selectedRoom.id)}/resources`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            kind: resKind,
+            title: {
+              fr: resTitleFr.trim(),
+              ar: resTitleAr.trim() || resTitleFr.trim(),
+            },
+            content: { fr: resContentFr.trim(), ar: resContentFr.trim() },
+            url: resUrl.trim() || undefined,
+          }),
+        }
+      );
+      if (res.ok) {
+        setResTitleFr("");
+        setResTitleAr("");
+        setResContentFr("");
+        setResUrl("");
+        await refreshStudioFromServer();
+        setStatusMessage("Ressource ajoutée · تمت إضافة المورد");
+      }
+    } finally {
+      setBusyAction(false);
+    }
+  }
 
   return (
-    <div className="min-h-[100dvh] bg-navy-950 text-ivory-50 flex flex-col">
-      {/* Sticky Single-Row Studio Top Bar */}
-      <header className="sticky top-0 z-30 border-b border-navy-700 bg-navy-900 safe-top">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-3 sm:px-6">
-          <div className="flex min-w-0 items-center gap-2.5">
+    <div className="min-h-screen bg-[#FAF8F4] text-[#0B1220]">
+      {/* Header */}
+      <header className="sticky top-0 z-30 border-b border-[#E9E3D6] bg-[#0B1220] text-[#FAF8F4] px-4 py-3">
+        <div className="mx-auto max-w-7xl flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <Link
               href="/"
-              aria-label="Accueil / الرئيسية"
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-navy-700 bg-navy-800 text-slate-300 hover:border-teal-bright hover:text-ivory-50"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-1.5 text-xs font-bold hover:bg-white/20"
             >
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              <ArrowLeft className="h-4 w-4" />
+              <span>Accueil</span>
             </Link>
-            <img
-              src="/icon.svg"
-              alt=""
-              aria-hidden="true"
-              width={28}
-              height={28}
-              className="hidden sm:block h-7 w-7 rounded-lg shrink-0"
-            />
             <div className="min-w-0">
-              <p className="font-display text-sm sm:text-base font-bold text-ivory-50 truncate">
-                AI Teacher Lab · Studio{" "}
-                <span
-                  dir="rtl"
-                  lang="ar"
-                  className="font-arabic text-teal-bright font-semibold"
-                >
-                  استوديو القاعات
-                </span>
-              </p>
-              <p className="hidden sm:block text-[11px] text-slate-400 truncate">
-                Espace multi-salles persistant · فضاء دائم لإدارة الورشات والعروض
+              <h1 className="font-display text-base md:text-lg font-bold truncate">
+                AI Teacher Lab · Studio 2.0
+              </h1>
+              <p dir="rtl" lang="ar" className="font-arabic text-xs text-teal-300 truncate">
+                استوديو إعداد وتسيير العروض والورشات التفاعلية
               </p>
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
-            <Link
-              href="/screen"
-              className="hidden md:inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-navy-700 bg-navy-800 px-3 py-1.5 text-xs font-semibold text-ivory-50 hover:border-teal-bright whitespace-nowrap"
-            >
-              <Monitor className="h-3.5 w-3.5 shrink-0 text-teal-bright" aria-hidden="true" />
-              <BilingualInline text={{ fr: "Projecteur", ar: "شاشة العرض" }} />
-            </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {initialStudioData.storageInfo.migrationPending && (
+              <span className="rounded-full bg-amber-500/20 border border-amber-400/40 px-3 py-1 text-[11px] font-semibold text-amber-200">
+                Tables Supabase en attente de migration
+              </span>
+            )}
+
+            {authenticated ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-300">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>Formateur connecté · وضع المنشط</span>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowAuthBox((v) => !v)}
+                data-studio-unlock-btn="true"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-3 py-1.5 text-xs font-bold text-[#0B1220] hover:bg-amber-400"
+              >
+                <Unlock className="h-3.5 w-3.5" />
+                <span>Déverrouiller formateur · دخول المنشط</span>
+              </button>
+            )}
+
             <button
               type="button"
-              onClick={() => setShowCreateModal(true)}
               data-testid="studio-new-room-btn"
-              className="min-h-[42px] inline-flex items-center gap-1.5 rounded-xl bg-teal-bright px-3.5 py-2 text-xs sm:text-sm font-bold text-navy-900 hover:bg-[#5EEAD4] cursor-pointer transition active:scale-[0.98] whitespace-nowrap"
+              onClick={() => setShowNewRoomModal(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-teal-500"
             >
-              <Plus className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <BilingualInline
-                text={{ fr: "Nouvelle salle", ar: "قاعة جديدة" }}
-              />
+              <Plus className="h-4 w-4" />
+              <span>Nouvelle salle · قاعة جديدة</span>
             </button>
           </div>
         </div>
+
+        {showAuthBox && !authenticated && (
+          <form
+            onSubmit={handleFacilitatorUnlock}
+            className="mx-auto max-w-7xl mt-3 pt-3 border-t border-slate-800 flex flex-wrap items-center gap-2"
+          >
+            <label htmlFor="studio-passcode" className="text-xs font-semibold text-teal-200">
+              Code animateur · رمز المنشط :
+            </label>
+            <input
+              id="studio-passcode"
+              type="password"
+              value={passcode}
+              onChange={(e) => setPasscode(e.target.value)}
+              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-white"
+            />
+            <button
+              type="submit"
+              className="rounded-lg bg-teal-600 px-3.5 py-1.5 text-xs font-bold text-white"
+            >
+              Valider
+            </button>
+            {authError && <span className="text-xs text-rose-400 font-bold">{authError}</span>}
+          </form>
+        )}
       </header>
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-3 py-5 sm:px-6 sm:py-7 space-y-5 safe-bottom">
-        {/* Clean Editorial Studio Bar (no gradient banner or eyebrow bloat) */}
-        <section className="flex flex-col gap-3 border-b border-navy-700/80 pb-5 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-1">
-            <h1 className="font-display text-xl sm:text-2xl font-bold text-ivory-50">
-              Salles &amp; Ateliers ·{" "}
-              <span dir="rtl" lang="ar" className="font-arabic text-teal-bright">
-                القاعات والورشات
-              </span>
-            </h1>
-            <BilingualBlock
-              text={{
-                fr: "Préparez vos salles, lancez vos présentations 16:9 et conservez les résultats de chaque cohorte.",
-                ar: "أعدّوا قاعاتكم، أطلقوا عروضكم 16:9 واحتفظوا بنتائج كل فوج بشكل مستقل وآمن.",
-              }}
-              frClassName="text-xs sm:text-sm text-slate-300"
-              arClassName="text-xs sm:text-sm text-slate-300"
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <Link
-              href="/presenter"
-              className="min-h-[42px] inline-flex items-center gap-1.5 rounded-xl bg-teal-700 px-4 py-2 text-xs font-bold text-white hover:bg-[#0D655E] transition active:scale-[0.98]"
-            >
-              <Play className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <BilingualInline
-                text={{ fr: "Lancer Salle #1", ar: "تشغيل القاعة 1" }}
-              />
-            </Link>
-          </div>
-        </section>
-
-        {statusNotice && (
-          <div
-            role="status"
-            aria-live="polite"
-            className="flex items-center justify-between gap-3 rounded-xl border border-teal-bright/40 bg-navy-800 px-4 py-2.5 text-xs font-medium text-teal-bright"
-          >
-            <span>{statusNotice}</span>
-            <button
-              type="button"
-              onClick={() => setStatusNotice(null)}
-              aria-label="Fermer / إغلاق"
-              className="rounded-lg p-1 text-teal-bright hover:bg-navy-700 cursor-pointer"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
+      <main className="mx-auto max-w-7xl px-4 py-6 space-y-6">
+        {statusMessage && (
+          <div className="rounded-xl border border-teal-300 bg-teal-50 px-4 py-2.5 text-xs font-semibold text-teal-950 flex items-center justify-between gap-3">
+            <span>{statusMessage}</span>
+            <button type="button" onClick={() => setStatusMessage(null)} aria-label="Fermer le message">
+              <X className="h-4 w-4" />
             </button>
           </div>
         )}
 
-        {/* Main Studio Grid: Quiet Left Room Rail + Elevated Right Room Workspace */}
-        <div className="grid gap-6 lg:grid-cols-12 items-start">
-          {/* Left Column: Persistent Rooms Directory */}
-          <aside className="lg:col-span-4 space-y-5">
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between px-1">
-                <BilingualBlock
-                  text={{
-                    fr: `Mes salles (${rooms.length})`,
-                    ar: `قاعاتي (${rooms.length})`,
-                  }}
-                  frClassName="text-xs font-bold text-slate-300"
-                  arClassName="text-xs font-bold text-teal-bright"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(true)}
-                  className="text-xs font-semibold text-teal-bright hover:underline cursor-pointer"
-                >
-                  + <BilingualInline text={{ fr: "Modèles", ar: "النماذج" }} />
-                </button>
-              </div>
-
-              <div className="divide-y divide-navy-700/70 rounded-2xl border border-navy-700 bg-navy-900 overflow-hidden">
-                {rooms.map((room) => {
-                  const selected = room.id === selectedRoom.id;
-                  const badge = STATUS_BADGE[room.status];
-                  return (
-                    <button
-                      key={room.id}
-                      type="button"
-                      onClick={() => setSelectedRoomId(room.id)}
-                      aria-pressed={selected}
-                      className={`w-full p-4 text-left transition cursor-pointer ${
-                        selected
-                          ? "bg-navy-800 ring-1 ring-inset ring-teal-bright/60"
-                          : "bg-navy-900 hover:bg-navy-800/60"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-2 mb-1.5">
-                        <span
-                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${badge.className}`}
-                        >
-                          <BilingualInline text={{ fr: badge.fr, ar: badge.ar }} />
-                        </span>
-                        <span className="font-mono-code text-[11px] text-slate-400">
-                          {room.slidesCount} diapos · {room.activitiesCount} act.
-                        </span>
-                      </div>
-                      <BilingualBlock
-                        text={room.title}
-                        frClassName="text-sm font-bold text-ivory-50 leading-snug"
-                        arClassName="text-xs font-bold text-teal-bright mt-0.5 leading-snug"
-                      />
-                      <p className="mt-1.5 text-[11px] text-slate-400">
-                        <BilingualInline text={room.updatedLabel} />
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Room Sidebar Selector */}
+          <aside className="lg:col-span-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display font-bold text-sm uppercase tracking-wider text-teal-800">
+                Salles & Ateliers ({allRooms.length})
+              </h2>
+              <span dir="rtl" lang="ar" className="font-arabic text-xs font-bold text-teal-800">
+                القاعات والورشات
+              </span>
             </div>
 
-            {/* Templates Quick Strip */}
             <div className="space-y-2.5">
-              <BilingualBlock
-                text={{
-                  fr: "Modèles rapides (5 blueprints)",
-                  ar: "نماذج سريعة جاهزة (5 قوالب)",
-                }}
-                frClassName="px-1 text-xs font-bold text-ivory-50"
-                arClassName="px-1 text-xs font-bold text-teal-bright"
-              />
-              <div className="space-y-1.5">
-                {STUDIO_TEMPLATES.map((tpl) => (
+              {allRooms.map((room) => {
+                const isSelected = room.id === selectedRoom?.id;
+                const countDecks = (decksByRoom[room.id] ?? []).length;
+                const isDraft = localDraftRooms.some((d) => d.id === room.id);
+                return (
                   <button
-                    key={tpl.key}
+                    key={room.id}
                     type="button"
-                    onClick={() => {
-                      setSelectedTemplateKey(tpl.key);
-                      setShowCreateModal(true);
-                    }}
-                    className="min-h-[44px] flex w-full items-center justify-between gap-2 rounded-xl border border-navy-700/80 bg-navy-900 px-3.5 py-2.5 text-left text-xs hover:border-teal-bright cursor-pointer"
+                    onClick={() => setSelectedRoomId(room.id)}
+                    className={`w-full text-left rounded-2xl border p-4 transition ${
+                      isSelected
+                        ? "border-teal-700 bg-white shadow-md ring-2 ring-teal-700/15"
+                        : "border-[#E9E3D6] bg-white/80 hover:border-teal-600/50"
+                    }`}
                   >
-                    <BilingualBlock
-                      text={tpl.title}
-                      frClassName="font-semibold text-ivory-50"
-                      arClassName="text-[11px] text-teal-bright"
-                    />
-                    <span className="shrink-0 font-mono-code text-[11px] text-slate-400">
-                      {tpl.estimatedMinutes}m
-                    </span>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="rounded-full bg-[#F4F0E8] px-2.5 py-0.5 text-[11px] font-bold text-teal-900">
+                        {isDraft ? "Brouillon local" : room.levelBadge}
+                      </span>
+                      <span className="text-[11px] font-mono text-slate-500">
+                        {isDraft ? "Local" : `${countDecks} deck(s)`}
+                      </span>
+                    </div>
+                    <p className="font-display font-bold text-sm text-[#0B1220]">
+                      {room.title.fr}
+                    </p>
+                    <p dir="rtl" lang="ar" className="font-arabic text-xs font-semibold text-teal-800 mt-0.5">
+                      {room.title.ar}
+                    </p>
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
           </aside>
 
-          {/* Right Column: Selected Room 6-Tab Inspector */}
-          <section className="lg:col-span-8 rounded-2xl border border-navy-700 bg-navy-900 overflow-hidden shadow-xl">
-            {/* Room Header */}
-            <div className="border-b border-navy-700 bg-navy-800/50 p-4 sm:p-6 space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${STATUS_BADGE[selectedRoom.status].className}`}
-                    >
-                      <BilingualInline
-                        text={{
-                          fr: STATUS_BADGE[selectedRoom.status].fr,
-                          ar: STATUS_BADGE[selectedRoom.status].ar,
-                        }}
-                      />
-                    </span>
-                    <span className="font-mono-code text-xs text-slate-400">
-                      /{selectedRoom.slug}
-                    </span>
+          {/* Selected Room Detail Workspace */}
+          {selectedRoom && (
+            <section className="lg:col-span-8 space-y-5 min-w-0">
+              {/* Room Hero Card */}
+              <div className="rounded-2xl border border-[#E9E3D6] bg-white p-5 shadow-xs space-y-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-emerald-100 text-emerald-900 px-2.5 py-0.5 text-[11px] font-bold">
+                        Active · نشطة
+                      </span>
+                      <span className="text-xs font-mono text-slate-600">
+                        PIN : {selectedRoom.joinPin}
+                      </span>
+                    </div>
+                    <h2 className="font-display text-xl md:text-2xl font-bold text-[#0B1220]">
+                      {selectedRoom.title.fr}
+                    </h2>
+                    <p dir="rtl" lang="ar" className="font-arabic text-base font-bold text-teal-800">
+                      {selectedRoom.title.ar}
+                    </p>
                   </div>
-                  <BilingualBlock
-                    text={selectedRoom.title}
-                    frClassName="font-display text-lg sm:text-2xl font-bold text-ivory-50"
-                    arClassName="text-base sm:text-lg font-bold text-teal-bright"
-                  />
-                  <BilingualBlock
-                    text={selectedRoom.subtitle}
-                    frClassName="text-xs text-slate-300"
-                    arClassName="text-xs text-slate-400"
-                  />
-                </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleDuplicateRoom(selectedRoom)}
-                    className="min-h-[40px] inline-flex items-center gap-1.5 rounded-xl border border-navy-700 bg-navy-800 px-3 py-1.5 text-xs font-semibold text-ivory-50 hover:border-teal-bright cursor-pointer"
-                  >
-                    <CopyPlus className="h-3.5 w-3.5 text-teal-bright" aria-hidden="true" />
-                    <BilingualInline text={{ fr: "Dupliquer", ar: "استنساخ" }} />
-                  </button>
-                  {selectedRoom.isLivePrimary && (
-                    <Link
-                      href="/presenter"
-                      className="min-h-[40px] inline-flex items-center gap-1.5 rounded-xl bg-teal-bright px-3.5 py-1.5 text-xs font-bold text-navy-900 hover:bg-[#5EEAD4] transition active:scale-[0.98]"
-                    >
-                      <Play className="h-3.5 w-3.5" aria-hidden="true" />
-                      <BilingualInline text={{ fr: "Présenter", ar: "تقديم" }} />
-                    </Link>
+                  {selectedRoom.id === "mediouna-default" && (
+                    <div className="flex flex-wrap gap-2">
+                      <Link
+                        href="/presenter"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#0B1220] px-3.5 py-2 text-xs font-bold text-white"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        <span>Régie Mediouna</span>
+                      </Link>
+                      <Link
+                        href="/export/slides?deckId=deck-mediouna-21&mode=slides"
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-teal-700 bg-teal-50 px-3.5 py-2 text-xs font-bold text-teal-900"
+                      >
+                        <Printer className="h-3.5 w-3.5" />
+                        <span>PDF 16:9</span>
+                      </Link>
+                    </div>
                   )}
                 </div>
+
+                {/* Accessible Role=Tab Navigation */}
+                <div
+                  role="tablist"
+                  aria-label="Onglets de la salle Studio"
+                  className="flex flex-wrap gap-1.5 border-t border-[#E9E3D6] pt-3"
+                >
+                  {ROOM_TABS.map((tab) => {
+                    const Icon = tab.icon;
+                    const active = activeTab === tab.key;
+                    return (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        onClick={() => setActiveTab(tab.key)}
+                        className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition ${
+                          active
+                            ? "bg-[#0B1220] text-white"
+                            : "bg-[#FAF8F4] text-slate-700 border border-[#E9E3D6] hover:border-teal-600"
+                        }`}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                        <span>{tab.fr}</span>
+                        <span className="font-arabic opacity-80 hidden sm:inline">
+                          · {tab.ar}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Horizontally Scrollable 6-Tab Bar */}
-              <div
-                role="tablist"
-                aria-label="Onglets de la salle / تبويبات القاعة"
-                className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1"
-              >
-                {ROOM_TABS.map((tab) => {
-                  const Icon = tab.icon;
-                  const isActive = activeTab === tab.key;
-                  return (
-                    <button
-                      key={tab.key}
-                      type="button"
-                      role="tab"
-                      aria-selected={isActive}
-                      onClick={() => setActiveTab(tab.key)}
-                      className={`min-h-[42px] shrink-0 inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold whitespace-nowrap cursor-pointer transition ${
-                        isActive
-                          ? "border-teal-bright bg-navy-900 text-teal-bright"
-                          : "border-navy-700/70 bg-navy-800/70 text-slate-300 hover:border-slate-500"
-                      }`}
-                    >
-                      <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                      <BilingualInline text={{ fr: tab.fr, ar: tab.ar }} />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Active Tab Panel */}
-            <div key={activeTab} className="p-4 sm:p-6 space-y-5 animate-stage-enter">
+              {/* TAB: OVERVIEW */}
               {activeTab === "overview" && (
-                <div className="space-y-5">
-                  <BilingualBlock
-                    text={selectedRoom.description}
-                    frClassName="text-sm leading-relaxed text-slate-200"
-                    arClassName="text-sm leading-relaxed text-teal-200"
-                  />
-
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <div className="rounded-xl border border-slate-800 bg-[#111C33] p-3.5">
-                      <p className="text-[11px] text-slate-400">
-                        Diapositives · <span className="font-arabic">الشرائح</span>
-                      </p>
-                      <p className="mt-1 font-display text-2xl font-bold text-white tabular-nums">
-                        {selectedRoom.slidesCount}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-slate-800 bg-[#111C33] p-3.5">
-                      <p className="text-[11px] text-slate-400">
-                        Activités · <span className="font-arabic">الأنشطة</span>
-                      </p>
-                      <p className="mt-1 font-display text-2xl font-bold text-white tabular-nums">
-                        {selectedRoom.activitiesCount}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-slate-800 bg-[#111C33] p-3.5">
-                      <p className="text-[11px] text-slate-400">
-                        Connectés · <span className="font-arabic">متصلون</span>
-                      </p>
-                      <p className="mt-1 font-display text-2xl font-bold text-teal-300 tabular-nums">
-                        {selectedRoom.connectedCount}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-slate-800 bg-[#111C33] p-3.5">
-                      <p className="text-[11px] text-slate-400">
-                        Inscrits · <span className="font-arabic">مسجلون</span>
-                      </p>
-                      <p className="mt-1 font-display text-2xl font-bold text-white tabular-nums">
-                        {selectedRoom.totalParticipants}
-                      </p>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-stage-enter">
+                  <div className="rounded-2xl border border-[#E9E3D6] bg-white p-4 space-y-1">
+                    <p className="text-xs font-bold uppercase text-slate-500">Présentations</p>
+                    <p className="text-2xl font-bold text-[#0B1220]">{roomDecks.length}</p>
+                    <p dir="rtl" lang="ar" className="font-arabic text-xs text-teal-800">
+                      العروض المحفوظة القابلة للتعديل
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-[#E9E3D6] bg-white p-4 space-y-1">
+                    <p className="text-xs font-bold uppercase text-slate-500">Sessions Live</p>
+                    <p className="text-2xl font-bold text-teal-800">{roomSessions.length}</p>
+                    <p dir="rtl" lang="ar" className="font-arabic text-xs text-slate-600">
+                      جلسات البث التفاعلي المباشر
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-[#E9E3D6] bg-white p-4 space-y-1">
+                    <p className="text-xs font-bold uppercase text-slate-500">
+                      Participants actifs (Mediouna)
+                    </p>
+                    <p className="text-2xl font-bold text-[#0B1220]">
+                      {initialSnapshot?.totalParticipants ?? 0}
+                    </p>
+                    <p dir="rtl" lang="ar" className="font-arabic text-xs text-slate-600">
+                      المشاركون المتفاعلون
+                    </p>
                   </div>
 
-                  {/* Quick Launch Surfaces */}
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    {[
-                      {
-                        id: "presenter",
-                        href: "/presenter",
-                        icon: Presentation,
-                        fr: "Console Animateur",
-                        ar: "لوحة المنشط",
-                      },
-                      {
-                        id: "screen",
-                        href: "/screen",
-                        icon: Monitor,
-                        fr: "Écran Projecteur 16:9",
-                        ar: "شاشة العرض 16:9",
-                      },
-                      {
-                        id: "join",
-                        href: "/join",
-                        icon: Smartphone,
-                        fr: "Vue Participant",
-                        ar: "واجهة المشارك",
-                      },
-                    ].map((surface) => {
-                      const Icon = surface.icon;
-                      const isCopied = copiedId === surface.id;
-                      return (
-                        <div
-                          key={surface.id}
-                          className="rounded-xl border border-slate-800 bg-[#0B1220] p-3.5 flex flex-col justify-between gap-3"
+                  {/* Quick Authoring Launchpad */}
+                  <div className="md:col-span-3 rounded-2xl border border-[#E9E3D6] bg-white p-5 space-y-3">
+                    <BilingualBlock
+                      text={{
+                        fr: "Créer ou importer une présentation interactive",
+                        ar: "إنشاء أو استيراد عرض تقديمي تفاعلي ثنائي اللغة",
+                      }}
+                      frClassName="font-display text-base font-bold"
+                      arClassName="text-sm font-semibold text-teal-800"
+                    />
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCreateDeckMode("blank");
+                          setShowCreateDeckModal(true);
+                        }}
+                        className="rounded-xl border border-[#E9E3D6] bg-[#FAF8F4] p-3 text-left font-bold hover:border-teal-700"
+                      >
+                        <Plus className="h-4 w-4 text-teal-700 mb-1" />
+                        Présentation vierge
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCreateDeckMode("template");
+                          setShowCreateDeckModal(true);
+                        }}
+                        className="rounded-xl border border-[#E9E3D6] bg-[#FAF8F4] p-3 text-left font-bold hover:border-teal-700"
+                      >
+                        <LayoutGrid className="h-4 w-4 text-teal-700 mb-1" />
+                        Modèle 1AEP–6AEP
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowAiWizard(true)}
+                        data-open-ai-wizard="true"
+                        className="rounded-xl border border-teal-300 bg-teal-50 p-3 text-left font-bold text-teal-950 hover:border-teal-700"
+                      >
+                        <Sparkles className="h-4 w-4 text-teal-700 mb-1" />
+                        Générer avec l&apos;IA
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCreateDeckMode("mediouna");
+                          setShowCreateDeckModal(true);
+                        }}
+                        className="rounded-xl border border-[#E9E3D6] bg-[#FAF8F4] p-3 text-left font-bold hover:border-teal-700"
+                      >
+                        <CopyPlus className="h-4 w-4 text-teal-700 mb-1" />
+                        Importer Mediouna (21)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB: PRESENTATION DECKS & 8 AUTHORING ENTRY PATHS */}
+              {activeTab === "presentation" && (
+                <div className="space-y-4 animate-stage-enter">
+                  {!isLocalDraftRoom && (
+                    <div className="rounded-2xl border border-[#E9E3D6] bg-white p-4 flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs font-bold uppercase text-teal-800">
+                        Créer / Importer un support ({roomDecks.length})
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowAiWizard(true)}
+                          className="inline-flex items-center gap-1 rounded-xl bg-teal-700 px-3 py-1.5 text-xs font-bold text-white"
                         >
-                          <div className="flex items-center gap-2">
-                            <Icon className="h-4 w-4 text-teal-300 shrink-0" />
-                            <BilingualBlock
-                              text={{ fr: surface.fr, ar: surface.ar }}
-                              frClassName="text-xs font-bold text-white"
-                              arClassName="text-[11px] font-semibold text-teal-300"
-                            />
+                          <Sparkles className="h-3.5 w-3.5" />
+                          <span>Assistant IA</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCreateDeckMode("template");
+                            setShowCreateDeckModal(true);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-xl border border-[#D9D0BE] bg-[#FAF8F4] px-3 py-1.5 text-xs font-bold"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          <span>Modèle / Vierge</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCreateDeckMode("markdown");
+                            setShowCreateDeckModal(true);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-xl border border-[#D9D0BE] bg-[#FAF8F4] px-3 py-1.5 text-xs font-bold"
+                        >
+                          <Upload className="h-3.5 w-3.5" />
+                          <span>Markdown / JSON</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {roomDecks.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-3">
+                      {roomDecks.map((deck) => (
+                        <article
+                          key={deck.id}
+                          className="rounded-2xl border border-[#E9E3D6] bg-white p-4 flex flex-wrap items-center justify-between gap-4 shadow-xs"
+                        >
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="rounded-full bg-teal-50 border border-teal-200 px-2.5 py-0.5 font-mono font-bold text-teal-900">
+                                v{deck.currentRevisionNo} · {deck.document.slides.length} slides
+                              </span>
+                            </div>
+                            <h3 className="font-display font-bold text-base text-[#0B1220]">
+                              {deck.title.fr}
+                            </h3>
+                            <p dir="rtl" lang="ar" className="font-arabic text-sm font-semibold text-teal-800">
+                              {deck.title.ar}
+                            </p>
                           </div>
-                          <div className="flex items-center gap-2">
+
+                          <div className="flex flex-wrap items-center gap-2">
                             <Link
-                              href={surface.href}
-                              className="min-h-[38px] flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-teal-600/90 px-2.5 py-1.5 text-xs font-bold text-white hover:bg-teal-500"
+                              href={`/studio/rooms/${encodeURIComponent(selectedRoom.id)}/decks/${encodeURIComponent(deck.id)}/edit`}
+                              data-edit-deck={deck.id}
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-[#0B1220] px-3.5 py-2 text-xs font-bold text-white hover:bg-teal-800"
                             >
-                              <ExternalLink className="h-3.5 w-3.5" />
-                              <span>{surface.href}</span>
+                              <Pencil className="h-3.5 w-3.5" />
+                              <span>Éditer · تحرير</span>
                             </Link>
                             <button
                               type="button"
-                              onClick={() =>
-                                handleCopyLink(surface.id, surface.href)
-                              }
-                              aria-label={`Copier ${surface.href} / نسخ الرابط`}
-                              className="inline-flex h-[38px] w-[38px] items-center justify-center rounded-lg border border-slate-700 bg-[#111C33] text-slate-300 hover:text-white cursor-pointer"
+                              disabled={busyAction}
+                              onClick={() => launchLiveForDeck(deck.id)}
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-teal-700 px-3.5 py-2 text-xs font-bold text-white hover:bg-teal-800"
                             >
-                              {isCopied ? (
-                                <Check className="h-3.5 w-3.5 text-emerald-400" />
-                              ) : (
-                                <Copy className="h-3.5 w-3.5" />
-                              )}
+                              <MonitorPlay className="h-3.5 w-3.5" />
+                              <span>Présenter Live</span>
                             </button>
+                            <Link
+                              href={`/export/slides?deckId=${encodeURIComponent(deck.id)}&mode=slides`}
+                              target="_blank"
+                              className="inline-flex items-center gap-1.5 rounded-xl border border-[#D9D0BE] bg-[#FAF8F4] px-3 py-2 text-xs font-bold"
+                            >
+                              <Printer className="h-3.5 w-3.5" />
+                              <span>PDF 16:9</span>
+                            </Link>
+                            <Link
+                              href={`/export/slides?deckId=${encodeURIComponent(deck.id)}&mode=worksheet`}
+                              target="_blank"
+                              className="inline-flex items-center gap-1.5 rounded-xl border border-[#D9D0BE] bg-[#FAF8F4] px-3 py-2 text-xs font-bold"
+                            >
+                              <FileText className="h-3.5 w-3.5" />
+                              <span>Fiche A4</span>
+                            </Link>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "presentation" && (
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <BilingualBlock
-                      text={{
-                        fr: `Plan 16:9 (${sectionList.length} sections · ${SLIDES.length} diapositives)`,
-                        ar: `مخطط العرض 16:9 (${sectionList.length} محوراً · ${SLIDES.length} شريحة)`,
-                      }}
-                      frClassName="text-sm font-bold text-white"
-                      arClassName="text-xs font-bold text-teal-300"
-                    />
-                    <Link
-                      href="/presenter"
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-teal-500"
-                    >
-                      <Play className="h-3.5 w-3.5" />
-                      <BilingualInline
-                        text={{ fr: "Ouvrir le lecteur 16:9", ar: "فتح عارض 16:9" }}
-                      />
-                    </Link>
-                  </div>
-                  <div className="grid gap-2.5 sm:grid-cols-2">
-                    {sectionList.map((sec) => (
-                      <div
-                        key={sec.sectionNumber}
-                        className="rounded-xl border border-slate-800 bg-[#111C33]/80 p-3 space-y-1"
-                      >
-                        <div className="flex items-center justify-between text-[11px] font-mono-code text-teal-300">
-                          <span>Section {sec.sectionNumber}</span>
-                          <span>{sec.timeRange.fr}</span>
-                        </div>
-                        <BilingualBlock
-                          text={sec.title}
-                          frClassName="text-xs font-bold text-white"
-                          arClassName="text-xs text-slate-300"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "resources" && (
-                <div className="space-y-4">
-                  <div className="space-y-2.5">
-                    {MEDIOUNA_ROOM_RESOURCES.map((res) => (
-                      <div
-                        key={res.id}
-                        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-[#111C33]/80 p-3.5"
-                      >
-                        <div className="space-y-1 flex-1 min-w-[200px]">
-                          <BilingualBlock
-                            text={res.title}
-                            frClassName="text-sm font-bold text-white"
-                            arClassName="text-xs font-bold text-teal-300"
-                          />
-                          <BilingualBlock
-                            text={res.description}
-                            frClassName="text-xs text-slate-400"
-                            arClassName="text-xs text-slate-400"
-                          />
-                        </div>
-                        {res.countLabel && (
-                          <span className="rounded-full border border-teal-500/30 bg-teal-500/10 px-3 py-1 text-[11px] font-bold text-teal-200">
-                            <BilingualInline text={res.countLabel} />
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="rounded-xl border border-slate-800 bg-[#0B1220] p-4 space-y-2">
-                    <div className="flex items-center gap-2 text-xs font-bold text-teal-300">
-                      <Layers className="h-4 w-4" />
-                      <BilingualInline
-                        text={{
-                          fr: `Galerie pédagogique intégrée (${GALLERY_CATEGORIES.length} catégories)`,
-                          ar: `المعرض التربوي المدمج (${GALLERY_CATEGORIES.length} فئة)`,
-                        }}
-                      />
+                        </article>
+                      ))}
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {GALLERY_CATEGORIES.map((cat) => (
-                        <span
-                          key={cat.id}
-                          className="rounded-lg border border-slate-800 bg-[#111C33] px-2.5 py-1 text-[11px] text-slate-200"
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-[#D9D0BE] bg-white p-6 text-center space-y-2">
+                      <p className="text-sm font-bold">
+                        {isLocalDraftRoom
+                          ? "Brouillon local sans présentation serveur."
+                          : "Aucune présentation dans cette salle."}
+                      </p>
+                      <p className="text-xs text-slate-600">
+                        Plan du programme Mediouna disponible ({SLIDES.length} diapositives,{" "}
+                        {sections.length} sections) ou créez votre propre support bilingue.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB: RESOURCES */}
+              {activeTab === "resources" && (
+                <div className="space-y-4 animate-stage-enter">
+                  <div className="rounded-2xl border border-[#E9E3D6] bg-white p-5 space-y-3">
+                    <h3 className="font-display font-bold text-base">
+                      Ressources & Fiches de la salle · موارد القاعة
+                    </h3>
+                    <div className="space-y-2">
+                      {roomResources.map((res) => (
+                        <div
+                          key={res.id}
+                          className="rounded-xl border border-[#E9E3D6] bg-[#FAF8F4] p-3.5 flex flex-wrap items-center justify-between gap-3"
                         >
-                          {cat.number}. {cat.title.fr}
-                        </span>
+                          <div>
+                            <p className="font-bold text-sm">{res.title.fr}</p>
+                            <p dir="rtl" lang="ar" className="font-arabic text-xs text-teal-800">
+                              {res.title.ar}
+                            </p>
+                            <p className="text-xs text-slate-600 mt-1">{res.content.fr}</p>
+                          </div>
+                          {res.url && (
+                            <Link
+                              href={res.url}
+                              className="rounded-lg bg-teal-700 px-3 py-1.5 text-xs font-bold text-white"
+                            >
+                              Ouvrir
+                            </Link>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
+
+                  {!isLocalDraftRoom && (
+                    <form
+                      onSubmit={handleAddResource}
+                      className="rounded-2xl border border-[#E9E3D6] bg-white p-5 space-y-3"
+                    >
+                      <h4 className="font-bold text-sm">Ajouter une ressource</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <label className="text-xs font-semibold">
+                          Type
+                          <select
+                            value={resKind}
+                            onChange={(e) => setResKind(e.target.value as typeof resKind)}
+                            className="mt-1 w-full rounded-lg border border-[#D9D0BE] px-2.5 py-2 text-xs"
+                          >
+                            <option value="note">Note</option>
+                            <option value="prompt">Méta-Prompt</option>
+                            <option value="worksheet">Fiche A4</option>
+                            <option value="link">Lien</option>
+                          </select>
+                        </label>
+                        <label className="text-xs font-semibold">
+                          Titre FR
+                          <input
+                            type="text"
+                            value={resTitleFr}
+                            onChange={(e) => setResTitleFr(e.target.value)}
+                            className="mt-1 w-full rounded-lg border border-[#D9D0BE] px-2.5 py-2 text-xs"
+                          />
+                        </label>
+                        <label className="text-xs font-semibold">
+                          العنوان AR
+                          <input
+                            type="text"
+                            dir="rtl"
+                            value={resTitleAr}
+                            onChange={(e) => setResTitleAr(e.target.value)}
+                            className="mt-1 w-full rounded-lg border border-[#D9D0BE] px-2.5 py-2 font-arabic text-xs"
+                          />
+                        </label>
+                      </div>
+                      <label className="block text-xs font-semibold">
+                        Contenu / Consigne
+                        <textarea
+                          rows={2}
+                          value={resContentFr}
+                          onChange={(e) => setResContentFr(e.target.value)}
+                          className="mt-1 w-full rounded-lg border border-[#D9D0BE] px-2.5 py-2 text-xs"
+                        />
+                      </label>
+                      <label className="block text-xs font-semibold">
+                        URL optionnelle
+                        <input
+                          type="text"
+                          value={resUrl}
+                          onChange={(e) => setResUrl(e.target.value)}
+                          className="mt-1 w-full rounded-lg border border-[#D9D0BE] px-2.5 py-2 text-xs"
+                        />
+                      </label>
+                      <button
+                        type="submit"
+                        disabled={busyAction}
+                        className="rounded-xl bg-[#0B1220] px-4 py-2 text-xs font-bold text-white"
+                      >
+                        Ajouter à la salle
+                      </button>
+                    </form>
+                  )}
                 </div>
               )}
 
+              {/* TAB: ACTIVITIES */}
               {activeTab === "activities" && (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {activityList.map((act) => (
-                    <div
-                      key={act.key}
-                      className="rounded-xl border border-slate-800 bg-[#111C33]/80 p-3.5 space-y-1.5"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="rounded bg-slate-800 px-2 py-0.5 font-mono-code text-[10px] uppercase text-teal-300">
+                <div className="rounded-2xl border border-[#E9E3D6] bg-white p-5 space-y-3 animate-stage-enter">
+                  <h3 className="font-display font-bold text-base">
+                    Activités interactives synchronisées · الأنشطة التفاعلية
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {Object.values(ACTIVITIES).map((act) => (
+                      <div
+                        key={act.key}
+                        className="rounded-xl border border-[#E9E3D6] bg-[#FAF8F4] p-3.5 space-y-1"
+                      >
+                        <span className="text-[11px] font-bold uppercase text-teal-800">
                           {act.type}
                         </span>
-                        <span className="text-[11px] text-slate-400">
-                          Section {act.sectionNumber}
-                        </span>
+                        <p className="font-bold text-sm">{act.title.fr}</p>
+                        <p dir="rtl" lang="ar" className="font-arabic text-xs text-teal-900">
+                          {act.title.ar}
+                        </p>
                       </div>
-                      <BilingualBlock
-                        text={act.title}
-                        frClassName="text-xs font-bold text-white"
-                        arClassName="text-xs font-semibold text-teal-300"
-                      />
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
 
+              {/* TAB: PARTICIPANTS / SESSIONS */}
               {activeTab === "participants" && (
-                <div className="space-y-4">
-                  <div className="rounded-xl border border-slate-800 bg-[#111C33] p-4 space-y-2">
-                    <BilingualBlock
-                      text={{
-                        fr: "Isolation des sessions par cohorte",
-                        ar: "عزل الجلسات والنتائج حسب كل فوج",
-                      }}
-                      frClassName="text-sm font-bold text-white"
-                      arClassName="text-xs font-bold text-teal-300"
-                    />
-                    <BilingualBlock
-                      text={{
-                        fr: "Chaque salle peut lancer plusieurs sessions indépendantes. Les participants rejoignent sans compte personnel via QR + PIN, avec séparation stricte Mode Démo / Mode Réel.",
-                        ar: "يمكن لكل قاعة إطلاق عدة جلسات مستقلة. ينضم المشاركون دون إنشاء حساب عبر رمز QR ورمز PIN مع فصل تام بين الوضع التجريبي والوضع الحقيقي.",
-                      }}
-                      frClassName="text-xs leading-relaxed text-slate-300"
-                      arClassName="text-xs leading-relaxed text-slate-300"
-                    />
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Link
-                      href="/presenter"
-                      className="min-h-[42px] inline-flex items-center gap-1.5 rounded-xl bg-[#0F766E] px-4 py-2 text-xs font-bold text-white hover:bg-[#0D655E] transition active:scale-[0.98]"
-                    >
-                      <Users className="h-4 w-4" />
-                      <BilingualInline
-                        text={{
-                          fr: "Gérer les participants en direct",
-                          ar: "تدبير المشاركين مباشرة",
-                        }}
-                      />
-                    </Link>
-                  </div>
+                <div className="rounded-2xl border border-[#E9E3D6] bg-white p-5 space-y-3 animate-stage-enter">
+                  <h3 className="font-display font-bold text-base">
+                    Sessions Live & Connexions · جلسات المشاركة
+                  </h3>
+                  {roomSessions.length > 0 ? (
+                    <div className="space-y-2">
+                      {roomSessions.map((sess) => (
+                        <div
+                          key={sess.id}
+                          className="rounded-xl border border-[#E9E3D6] bg-[#FAF8F4] p-3.5 flex flex-wrap items-center justify-between gap-2"
+                        >
+                          <div>
+                            <p className="font-bold text-sm">{sess.title.fr}</p>
+                            <p className="text-xs text-slate-600">
+                              Slide {sess.currentSlideIndex + 1}/{sess.slideCount} · PIN{" "}
+                              <span className="font-mono">{sess.joinPin}</span>
+                            </p>
+                          </div>
+                          <div className="flex gap-2 text-xs">
+                            <Link
+                              href={`/presenter?sessionId=${encodeURIComponent(sess.id)}`}
+                              className="rounded-lg bg-[#0B1220] px-3 py-1.5 font-bold text-white"
+                            >
+                              Régie
+                            </Link>
+                            <Link
+                              href={`/screen?sessionId=${encodeURIComponent(sess.id)}`}
+                              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-bold"
+                            >
+                              Projecteur
+                            </Link>
+                            <Link
+                              href={`/join?sessionId=${encodeURIComponent(sess.id)}`}
+                              className="rounded-lg bg-teal-700 px-3 py-1.5 font-bold text-white"
+                            >
+                              /join
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-600">
+                      Aucune session Studio 2.0 encore lancée pour cette salle. Cliquez sur « Présenter Live » depuis l&apos;onglet Présentation.
+                    </p>
+                  )}
                 </div>
               )}
 
+              {/* TAB: SETTINGS */}
               {activeTab === "settings" && (
-                <div className="space-y-4">
-                  <div className="rounded-xl border border-teal-500/30 bg-teal-950/25 p-4 space-y-2">
-                    <div className="flex items-center gap-2 text-xs font-bold text-teal-200">
-                      <ShieldCheck className="h-4 w-4 shrink-0" />
-                      <BilingualInline
-                        text={{
-                          fr: "Architecture multi-salles additive & non destructive",
-                          ar: "بنية متعددة القاعات إضافية وآمنة دون مساس بالبيانات",
-                        }}
-                      />
-                    </div>
-                    <BilingualBlock
-                      text={{
-                        fr: "La Salle #1 (mediouna-ai-teacher-lab) reste connectée à la base Supabase de production en lecture/écriture. Les nouvelles salles brouillons créées ici sont stockées localement en aperçu Studio jusqu'à validation de la migration SQL additive (docs/STUDIO_MIGRATION_PROPOSAL.md).",
-                        ar: "تظل القاعة 1 مرتبطة بقاعدة البيانات الحية. أما القاعات التجريبية الجديدة المنشأة هنا فتُحفظ محلياً كمعاينة للاستوديو إلى حين اعتماد ترحيل قاعدة البيانات الإضافي.",
-                      }}
-                      frClassName="text-xs leading-relaxed text-slate-300"
-                      arClassName="text-xs leading-relaxed text-teal-100/90"
-                    />
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2 text-xs">
-                    <div className="rounded-xl border border-slate-800 bg-[#111C33] p-3.5 space-y-1">
-                      <p className="text-slate-400">
-                        Identifiant salle · <span className="font-arabic">معرف القاعة</span>
-                      </p>
-                      <p className="font-mono-code font-bold text-white">
-                        {selectedRoom.slug}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-slate-800 bg-[#111C33] p-3.5 space-y-1">
-                      <p className="text-slate-400">
-                        Affichage bilingue · <span className="font-arabic">العرض الثنائي</span>
-                      </p>
-                      <p className="font-semibold text-teal-300">
-                        FR (LTR) + AR (RTL) simultané · متزامن دائماً
-                      </p>
-                    </div>
-                  </div>
+                <div className="rounded-2xl border border-[#E9E3D6] bg-white p-5 space-y-3 text-xs animate-stage-enter">
+                  <h3 className="font-display font-bold text-base">
+                    Paramètres de salle · إعدادات القاعة
+                  </h3>
+                  <p>
+                    Identifiant : <code className="font-mono">{selectedRoom.id}</code>
+                  </p>
+                  <p>
+                    Badge niveau : <strong>{selectedRoom.levelBadge}</strong>
+                  </p>
+                  <p>
+                    Mode stockage serveur :{" "}
+                    <code className="font-mono">{initialStudioData.storageInfo.mode}</code>
+                  </p>
                 </div>
               )}
-            </div>
-          </section>
+            </section>
+          )}
         </div>
       </main>
 
-      {/* Create Room Modal */}
-      {showCreateModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Créer une nouvelle salle Studio / إنشاء قاعة جديدة"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs"
-        >
+      {/* Modal: Create New Room */}
+      {showNewRoomModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4">
           <form
             onSubmit={handleCreateRoom}
-            className="w-full max-w-lg rounded-2xl border border-slate-700 bg-[#0B1220] p-5 sm:p-6 text-white shadow-2xl space-y-4 max-h-[90dvh] overflow-y-auto"
+            className="w-full max-w-lg rounded-2xl border border-[#E9E3D6] bg-white p-6 space-y-4 shadow-2xl"
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <BilingualBlock
-                text={{
-                  fr: "Créer une salle dans AI Teacher Lab Studio",
-                  ar: "إنشاء قاعة جديدة في استوديو AI Teacher Lab",
-                }}
-                frClassName="text-base font-bold text-white"
-                arClassName="text-sm font-bold text-teal-300"
-              />
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-lg font-bold">
+                Nouvelle salle Studio · قاعة جديدة
+              </h2>
               <button
                 type="button"
-                onClick={() => setShowCreateModal(false)}
-                aria-label="Fermer / إغلاق"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 text-slate-300 hover:text-white cursor-pointer"
+                onClick={() => setShowNewRoomModal(false)}
+                aria-label="Fermer la fenêtre"
+                className="rounded p-1 hover:bg-slate-100"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="space-y-1.5">
-              <label
-                htmlFor="studio-template"
-                className="block text-xs font-bold text-slate-300"
-              >
-                <BilingualInline
-                  text={{ fr: "Choisir un modèle", ar: "اختر نموذج القاعة" }}
-                />
-              </label>
-              <select
-                id="studio-template"
-                value={selectedTemplateKey}
-                onChange={(e) => setSelectedTemplateKey(e.target.value)}
-                className="min-h-[44px] w-full rounded-xl border border-slate-700 bg-[#111C33] px-3 py-2 text-sm text-white"
-              >
-                {STUDIO_TEMPLATES.map((tpl) => (
-                  <option key={tpl.key} value={tpl.key}>
-                    {tpl.title.fr} · {tpl.title.ar}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label
-                htmlFor="studio-title-fr"
-                className="block text-xs font-bold text-slate-300"
-              >
-                Titre en Français (LTR)
+            <div>
+              <label htmlFor="studio-title-fr" className="block text-xs font-bold mb-1">
+                Titre en Français *
               </label>
               <input
                 id="studio-title-fr"
                 type="text"
-                dir="ltr"
+                required
                 value={newTitleFr}
                 onChange={(e) => setNewTitleFr(e.target.value)}
-                placeholder="Ex : Atelier Évaluation & IA — Cycle Primaire"
-                className="min-h-[44px] w-full rounded-xl border border-slate-700 bg-[#111C33] px-3.5 py-2 text-base sm:text-sm text-white placeholder:text-slate-500"
+                placeholder="ex: Atelier Lecture & IA — 3AEP"
+                className="w-full rounded-xl border border-[#D9D0BE] px-3 py-2 text-sm"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label
-                htmlFor="studio-title-ar"
-                className="block text-xs font-bold text-teal-300 font-arabic"
-                dir="rtl"
-                lang="ar"
-              >
-                العنوان بالعربية (RTL)
+            <div>
+              <label htmlFor="studio-title-ar" className="block text-xs font-bold mb-1">
+                العنوان بالعربية *
               </label>
               <input
                 id="studio-title-ar"
                 type="text"
+                required
                 dir="rtl"
                 lang="ar"
                 value={newTitleAr}
                 onChange={(e) => setNewTitleAr(e.target.value)}
-                placeholder="مثال: ورشة التقويم والذكاء الاصطناعي — السلك الابتدائي"
-                className="font-arabic min-h-[44px] w-full rounded-xl border border-slate-700 bg-[#111C33] px-3.5 py-2 text-base sm:text-sm text-white placeholder:text-slate-500"
+                placeholder="مثال: ورشة القراءة التفاعلية"
+                className="w-full rounded-xl border border-[#D9D0BE] px-3 py-2 font-arabic text-sm"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setShowCreateModal(false)}
-              className="min-h-[42px] rounded-xl border border-navy-700 px-4 py-2 text-xs font-semibold text-slate-300 hover:text-white cursor-pointer"
-            >
-              <BilingualInline text={{ fr: "Annuler", ar: "إلغاء" }} />
-            </button>
-            <button
-              type="submit"
-              className="min-h-[42px] inline-flex items-center gap-1.5 rounded-xl bg-teal-bright px-4 py-2 text-xs font-bold text-navy-900 hover:bg-[#5EEAD4] cursor-pointer"
-            >
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              <BilingualInline
-                text={{ fr: "Créer la salle", ar: "إنشاء القاعة" }}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="studio-level" className="block text-xs font-bold mb-1">
+                  Public / Niveau
+                </label>
+                <input
+                  id="studio-level"
+                  type="text"
+                  value={newLevelBadge}
+                  onChange={(e) => setNewLevelBadge(e.target.value)}
+                  className="w-full rounded-xl border border-[#D9D0BE] px-3 py-2 text-xs"
+                />
+              </div>
+              <div>
+                <label htmlFor="studio-pin" className="block text-xs font-bold mb-1">
+                  Code PIN Live
+                </label>
+                <input
+                  id="studio-pin"
+                  type="text"
+                  value={newPin}
+                  onChange={(e) => setNewPin(e.target.value)}
+                  className="w-full rounded-xl border border-[#D9D0BE] px-3 py-2 font-mono text-xs"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="studio-sub-fr" className="block text-xs font-bold mb-1">
+                Sous-titre optionnel
+              </label>
+              <input
+                id="studio-sub-fr"
+                type="text"
+                value={newSubtitleFr}
+                onChange={(e) => setNewSubtitleFr(e.target.value)}
+                className="w-full rounded-xl border border-[#D9D0BE] px-3 py-2 text-xs"
               />
-            </button>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowNewRoomModal(false)}
+                className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={busyAction}
+                className="rounded-xl bg-teal-700 px-5 py-2 text-xs font-bold text-white"
+              >
+                Créer la salle
+              </button>
             </div>
           </form>
         </div>
+      )}
+
+      {/* Modal: Create / Import Deck */}
+      {showCreateDeckModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4">
+          <div className="w-full max-w-xl rounded-2xl border border-[#E9E3D6] bg-white p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-lg font-bold">
+                Nouvelle présentation dans « {selectedRoom?.title.fr} »
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowCreateDeckModal(false)}
+                aria-label="Fermer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5 text-xs">
+              {(
+                [
+                  { id: "template", label: "Modèle" },
+                  { id: "blank", label: "Vierge" },
+                  { id: "mediouna", label: "Import Mediouna" },
+                  { id: "duplicate", label: "Dupliquer" },
+                  { id: "markdown", label: "Markdown" },
+                  { id: "json", label: "JSON Studio" },
+                ] as const
+              ).map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setCreateDeckMode(m.id)}
+                  className={`rounded-lg px-3 py-1.5 font-bold border ${
+                    createDeckMode === m.id
+                      ? "bg-[#0B1220] text-white border-[#0B1220]"
+                      : "bg-[#FAF8F4] text-slate-700 border-[#E9E3D6]"
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className="text-xs font-bold">
+                Titre FR
+                <input
+                  type="text"
+                  value={deckTitleFr}
+                  onChange={(e) => setDeckTitleFr(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[#D9D0BE] px-3 py-2 text-xs"
+                />
+              </label>
+              <label className="text-xs font-bold">
+                العنوان AR
+                <input
+                  type="text"
+                  dir="rtl"
+                  lang="ar"
+                  value={deckTitleAr}
+                  onChange={(e) => setDeckTitleAr(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[#D9D0BE] px-3 py-2 font-arabic text-xs"
+                />
+              </label>
+            </div>
+
+            {createDeckMode === "template" && (
+              <label className="block text-xs font-bold">
+                Modèle prêt à l&apos;emploi
+                <select
+                  value={deckTemplateKey}
+                  onChange={(e) =>
+                    setDeckTemplateKey(e.target.value as typeof deckTemplateKey)
+                  }
+                  className="mt-1 w-full rounded-xl border border-[#D9D0BE] px-3 py-2 text-xs"
+                >
+                  <option value="primary-lesson">Leçon Primaire (1AEP–6AEP)</option>
+                  <option value="teacher-training">Atelier Enseignants (Bilingue + Vote)</option>
+                  <option value="quiz-session">Quiz Évaluation Formative</option>
+                </select>
+              </label>
+            )}
+
+            {createDeckMode === "duplicate" && (
+              <label className="block text-xs font-bold">
+                Présentation source
+                <select
+                  value={deckDuplicateId || roomDecks[0]?.id || "deck-mediouna-21"}
+                  onChange={(e) => setDeckDuplicateId(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[#D9D0BE] px-3 py-2 text-xs"
+                >
+                  <option value="deck-mediouna-21">Mediouna Officiel (21 slides)</option>
+                  {roomDecks.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.title.fr}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            {createDeckMode === "markdown" && (
+              <label className="block text-xs font-bold">
+                Texte Markdown (# = titre de slide)
+                <textarea
+                  rows={5}
+                  value={deckMarkdown}
+                  onChange={(e) => setDeckMarkdown(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[#D9D0BE] p-3 font-mono text-xs"
+                />
+              </label>
+            )}
+
+            {createDeckMode === "json" && (
+              <label className="block text-xs font-bold">
+                Coller le JSON DeckDocumentV1
+                <textarea
+                  rows={5}
+                  value={deckJsonText}
+                  onChange={(e) => setDeckJsonText(e.target.value)}
+                  placeholder='{"schemaVersion":1,...}'
+                  className="mt-1 w-full rounded-xl border border-[#D9D0BE] p-3 font-mono text-xs"
+                />
+              </label>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowCreateDeckModal(false)}
+                className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                disabled={busyAction}
+                onClick={() => {
+                  let rawDocument: unknown;
+                  if (createDeckMode === "json") {
+                    try {
+                      rawDocument = JSON.parse(deckJsonText);
+                    } catch {
+                      setStatusMessage("JSON invalide.");
+                      return;
+                    }
+                  }
+                  void createDeckInSelectedRoom({
+                    mode: createDeckMode,
+                    title: { fr: deckTitleFr, ar: deckTitleAr },
+                    templateKey: deckTemplateKey,
+                    sourceDeckId:
+                      deckDuplicateId || roomDecks[0]?.id || "deck-mediouna-21",
+                    markdown: deckMarkdown,
+                    rawDocument,
+                  });
+                }}
+                className="rounded-xl bg-teal-700 px-5 py-2 text-xs font-bold text-white"
+              >
+                Créer & Éditer · إنشاء وتحرير
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: AI Deck Wizard */}
+      {showAiWizard && selectedRoom && (
+        <AiDeckWizardModal
+          roomId={selectedRoom.id}
+          onClose={() => setShowAiWizard(false)}
+          onCreatedDeck={async (aiDoc) => {
+            await createDeckInSelectedRoom({
+              mode: "ai",
+              title: aiDoc.title,
+              aiDocument: aiDoc,
+            });
+          }}
+        />
       )}
     </div>
   );

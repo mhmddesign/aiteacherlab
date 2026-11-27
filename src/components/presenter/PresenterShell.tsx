@@ -1457,6 +1457,25 @@ export function PresenterShell({
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-2">
+              <Link
+                href="/export/slides?deckId=deck-mediouna-21&mode=slides"
+                target="_blank"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-teal-500/40 bg-teal-950/50 px-3 py-2.5 text-xs font-bold text-teal-200 hover:bg-teal-900/60"
+              >
+                <FileText className="h-4 w-4 shrink-0" />
+                <span>PDF 16:9 (21 slides)</span>
+              </Link>
+              <Link
+                href="/export/slides?deckId=deck-mediouna-21&mode=worksheet"
+                target="_blank"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-[#111C33] px-3 py-2.5 text-xs font-bold text-slate-200 hover:border-teal-400"
+              >
+                <FileText className="h-4 w-4 shrink-0" />
+                <span>Fiches A4</span>
+              </Link>
+            </div>
+
             <QrJoinPanel size={130} darkSurface showPinHint={resolvedPinHint} />
 
             {/* Purge Controls */}
