@@ -76,6 +76,7 @@ export function PresentationViewport({
     ro.observe(container);
 
     window.addEventListener("resize", scheduleUpdate);
+    window.addEventListener("orientationchange", scheduleUpdate);
     window.visualViewport?.addEventListener("resize", scheduleUpdate);
     document.addEventListener("fullscreenchange", scheduleUpdate);
 
@@ -83,6 +84,7 @@ export function PresentationViewport({
       if (rafId) cancelAnimationFrame(rafId);
       ro.disconnect();
       window.removeEventListener("resize", scheduleUpdate);
+      window.removeEventListener("orientationchange", scheduleUpdate);
       window.visualViewport?.removeEventListener("resize", scheduleUpdate);
       document.removeEventListener("fullscreenchange", scheduleUpdate);
     };

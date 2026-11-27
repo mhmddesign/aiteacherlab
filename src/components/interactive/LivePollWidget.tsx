@@ -46,7 +46,8 @@ export function LivePollWidget({
 
   if (!activity || !activity.options) return null;
 
-  const isLocked = isPaused || status !== "open" || Boolean(existing);
+  const isLocked =
+    isPaused || status !== "open" || Boolean(existing) || saveState === "saved";
 
   const handleSubmit = async (optionId: string) => {
     if (!canSubmit || isLocked || saveState === "saving") return;
@@ -100,22 +101,22 @@ export function LivePollWidget({
             />
             <div className="flex flex-wrap items-center gap-1.5" aria-live="polite">
               {saveState === "saving" && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-teal-800 transition-opacity">
-                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-700/20 bg-status-success-bg px-3 py-1 text-status-success transition-opacity">
+                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden="true" />
                   <BilingualInline text={{ fr: "Enregistrement...", ar: "جاري الحفظ..." }} />
                 </span>
               )}
               {(existing || saveState === "saved") && saveState !== "saving" && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-3 py-1 text-teal-800">
-                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-700/20 bg-status-success-bg px-3 py-1 text-status-success">
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   <BilingualInline
                     text={{ fr: "Réponse enregistrée", ar: "تم حفظ الإجابة" }}
                   />
                 </span>
               )}
               {status !== "open" || isPaused ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-amber-800">
-                  <Lock className="h-3.5 w-3.5 shrink-0" />
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-800/20 bg-status-warning-bg px-3 py-1 text-status-warning">
+                  <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   {isPaused ? (
                     <BilingualInline text={{ fr: "Atelier en pause", ar: "الورشة في استراحة" }} />
                   ) : status === "closed" || status === "revealed" ? (
@@ -125,8 +126,8 @@ export function LivePollWidget({
                   )}
                 </span>
               ) : !existing && saveState !== "saving" ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-cyan-50 px-3 py-1 text-cyan-800">
-                  <Send className="h-3.5 w-3.5 shrink-0" />
+                <span className="inline-flex items-center gap-1 rounded-full border border-blue-700/20 bg-status-info-bg px-3 py-1 text-status-info">
+                  <Send className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   <BilingualInline text={{ fr: "Ouvert aux votes", ar: "مفتوح للتصويت" }} />
                 </span>
               ) : null}
@@ -179,13 +180,16 @@ export function LivePollWidget({
           </div>
 
           {error && (
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-xs font-medium text-amber-900">
+            <div
+              role="alert"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-red-800/20 bg-status-error-bg px-4 py-2.5 text-xs font-medium text-status-error"
+            >
               <span>{error}</span>
               {lastAttemptOption && status === "open" && !isPaused && (
                 <button
                   type="button"
                   onClick={() => handleSubmit(lastAttemptOption)}
-                  className="rounded-lg bg-amber-600 px-3 py-1 font-bold text-white hover:bg-amber-700 cursor-pointer"
+                  className="rounded-lg bg-teal-700 px-3 py-1 font-bold text-white hover:bg-[#0D655E] cursor-pointer"
                 >
                   <BilingualInline text={{ fr: "Réessayer", ar: "إعادة المحاولة" }} />
                 </button>

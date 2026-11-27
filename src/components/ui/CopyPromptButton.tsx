@@ -46,10 +46,10 @@ export function CopyPromptButton({
     <button
       type="button"
       onClick={handleCopy}
-      className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition cursor-pointer ${
+      className={`inline-flex min-h-[38px] items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition cursor-pointer ${
         copied
-          ? "border-teal-600 bg-teal-600 text-white"
-          : "border-slate-300 bg-white text-slate-800 hover:border-teal-500 hover:text-teal-800"
+          ? "border-teal-700 bg-teal-700 text-white"
+          : "border-slate-400 bg-white text-navy-900 hover:border-teal-700 hover:text-teal-700"
       } ${className}`}
     >
       {copied ? <Check className="h-3.5 w-3.5 shrink-0" /> : <Copy className="h-3.5 w-3.5 shrink-0" />}

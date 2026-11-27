@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
   Fraunces,
   IBM_Plex_Sans_Arabic,
@@ -6,6 +6,13 @@ import {
   Plus_Jakarta_Sans,
 } from "next/font/google";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#060B16",
+};
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -48,7 +55,7 @@ export default function RootLayout({
       lang="fr"
       className={`${plusJakarta.variable} ${fraunces.variable} ${ibmArabic.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="min-h-screen bg-[#0B1426] text-slate-900 antialiased selection:bg-teal-500/20 selection:text-teal-900">
+      <body className="min-h-screen bg-navy-950 text-ivory-50 antialiased">
         {children}
       </body>
     </html>

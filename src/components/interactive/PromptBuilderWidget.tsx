@@ -77,6 +77,7 @@ export function PromptBuilderWidget({
   );
 
   const [submitting, setSubmitting] = useState(false);
+  const [optimisticSaved, setOptimisticSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const targetLangFr =
@@ -156,12 +157,13 @@ export function PromptBuilderWidget({
     qualityCriteria,
   ]);
 
-  const isLocked = isPaused || status !== "open" || Boolean(existing);
+  const isLocked = isPaused || status !== "open" || Boolean(existing) || optimisticSaved;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit || isLocked || submitting) return;
     setSubmitting(true);
+    setOptimisticSaved(true);
     setError(null);
     try {
       const res = await fetch("/api/participant/respond", {
@@ -184,6 +186,7 @@ export function PromptBuilderWidget({
       });
       const data = await res.json();
       if (!res.ok) {
+        setOptimisticSaved(false);
         setError(
           data.error ??
             "Impossible de partager votre prompt. / تعذر مشاركة التوجيه."
@@ -192,6 +195,7 @@ export function PromptBuilderWidget({
       }
       onSubmitted?.(data.response as ParticipantResponseItem | undefined);
     } catch {
+      setOptimisticSaved(false);
       setError(
         "Erreur réseau lors de l'envoi. Votre prompt reste copiable ci-contre. / خطأ في الشبكة أثناء الإرسال، يمكنكم نسخ التوجيه."
       );
@@ -294,10 +298,20 @@ export function PromptBuilderWidget({
               frClassName="text-sm font-bold text-slate-900"
               arClassName="text-xs font-bold text-teal-800"
             />
-            {existing ? (
+            {existing || optimisticSaved ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
-                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                <BilingualInline text={{ fr: "Partagé avec la salle", ar: "تمت المشاركة مع القاعة" }} />
+                {submitting ? (
+                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                )}
+                <BilingualInline
+                  text={
+                    submitting
+                      ? { fr: "Partage en cours...", ar: "جاري المشاركة..." }
+                      : { fr: "Partagé avec la salle", ar: "تمت المشاركة مع القاعة" }
+                  }
+                />
               </span>
             ) : status !== "open" || isPaused ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
@@ -470,7 +484,7 @@ export function PromptBuilderWidget({
             <button
               type="submit"
               disabled={isLocked || submitting}
-              className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700 disabled:opacity-50 cursor-pointer"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-teal-700 px-4 py-2 text-xs font-bold text-white hover:bg-[#0D655E] disabled:opacity-50 cursor-pointer"
             >
               {submitting ? (
                 <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
@@ -492,9 +506,9 @@ export function PromptBuilderWidget({
       )}
 
       <div className={`${canSubmit ? "lg:col-span-5" : "lg:col-span-12"} space-y-4`}>
-        <div className="rounded-2xl border border-slate-800 bg-[#0B1426] p-4 text-slate-100 space-y-3">
+        <div className="rounded-2xl border border-navy-700 bg-navy-900 p-4 text-ivory-50 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
+            <span className="text-xs font-bold uppercase tracking-wider text-teal-bright">
               Prompt assemblé (FR) · التوجيه المركّب
             </span>
             <CopyPromptButton text={assembledPromptFr} label="Copier FR" labelAr="نسخ FR" />

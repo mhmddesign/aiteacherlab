@@ -38,23 +38,31 @@ export function ExitTicketWidget({
     existing?.selectedOption ?? activity?.options?.[0]?.id ?? "diff"
   );
   const [commitment, setCommitment] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [optimisticSaved, setOptimisticSaved] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
   if (!activity || !activity.options) return null;
 
-  const isLocked = isPaused || status !== "open" || Boolean(existing);
+  const isLocked =
+    isPaused ||
+    status !== "open" ||
+    Boolean(existing) ||
+    saveState === "saving" ||
+    saveState === "saved";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit || isLocked || submitting) return;
-    if (commitment.trim().length < 5) {
+    if (!canSubmit || isLocked) return;
+    const trimmed = commitment.trim();
+    if (trimmed.length < 5) {
       setError(
         "Écrivez au moins une courte phrase (5 caractères min.). / اكتبوا جملة قصيرة على الأقل (5 أحرف)."
       );
       return;
     }
-    setSubmitting(true);
+    setOptimisticSaved(trimmed);
+    setSaveState("saving");
     setError(null);
     try {
       const res = await fetch("/api/participant/respond", {
@@ -66,23 +74,26 @@ export function ExitTicketWidget({
           selectedOption: category,
           payload: {
             category,
-            commitment: commitment.trim(),
+            commitment: trimmed,
           },
         }),
       });
       const data = await res.json();
       if (!res.ok) {
+        setOptimisticSaved(null);
+        setSaveState("error");
         setError(
           data.error ??
             "Impossible d'envoyer votre ticket de sortie. / تعذر إرسال تذكرة الخروج."
         );
         return;
       }
+      setSaveState("saved");
       onSubmitted?.(data.response as ParticipantResponseItem | undefined);
     } catch {
+      setOptimisticSaved(null);
+      setSaveState("error");
       setError("Problème de connexion. Réessayez. / مشكل في الاتصال، حاولوا مجدداً.");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -99,10 +110,15 @@ export function ExitTicketWidget({
               frClassName="text-sm font-bold text-slate-900"
               arClassName="text-xs font-bold text-teal-800"
             />
-            {existing ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
+            {existing || saveState === "saved" ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800" aria-live="polite">
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 <BilingualInline text={{ fr: "Engagement enregistré", ar: "تم تسجيل الالتزام" }} />
+              </span>
+            ) : saveState === "saving" ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800" aria-live="polite">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <BilingualInline text={{ fr: "Enregistrement...", ar: "جاري الحفظ..." }} />
               </span>
             ) : status !== "open" || isPaused ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
@@ -125,14 +141,14 @@ export function ExitTicketWidget({
                 onClick={() => setCategory(opt.id)}
                 className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition ${
                   category === opt.id
-                    ? "border-teal-600 bg-teal-600 text-white"
-                    : "border-slate-200 bg-slate-50 text-slate-700"
+                    ? "border-teal-700 bg-teal-700 text-white"
+                    : "border-slate-300 bg-ivory-50 text-navy-900 hover:border-teal-700"
                 }`}
               >
                 <BilingualBlock
                   text={opt.label}
                   frClassName="text-xs"
-                  arClassName={`text-[11px] ${category === opt.id ? "text-teal-50" : "text-teal-800"}`}
+                  arClassName={`text-[11px] ${category === opt.id ? "text-white/95" : "text-teal-700"}`}
                 />
               </button>
             ))}
@@ -141,35 +157,45 @@ export function ExitTicketWidget({
           <textarea
             rows={2}
             disabled={isLocked}
+            aria-label="Votre engagement cette semaine / التزامكم هذا الأسبوع"
             value={
               existing && typeof existing.payload.commitment === "string"
                 ? existing.payload.commitment
-                : commitment
+                : optimisticSaved ?? commitment
             }
             onChange={(e) => setCommitment(e.target.value)}
             placeholder="Ex. : Préparer 3 fiches graduées en lecture 4AEP... / مثال: إعداد 3 بطاقات متدرجة للقراءة..."
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900"
+            className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-base sm:text-sm text-slate-900"
           />
 
           {error && (
-            <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
-              {error}
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+              <span>{error}</span>
+              {status === "open" && !isPaused && (
+                <button
+                  type="submit"
+                  className="rounded-lg bg-amber-600 px-3 py-1 font-bold text-white hover:bg-amber-700 cursor-pointer"
+                >
+                  <BilingualInline text={{ fr: "Réessayer", ar: "إعادة المحاولة" }} />
+                </button>
+              )}
+            </div>
           )}
 
-          {!existing && (
+          {!existing && saveState !== "saved" && (
             <button
               type="submit"
-              disabled={isLocked || submitting}
-              className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700 disabled:opacity-50 cursor-pointer"
+              disabled={isLocked}
+              aria-busy={saveState === "saving"}
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-teal-700 px-4 py-2 text-xs font-bold text-white hover:bg-[#0D655E] disabled:opacity-50 cursor-pointer"
             >
-              {submitting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              {saveState === "saving" ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               ) : (
-                <Send className="h-3.5 w-3.5" />
+                <Send className="h-4 w-4" aria-hidden="true" />
               )}
               <span>
-                {submitting ? (
+                {saveState === "saving" ? (
                   "Enregistrement... / جاري الحفظ..."
                 ) : (
                   <BilingualInline

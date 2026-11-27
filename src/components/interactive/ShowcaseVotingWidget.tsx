@@ -231,7 +231,7 @@ export function ShowcaseVotingWidget({
                   <div className="space-y-2">
                     {activity.options!.map((opt) => {
                       const chosen = chosenGroupId === opt.id;
-                      const locked = !isOpen || Boolean(mine) || isSaving;
+                      const locked = !isOpen || Boolean(mine) || isSaving || isSaved;
                       return (
                         <button
                           key={opt.id}
@@ -239,7 +239,7 @@ export function ShowcaseVotingWidget({
                           aria-pressed={chosen}
                           disabled={locked}
                           onClick={() => handleVote(cat.id, opt.id)}
-                          className={`flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-all duration-150 active:scale-[0.99] ${
+                          className={`flex min-h-[44px] w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-all duration-150 active:scale-[0.99] ${
                             chosen
                               ? "border-teal-600 bg-teal-50 text-teal-950 ring-2 ring-teal-500/25"
                               : "border-slate-200 bg-slate-50 text-slate-800 hover:border-teal-400"
@@ -315,68 +315,77 @@ export function ShowcaseVotingWidget({
               <form onSubmit={handleContribute} className="mt-4 grid gap-3 sm:grid-cols-2">
                 <input
                   required
+                  aria-label="Nom(s) des collègues ou groupe / أسماء الزملاء أو المجموعة"
                   placeholder="Nom(s) des collègues ou groupe / أسماء الزملاء أو المجموعة"
                   value={contributorName}
                   onChange={(e) => setContributorName(e.target.value)}
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
+                  className="min-h-[44px] rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm sm:text-xs"
                 />
                 <input
                   required
+                  aria-label="Titre de l'application pédagogique / عنوان التطبيق التربوي"
                   placeholder="Titre de l'application pédagogique / عنوان التطبيق التربوي"
                   value={appTitle}
                   onChange={(e) => setAppTitle(e.target.value)}
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
+                  className="min-h-[44px] rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm sm:text-xs"
                 />
                 <input
                   required
+                  aria-label="Niveau scolaire / المستوى الدراسي"
                   placeholder="Niveau (ex: 3AEP–4AEP) / المستوى الدراسي"
                   value={gradeRange}
                   onChange={(e) => setGradeRange(e.target.value)}
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
+                  className="min-h-[44px] rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm sm:text-xs"
                 />
                 <input
                   required
+                  aria-label="Discipline / المادة الدراسية"
                   placeholder="Discipline / المادة الدراسية"
                   value={discipline}
                   onChange={(e) => setDiscipline(e.target.value)}
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
+                  className="min-h-[44px] rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm sm:text-xs"
                 />
                 <input
                   required
+                  aria-label="Langue / اللغة"
                   placeholder="Langue (FR LTR / AR RTL / Bilingue) / اللغة"
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
+                  className="min-h-[44px] rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm sm:text-xs"
                 />
                 <input
                   required
+                  aria-label="Fichier HTML, lien ou support / رابط أو اسم الملف"
                   placeholder="Fichier HTML, lien ou support / رابط أو اسم الملف"
                   value={appResource}
                   onChange={(e) => setAppResource(e.target.value)}
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
+                  className="min-h-[44px] rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm sm:text-xs"
                 />
                 <input
                   required
+                  aria-label="Objectif d'apprentissage / الهدف التعلمي"
                   placeholder="Objectif d'apprentissage / الهدف التعلمي"
                   value={learningObjective}
                   onChange={(e) => setLearningObjective(e.target.value)}
-                  className="sm:col-span-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
+                  className="sm:col-span-2 min-h-[44px] rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm sm:text-xs"
                 />
                 <textarea
                   required
                   rows={2}
+                  aria-label="Description courte du prototype / وصف موجز للنموذج"
                   placeholder="Description courte du prototype... / وصف موجز للنموذج..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
+                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm sm:text-xs"
                 />
                 <textarea
                   required
                   rows={2}
+                  aria-label="Mode d'emploi en classe / طريقة الاستعمال في القسم"
                   placeholder="Mode d'emploi en classe... / طريقة الاستعمال في القسم..."
                   value={classroomInstructions}
                   onChange={(e) => setClassroomInstructions(e.target.value)}
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
+                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm sm:text-xs"
                 />
                 <label className="sm:col-span-2 flex items-start gap-2 rounded-xl border border-teal-300 bg-white p-3 text-xs text-slate-800 cursor-pointer">
                   <input
@@ -399,7 +408,7 @@ export function ShowcaseVotingWidget({
                   <button
                     type="submit"
                     disabled={contributing}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700 disabled:opacity-70 cursor-pointer"
+                    className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-teal-700 px-4 py-2 text-xs font-bold text-white hover:bg-[#0D655E] disabled:opacity-70 cursor-pointer"
                   >
                     {contributing ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
